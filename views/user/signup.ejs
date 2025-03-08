@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Furni</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background-color: #3c5c4b;
+            padding: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin-left: 30px;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: #f9ca24;
+        }
+        
+        .signup-section {
+            padding: 60px 0;
+        }
+        
+        .signup-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+        }
+        
+        .signup-image {
+            flex: 1;
+            background-color: #3c5c4b;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: white;
+        }
+        
+        .signup-image h2 {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
+        .signup-image p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .signup-form {
+            flex: 1;
+            padding: 40px;
+        }
+        
+        .form-title {
+            font-size: 24px;
+            color: #3c5c4b;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #3c5c4b;
+            outline: none;
+        }
+        
+        .submit-button {
+            background-color: #3c5c4b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 15px;
+            font-size: 16px;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 15px;
+        }
+        
+        .submit-button:hover {
+            background-color: #2c4c3b;
+        }
+        
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #666;
+        }
+        
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .or-divider::before {
+            margin-right: 10px;
+        }
+        
+        .or-divider::after {
+            margin-left: 10px;
+        }
+        
+        .google-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .google-button:hover {
+            background-color: #f8f8f8;
+        }
+        
+        .google-icon {
+            margin-right: 10px;
+            height: 18px;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .login-link a {
+            color: #3c5c4b;
+            text-decoration: none;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .footer {
+            background-color: #3c5c4b;
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .signup-container {
+                flex-direction: column;
+            }
+            
+            .signup-image {
+                padding: 30px;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+        }
+        
+        .error-message {
+            color: red;
+            font-size: 0.75rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="/" class="logo">Furni.</a>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="/shop" class="nav-link">Shop</a></li>
+                    <li class="nav-item"><a href="/about" class="nav-link">About us</a></li>
+                    <li class="nav-item"><a href="/services" class="nav-link">Services</a></li>
+                    <li class="nav-item"><a href="/blog" class="nav-link">Blog</a></li>
+                    <li class="nav-item"><a href="/contact" class="nav-link">Contact us</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <main>
+        <section class="signup-section">
+            <div class="container">
+                <div class="signup-container">
+                    <div class="signup-image">
+                        <h2>Join the Furni Family</h2>
+                        <p>Sign up to get access to exclusive deals, track your orders, and get personalized recommendations for your home.</p>
+                    </div>
+                    <div class="signup-form">
+                        <h2 class="form-title">Create an Account</h2>
+                        <form id="signform" method="post" action="/signup">
+                            <div class="form-group">
+                                <label for="fullName" class="form-label">Full Name</label>
+                                <input type="text" id="fullName" name="fullName" class="form-control" placeholder="Enter your full name">
+                                <div id="error1" class="error-message"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email">
+                                <div id="error2" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter your phone number">
+                                <div id="error3" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" id="password" name="password" class="form-control" placeholder="Create a password">
+                                <div id="error4" class="error-message"></div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm your password">
+                                <div id="error5" class="error-message"></div>
+                            </div>
+                            
+                            <button type="submit" class="submit-button">Sign Up</button>
+                            
+                            <div class="or-divider">or</div>
+                            
+                            <button type="button" class="google-button">
+                                <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="18px" height="18px">
+                                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                </svg>
+                                Sign up with Google
+                            </button>
+                            
+                            <div class="login-link">
+                                Already have an account? <a href="/login">Log in</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Furni. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const nameid = document.getElementById('fullName');
+        const emailid = document.getElementById('email');
+        const phoneid = document.getElementById('phone');
+        const passid = document.getElementById('password');
+        const cpassid = document.getElementById('confirmPassword');
+
+        const erro1 = document.getElementById('error1');
+        const erro2 = document.getElementById('error2');
+        const erro3 = document.getElementById('error3');
+        const erro4 = document.getElementById('error4');
+        const erro5 = document.getElementById('error5');
+        const signform = document.getElementById('signform');
+
+        function nameValidationChecking() {
+            const nameval = nameid.value;
+            const namePattern = /^[A-Za-z\s]+$/;
+
+            if (nameval.trim() === "") {
+                erro1.style.display = 'block';
+                erro1.innerHTML = 'Please enter a valid name.';
+            } else if (!namePattern.test(nameval)) {
+                erro1.style.display = 'block';
+                erro1.innerHTML = 'Name can only contain alphabets and spaces.';
+            } else {
+                erro1.style.display = 'none';
+                erro1.innerHTML = '';
+            }
+        }
+
+        function emailValidateChecking() {
+            const emailval = emailid.value;
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+            if (!emailPattern.test(emailval)) {
+                erro2.style.display = 'block';
+                erro2.innerHTML = 'Invalid email format.';
+            } else {
+                erro2.style.display = 'none';
+                erro2.innerHTML = '';
+            }
+        }
+
+        function phoneValidationChecking() {
+            const phoneval = phoneid.value;
+
+            if (phoneval.trim() === '') {
+                erro3.style.display = 'block';
+                erro3.innerHTML = 'Please enter a valid phone number.';
+            } else if (phoneval.length !=10) {
+                erro3.style.display = 'block';
+                erro3.innerHTML = 'Phone number must be 10 digits.';
+            } else {
+                erro3.style.display = 'none';
+                erro3.innerHTML = '';
+            }
+        }
+
+        function passValidateChecking() {
+            const passval = passid.value;
+            const cpassval = cpassid.value;
+            const alphaPattern = /[a-zA-Z]/;
+            const digitPattern = /\d/;
+
+            if (passval.length < 8) {
+                erro4.style.display = 'block';
+                erro4.innerHTML = 'Password should contain at least 8 characters.';
+            } else if (!alphaPattern.test(passval) || !digitPattern.test(passval)) {
+                erro4.style.display = 'block';
+                erro4.innerHTML = 'Password should contain both letters and numbers.';
+            } else {
+                erro4.style.display = 'none';
+                erro4.innerHTML = '';
+            }
+
+            if (passval !== cpassval) {
+                erro5.style.display = 'block';
+                erro5.innerHTML = 'Passwords do not match.';
+            } else {
+                erro5.style.display = 'none';
+                erro5.innerHTML = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            signform.addEventListener('submit', function (e) {
+                nameValidationChecking();
+                emailValidateChecking();
+                phoneValidationChecking();
+                passValidateChecking();
+
+                if (
+                    erro1.innerHTML ||
+                    erro2.innerHTML ||
+                    erro3.innerHTML ||
+                    erro4.innerHTML ||
+                    erro5.innerHTML
+                ) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
