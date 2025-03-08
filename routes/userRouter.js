@@ -1,10 +1,12 @@
-const express=require('express')
-const router=express.Router()
-const usercontroller=require('../controller/user')
+const express = require('express');
+const router = express.Router();
+const usercontroller = require('../controller/user');
 
-router.get('/pageNotFound',usercontroller.pageNotFound)
-router.get('/',usercontroller.loadhomepage)
-router.get('/signup',usercontroller.loadsignup)
-router.post('/signup',usercontroller.signup)
+router.get('/pageNotFound', usercontroller.pageNotFound);
 
-module.exports=router
+router.get('/', usercontroller.loadhomepage);
+router.get('/signup', usercontroller.loadsignup);
+router.post('/signup', usercontroller.signup);
+router.post('/verify-otp', usercontroller.verifyOTP);
+
+module.exports = router;

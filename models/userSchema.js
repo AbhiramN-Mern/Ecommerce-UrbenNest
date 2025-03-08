@@ -55,7 +55,8 @@ const userSchema = new Schema({
     },
     referalcode:{
         type:String,
-        unique:true
+        unique:true,
+        sparse:true
     },
     redeemed:{
         type:Boolean

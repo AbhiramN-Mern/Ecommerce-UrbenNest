@@ -1,7 +1,9 @@
-const { log } = require('console')
+const { log, Console, error } = require('console')
 const User=require('../models/userSchema')
 const nodemailer=require('nodemailer')
 const env=require('dotenv').config()
+const bcrypt=require('bcrypt')
+const { json } = require('stream/consumers')
 
 
 const loadhomepage=async(req,res)=>{
@@ -35,7 +37,7 @@ function genarateOTP(){
 }
 async function sendVerificationEmail(email,otp){
     try {
-        console.log('check val');
+        
         
         const transpoter=nodemailer.createTransport({
             service:'gmail',
@@ -48,7 +50,7 @@ async function sendVerificationEmail(email,otp){
             }
 
         })
-        console.log(transpoter);
+
         
 
     const info=await transpoter.sendMail({
@@ -81,7 +83,7 @@ const signup = async (req, res) => {
     try {
         console.log("Received signup request:", req.body);
 
-        const { email, password, confirmPassword } = req.body;
+        const { email,phone,name, password, confirmPassword } = req.body;
         if (password !== confirmPassword) {
             console.log("Passwords do not match:", password, confirmPassword);
             return res.render('signup', { message: 'Passwords do not match' });
@@ -93,7 +95,7 @@ const signup = async (req, res) => {
             return res.render('signup', { message: "User with this email already exists" });
         }
 
-        console.log("Generating OTP...");
+        
         const otp = genarateOTP();
         console.log("Generated OTP:", otp);
 
@@ -105,11 +107,11 @@ const signup = async (req, res) => {
 
         // Store OTP and user data in session
         req.session.userOtp = otp;
-        req.session.userData = { email, password };
+        req.session.userData = { name,phone,email, password };
         // console.log("Session Data:", req.session);
-        res.send(req.session.userOtp)
+        // res.send(req.session.userOtp)
 
-        // res.render("verifyOTP"); // Redirect to OTP verification page
+        res.render("verifyOTP"); // Redirect to OTP verification page
     } catch (error) {
         console.error('Signup error:', error);
         res.redirect('/pageNotFound');
@@ -117,24 +119,54 @@ const signup = async (req, res) => {
 };
 
 
+const securePassword=async(password)=>{
+    try{
+        const passwordHash=await bcrypt.hash(password,10)
+        return passwordHash
+        
+    }catch(error){
 
-// const signup=async(req,res)=>{
-//     const {name,email,phone,password}=req.body
-//     try{
-//     const newUSer=new User({name,email,phone,password})
-//     console.log(newUSer)
-    
-//     await newUSer.save()
-//     console.log('1')
-//     return res.redirect('/signup')
-//     }catch(error){
-//         console.log('Error for save user',error)
-//         res.status(500).send('internal server error')
-//     }
-// }
+    }
+}
+
+const verifyOTP = async (req, res) => {
+    try {
+        const { otp } = req.body;
+        console.log("Entered OTP:", otp);
+
+        // Use the correct session variable key: userOtp
+        if (otp === req.session.userOtp) {
+            console.log('one');
+            
+            const userData = req.session.userData;
+            const passwordHash = await securePassword(userData.password);
+
+            const saveUserData = new User({
+                name: userData.name,
+                email: userData.email,
+                phone: userData.phone,
+                password: passwordHash,
+            });
+            console.log('two');
+            
+            await saveUserData.save();
+
+            req.session.user = saveUserData._id;
+            
+            res.redirect('/')
+        } else {
+            console.error("Invalid OTP entered:", otp);
+            // return res.status(400).json({ success: false, message: "Invalid OTP, Please Try Again" });
+        }
+    } catch (error) {
+        console.error("Error in verifyOTP:", error);
+        return res.redirect('/pageNotFound');
+    }
+};
 
 module.exports={
     loadhomepage,
     pageNotFound,
-    loadsignup,signup
+    loadsignup,signup,
+    verifyOTP
 }
