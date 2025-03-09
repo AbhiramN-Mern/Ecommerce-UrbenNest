@@ -13,7 +13,7 @@ const userSchema = new Schema({
     },
     phone:{
         type:String,
-        // required:false,
+        required:false,
         unique:false,
         sparse:true,
         default:null
@@ -26,7 +26,7 @@ const userSchema = new Schema({
     },
     password:{
         type:String,
-        // required:false,
+        required:false,
 
     },
     isBlocked:{
