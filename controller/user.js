@@ -3,7 +3,8 @@ const User = require('../models/userSchema');
 const nodemailer = require('nodemailer');
 require('dotenv').config(); // Corrected env import
 const bcrypt = require('bcrypt');
-const { json } = require('stream/consumers');
+
+
 
 const loadhomepage = async (req, res) => {
     try {
@@ -181,11 +182,59 @@ const resendOTP = async (req, res) => {
     }
 };
 
+const loadlogin=async (req,res)=>{
+    try {
+        if(!req.session.user){
+            return res.render('login')
+        }else{
+            res.redirect('/home')
+        }
+    } catch (error) {
+        res.redirect('/pageNotFound')
+        
+    }
+}
+
+const login=async(req,res)=>{
+    try {
+        const {email,password}=req.body
+        const findUser=await User.findOne({isAdmin:0,email:email})
+    if(!findUser){
+        return res.render('login',{message:"User Not Found"})
+        
+        
+
+    }
+    if(findUser.isBlocked){
+        console.log('User is Blocked by Admin ');
+        return res.render('login',{message:'User is Blocked by Admin '})
+    }
+    const passwordMatch=await bcrypt.compare(password,findUser.password)
+    
+    
+    
+
+    if(!passwordMatch){
+        console.log("incorrect Password");
+        
+        return res.render('login',{message:"incorrect Password"})
+    }
+    req.session.user=findUser._id
+    res.redirect('/')
+
+    } catch (error) {
+        console.log('login error',error)
+        res.render('login',{message:'login failed Please Try Again Later'})
+    }
+}
+
 module.exports = {
     loadhomepage,
     pageNotFound,
     loadsignup,
     signup,
     verifyOTP,
-    resendOTP
+    resendOTP,
+    loadlogin,
+    login
 };

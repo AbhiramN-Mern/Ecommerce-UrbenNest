@@ -249,6 +249,7 @@
         }
     </style>
 </head>
+
 <body>
     <header class="header">
         <div class="container">
@@ -275,16 +276,16 @@
                         <p>Log in to access your account, view your orders, and continue exploring our exclusive collection of modern furniture pieces.</p>
                     </div>
                     <div class="login-form">
-                        <h2 class="form-title">Sign In</h2>
-                        <form>
+                        <h2 class="form-title">Login In</h2>
+                        <form id="loginform" method="post" action="/login">
                             <div class="form-group">
                                 <label for="email" class="form-label">Email Address</label>
-                                <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                                <input name="email" type="email" id="email" class="form-control" placeholder="Enter your email" required>
                             </div>
                             
                             <div class="form-group">
                                 <label for="password" class="form-label">Password</label>
-                                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                                <input name="password" type="password" id="password" class="form-control" placeholder="Enter your password" required>
                             </div>
                             
                             <div class="forgot-password">
@@ -309,6 +310,18 @@
                                 Don't have an account? <a href="/signup">Sign up</a>
                             </div>
                         </form>
+
+                        <% if (locals.message && locals.message.length > 0) { %>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: '<%= message %>'
+                                    });
+                                });
+                            </script>
+                        <% } %>
                     </div>
                 </div>
             </div>
@@ -317,8 +330,11 @@
     
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 Furni. All rights reserved.</p>
+            <p>© 2025 Furni. All rights reserved.</p>
         </div>
     </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

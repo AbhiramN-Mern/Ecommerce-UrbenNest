@@ -16,4 +16,7 @@ router.get('/auth/google', Passport.authenticate('google', { scope: ['profile', 
 router.get('/auth/google/callback',Passport.authenticate('google',{failureRedirect:'/signup'}),(req,res)=>{
     res.redirect('/')
 })
+
+router.get('/login',usercontroller.loadlogin);
+router.post('/login',usercontroller.login)
 module.exports = router;
