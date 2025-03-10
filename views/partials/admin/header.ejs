@@ -1,126 +1,383 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Men Fashion</title>
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta property="og:title" content="">
-    <meta property="og:type" content="">
-    <meta property="og:url" content="">
-    <meta property="og:image" content="">
-    <link rel="shortcut icon" type="image/x-icon" href="#">
-    <link href="/admin-assets/css/main.css" rel="stylesheet" type="text/css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.16.6/dist/sweetalert2.min.css">
-<script src="https://kit.fontawesome.com/16d4885483.js" crossorigin="anonymous"></script>
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<style>
-body {
-    background-color: #ffffff;
-}
-.navbar {
-    background-color: #8da7ab;
-}
-.navbar-aside {
-    background-color: #b0d5de;
-}
-.menu-item a.menu-link {
-    color: #310505;
-}
-
-.menu-item a.menu-link:hover,
-.menu-item a.menu-link.active {
-    background-color: #6e7e6e; 
-    color: #ffffff;
-}
-.dropdown-menu {
-    background-color: #bb9aaf;
-}
-
-.dropdown-item:hover {
-    background-color: #33053d;
-    color: #ffffff;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furni - Admin Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4b3d69;
+            --secondary-color: #6a5a8e;
+            --accent-color: #f9a825;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --bg-light: #f8f9fa;
+            --bg-grey: #f1f1f1;
+            --light-blue: #e8f0fe;
+            --blue: #4285f4;
+            --red: #ea4335;
+            --green: #34a853;
+            --orange: #fbbc05;
+            --purple: #a142f4;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+        }
+        
+        .sidebar {
+            background-color: var(--text-light);
+            color: var(--text-dark);
+            min-height: 100vh;
+            position: fixed;
+            width: 250px;
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .sidebar .logo {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: var(--primary-color);
+            color: var(--text-light);
+        }
+        
+        .sidebar .nav-link {
+            color: var(--text-dark);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: var(--light-blue);
+            color: var(--blue);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .dashboard-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+        
+        .filter-area {
+            background-color: var(--text-light);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-btn {
+            background-color: var(--light-blue);
+            color: var(--blue);
+            border: none;
+            font-size: 14px;
+            padding: 5px 15px;
+            border-radius: 50px;
+            margin-right: 10px;
+        }
+        
+        .filter-btn.active {
+            background-color: var(--blue);
+            color: var(--text-light);
+        }
+        
+        .date-picker-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .date-picker {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        
+        .stats-card {
+            background-color: var(--text-light);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            height: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .stats-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        .stats-icon.sales {
+            background-color: var(--light-blue);
+            color: var(--blue);
+        }
+        
+        .stats-icon.orders {
+            background-color: #eee6ff;
+            color: var(--purple);
+        }
+        
+        .stats-icon.returned {
+            background-color: #ffebee;
+            color: var(--red);
+        }
+        
+        .stats-icon.pending {
+            background-color: #fff8e1;
+            color: var(--orange);
+        }
+        
+        .stats-icon.delivered {
+            background-color: #e8f5e9;
+            color: var(--green);
+        }
+        
+        .stats-icon.shipped {
+            background-color: #e0f7fa;
+            color: #00bcd4;
+        }
+        
+        .stats-icon.users {
+            background-color: #f1e8ff;
+            color: #7c4dff;
+        }
+        
+        .stats-icon.discount {
+            background-color: #ffe0e9;
+            color: #e91e63;
+        }
+        
+        .stats-info {
+            flex: 1;
+        }
+        
+        .stats-title {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stats-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .chart-container {
+            background-color: var(--text-light);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .chart-title i {
+            margin-right: 8px;
+            color: var(--blue);
+        }
+        
+        .chart-inner {
+            height: 300px;
+            width: 100%;
+        }
+        
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        
+        .top-products {
+            background-color: var(--text-light);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .product-rank {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--light-blue);
+            color: var(--blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .product-info {
+            flex: 1;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .product-meta {
+            display: flex;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .product-meta span {
+            margin-right: 15px;
+        }
+        
+        .apply-btn {
+            background-color: var(--blue);
+            color: var(--text-light);
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            
+            .sidebar .logo span {
+                display: none;
+            }
+            
+            .sidebar .nav-link span {
+                display: none;
+            }
+            
+            .sidebar .nav-link i {
+                margin-right: 0;
+                font-size: 18px;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="screen-overlay"></div>
-    <aside class="navbar-aside" id="offcanvas_aside">
-        <div class="aside-top">
-            <a href="#" class="brand-wrap">
-                <img src="/img/logo.png"  class="logo" alt="Men Fashion Dashboard">
-            </a>
-            <div>
-                <button class="btn btn-icon btn-aside-minimize"> <i class="text-muted material-icons md-menu_open"></i> </button>
-            </div>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fas fa-couch me-2"></i>
+            <span>Furnic Admin</span>
         </div>
-        <nav>
-            <ul class="menu-aside">
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin"> <i class="icon material-icons md-home"></i>
-                        <span class="text">Dashboard</span>
+        <div class="mt-4">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
                     </a>
                 </li>
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin/users"> <i class="icon material-icons md-person"></i>
-                        <span class="text">Customers</span>
-                    </a>
-
-                </li>
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin/category"> <i class="icon material-icons md-person"></i>
-                        <span class="text">Category</span>
-                    </a>
-
-                </li>
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin/brands"> <i class="icon material-icons md-stars"></i>
-                        <span class="text">Brands</span> </a>
-                </li>
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin/addProducts"> <i class="icon material-icons md-add_box"></i>
-                        <span class="text">Add product</span>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
                     </a>
                 </li>
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin/products"> <i class="icon material-icons md-shopping_bag"></i>
-                        <span class="text">Products</span>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-th-large"></i>
+                        <span>Category</span>
                     </a>
                 </li>
-            
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin/coupon"> <i class="icon material-icons md-class"></i>
-                        <span class="text">Coupon</span> </a>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-tags"></i>
+                        <span>Brands</span>
+                    </a>
                 </li>
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin/banner"> <i class="icon material-icons md-photo_size_select_actual"></i>
-                        <span class="text">Banner</span> </a>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add Product</span>
+                    </a>
                 </li>
-
-                <li class="menu-item">
-                    <a class="menu-link" href="/admin/orderList"> <i class="icon material-icons md-shopping_cart"></i>
-                        <span class="text">Orders</span>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Orders</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Coupon</span>
+                    </a>
+                </li>
+                <li class="nav-item mt-5">
+                    <a class="nav-link" href="#">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>LogOut</span>
                     </a>
                 </li>
             </ul>
-        </nav>
-    </aside>
-    <main class="main-wrap">
-        <header class="main-header navbar">
-            <div class="col-search">
-            </div>
-            <div class="col-nav">
-                <button class="btn btn-icon btn-mobile me-auto" data-trigger="#offcanvas_aside"> <i class="material-icons md-apps"></i> </button>
-                <ul class="nav">
-                    <li class="dropdown nav-item">
-                        <a class="dropdown-toggle" data-bs-toggle="dropdown" href="#" id="dropdownAccount" aria-expanded="false"> <img class="img-xs rounded-circle" src="/admin-assets/imgs/people/avatar2.jpg" alt="User"></a>
-                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownAccount">
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item text-danger" href="/admin/logout"><i class="material-icons md-exit_to_app"></i>Logout</a>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </header>
+        </div>
+    </div>

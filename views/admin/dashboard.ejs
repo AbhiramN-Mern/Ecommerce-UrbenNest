@@ -1,10 +1,216 @@
 <%- include("../../views/partials/admin/header") %>
-<section class="content-main">
-    <div class="content-header">
+<!-- Main Content -->
+<div class="main-content">
+    <h4 class="dashboard-title">Dashboard</h4>
+    
+    <!-- Filter Area -->
+    <div class="filter-area d-flex justify-content-between align-items-center">
         <div>
-            <h2 class="content-title card-title">Dashboard </h2>
+            <button class="filter-btn active">1 Day</button>
+            <button class="filter-btn">1 Week</button>
+            <button class="filter-btn">1 Month</button>
+            <button class="filter-btn">1 Year</button>
         </div>
-       
+        <div class="date-picker-container">
+            <input type="date" class="date-picker" value="2025-03-01">
+            <span>to</span>
+            <input type="date" class="date-picker" value="2025-03-10">
+            <button class="apply-btn ms-2">Apply</button>
+        </div>
     </div>
-</section>
+    
+    <!-- Stats Cards -->
+    <div class="row">
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="stats-icon sales">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stats-info">
+                    <div class="stats-title">Total Sales</div>
+                    <div class="stats-value">₹19395</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="stats-icon orders">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stats-info">
+                    <div class="stats-title">Total Orders</div>
+                    <div class="stats-value">6</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="stats-icon returned">
+                    <i class="fas fa-undo"></i>
+                </div>
+                <div class="stats-info">
+                    <div class="stats-title">Returned Orders</div>
+                    <div class="stats-value">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="stats-icon pending">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="stats-info">
+                    <div class="stats-title">Pending Orders</div>
+                    <div class="stats-value">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="stats-icon delivered">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-info">
+                    <div class="stats-title">Delivered Orders</div>
+                    <div class="stats-value">2</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="stats-icon shipped">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div class="stats-info">
+                    <div class="stats-title">Shipped Orders</div>
+                    <div class="stats-value">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="stats-icon users">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-info">
+                    <div class="stats-title">Total Users</div>
+                    <div class="stats-value">5</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stats-card">
+                <div class="stats-icon discount">
+                    <i class="fas fa-percent"></i>
+                </div>
+                <div class="stats-info">
+                    <div class="stats-title">Total Discount</div>
+                    <div class="stats-value">₹100</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analytics Chart -->
+    <div class="chart-container">
+        <div class="mb-3">
+            <div class="d-flex align-items-center">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--blue);"></div>
+                    <span>Sales Amount (₹)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--green);"></div>
+                    <span>Orders Count</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--red);"></div>
+                    <span>Discounts (₹)</span>
+                </div>
+            </div>
+        </div>
+        <div class="chart-inner" id="analyticsChart"></div>
+    </div>
+    
+    <!-- Best Sellers -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="top-products">
+                <h5 class="mb-4">Top 10 Best Selling Products</h5>
+                
+                <div class="product-item">
+                    <div class="product-rank">1</div>
+                    <div class="product-info">
+                        <div class="product-name">Eco Writing Table in Sonoma Dark Finish</div>
+                        <div class="product-meta">
+                            <span>Sold: 71</span>
+                            <span>Revenue: ₹22594.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-rank">2</div>
+                    <div class="product-info">
+                        <div class="product-name">Indigo Fabric 1 Seater Sofa in Blue Colour</div>
+                        <div class="product-meta">
+                            <span>Sold: 52</span>
+                            <span>Revenue: ₹46295.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-rank">3</div>
+                    <div class="product-info">
+                        <div class="product-name">Eames Plastic Iconic Chair in White Colour</div>
+                        <div class="product-meta">
+                            <span>Sold: 41</span>
+                            <span>Revenue: ₹12995.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-rank">4</div>
+                    <div class="product-info">
+                        <div class="product-name">Calvary Sheesham Wood Arm Chair in Provincial Teak Finish with Cane Mesh</div>
+                        <div class="product-meta">
+                            <span>Sold: 31</span>
+                            <span>Revenue: ₹9899.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="top-products">
+                <h5 class="mb-4">Top 10 Best Selling Categories</h5>
+                
+                <div class="product-item">
+                    <div class="product-rank">1</div>
+                    <div class="product-info">
+                        <div class="product-name">Sofa</div>
+                        <div class="product-meta">
+                            <span>Sold: 31</span>
+                            <span>Revenue: ₹68038.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-item">
+                    <div class="product-rank">2</div>
+                    <div class="product-info">
+                        <div class="product-name">Chairs</div>
+                        <div class="product-meta">
+                            <span>Sold: 23</span>
+                            <span>Revenue: ₹7586.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <%- include("../../views/partials/admin/footer") %>
