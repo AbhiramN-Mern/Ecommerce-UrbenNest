@@ -6,6 +6,6 @@ const {userAuth,adminAuth}=require('../middlewares/auth')
 router.get('/login',adminController.loadlogin)
 router.post('/login',adminController.login)
 router.get('/dashbord',adminAuth,adminController.loadDashbord)
-
+router.get('/logout',adminController.logout)
 
 module.exports=router

@@ -1,6 +1,7 @@
 const User=require('../models/userSchema')
 const mongoose=require('mongoose')
 const bcrypt=require('bcrypt')
+const { log, error } = require('console')
 
 const loadlogin=async(req,res)=>{
     if(req.session.admin){
@@ -41,10 +42,30 @@ const loadDashbord=async (req,res)=>{
         }
     }
 }
+const logout=async(req,res)=>{
+   try {
+    req.session.destroy(err=>{
+        if(err){
+        console.log('Error in Admin Logout',err)
+        return res.redirect('/pageNotFound');
+        }
+        res.redirect('/admin/login')
+        console.log('Admin Logout Successfully')
+    })
+    
+   } catch (error) {
+    console.log('Unexpected Error in Admin Logout',error);
+    res.redirect('/pageNotFound')
+    
+    
+   }
+}
 
 
 
 module.exports={
 loadlogin,
 login,
-loadDashbord}
+loadDashbord,
+logout
+}
