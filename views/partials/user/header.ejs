@@ -44,10 +44,20 @@
 						<li><a class="nav-link" href="shop.html">Shop</a></li>
 						<li><a class="nav-link" href="about.html">About us</a></li>
 						<li><a class="nav-link" href="services.html">Services</a></li>
-						<li><a class="nav-link" href="/signup">signup</a></li>
-						<li><a class="nav-link" href="/login">Login</a></li>
-					</ul>
+						<% if (user) { %>
+    <div class="dropdown">
+        <a href="" class="nav-link"><%= user.name %></a>
+        <div class="dropdown-content">
+            <a class="dropdown-content-a" href="/userProfile">profile</a>
+            <a class="dropdown-content-a" href="/logout">Logout</a>
+        </div>
+    </div>
+<% } else { %>
+    <li><a class="nav-link" href="/signup">signup</a></li>
+    <li><a class="nav-link" href="/login">Login</a></li>
+<% } %>
 
+						
 					<ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
 						<li><a class="nav-link" href="/user/signup"><img src="images/user.svg"></a></li>
 						<li><a class="nav-link" href="cart.html"><img src="images/cart.svg"></a></li>

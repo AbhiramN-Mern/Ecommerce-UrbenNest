@@ -8,7 +8,14 @@ const bcrypt = require('bcrypt');
 
 const loadhomepage = async (req, res) => {
     try {
-        return res.render('home');
+        const user = req.session.user;
+        if (user) {
+            const userData = await User.findOne({ _id: user });
+            res.render('home', { user: userData });
+            console.log(userData);
+        } else {
+            res.render('home', { user: null });
+        }
     } catch (error) {
         console.log('Home Page Not Found');
         res.status(500).send('Server Error');
