@@ -234,6 +234,26 @@ const login=async(req,res)=>{
         res.render('login',{message:'login failed Please Try Again Later'})
     }
 }
+const logout=async(req,res)=>{
+    try {
+        req.session.destroy((err)=>{
+            if(err){
+                console.log('Error in logout',err.message);
+                return res.redirect('/pageNotFound')
+                
+            }else{
+                console.log('User Logged Out');
+                return res.redirect('/login')
+               
+                
+            }
+        })
+    } catch (error) {
+        console.log('Logout Error',error);
+        res.redirect('/pageNotFound')
+        
+    }
+}
 
 module.exports = {
     loadhomepage,
@@ -243,5 +263,6 @@ module.exports = {
     verifyOTP,
     resendOTP,
     loadlogin,
-    login
+    login,
+    logout
 };
