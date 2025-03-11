@@ -1,216 +1,673 @@
 <%- include("../../views/partials/admin/header") %>
-<!-- Main Content -->
 <div class="main-content">
-    <h4 class="dashboard-title">Dashboard</h4>
-    
-    <!-- Filter Area -->
-    <div class="filter-area d-flex justify-content-between align-items-center">
-        <div>
-            <button class="filter-btn active">1 Day</button>
-            <button class="filter-btn">1 Week</button>
-            <button class="filter-btn">1 Month</button>
-            <button class="filter-btn">1 Year</button>
+    <div class="content">
+        <div class="topbar">
+            <h1>Dashboard</h1>
+            <div class="profile"></div>
         </div>
-        <div class="date-picker-container">
-            <input type="date" class="date-picker" value="2025-03-01">
-            <span>to</span>
-            <input type="date" class="date-picker" value="2025-03-10">
-            <button class="apply-btn ms-2">Apply</button>
+        <div class="date-filters">
+            <div class="filter-group">
+                <button class="date-filter active" data-range="1">1 Day</button>
+                <button class="date-filter" data-range="7">1 Week</button>
+                <button class="date-filter" data-range="30">1 Month</button>
+                <button class="date-filter" data-range="365">1 Year</button> 
+            </div>
+            <div class="custom-date-group">
+                <input type="date" id="startDate">
+                <span class="date-separator">to</span>
+                <input type="date" id="endDate">
+                <button class="apply-filter">Apply</button>
+            </div>
+            <div class="export-group">
+                <button class="export-btn" id="exportExcel">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+                <button class="export-btn" id="exportPdf">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+            </div>
         </div>
-    </div>
-    
-    <!-- Stats Cards -->
-    <div class="row">
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="stats-icon sales">
+        <div class="dashboard-cards">
+            <div class="card sales-card">
+                <div class="card-body">
                     <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="stats-info">
-                    <div class="stats-title">Total Sales</div>
-                    <div class="stats-value">₹19395</div>
+                    <div class="card-content">
+                        <h5 class="card-title">Total Sales</h5>
+                        <p class="card-text">₹</p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="stats-icon orders">
+            <div class="card orders-card">
+                <div class="card-body">
                     <i class="fas fa-shopping-cart"></i>
-                </div>
-                <div class="stats-info">
-                    <div class="stats-title">Total Orders</div>
-                    <div class="stats-value">6</div>
+                    <div class="card-content">
+                        <h5 class="card-title">Total Orders</h5>
+                        <p class="card-text"></p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="stats-icon returned">
+            <div class="card returns-card">
+                <div class="card-body">
                     <i class="fas fa-undo"></i>
-                </div>
-                <div class="stats-info">
-                    <div class="stats-title">Returned Orders</div>
-                    <div class="stats-value">0</div>
+                    <div class="card-content">
+                        <h5 class="card-title">Returned Orders</h5>
+                        <p class="card-text"></p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="stats-icon pending">
+            <div class="card pending-card">
+                <div class="card-body">
                     <i class="fas fa-hourglass-half"></i>
-                </div>
-                <div class="stats-info">
-                    <div class="stats-title">Pending Orders</div>
-                    <div class="stats-value">0</div>
+                    <div class="card-content">
+                        <h5 class="card-title">Pending Orders</h5>
+                        <p class="card-text"></p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="stats-icon delivered">
+            <div class="card delivered-card">
+                <div class="card-body">
                     <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stats-info">
-                    <div class="stats-title">Delivered Orders</div>
-                    <div class="stats-value">2</div>
+                    <div class="card-content">
+                        <h5 class="card-title">Delivered Orders</h5>
+                        <p class="card-text"></p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="stats-icon shipped">
+            <div class="card shipped-card">
+                <div class="card-body">
                     <i class="fas fa-truck"></i>
-                </div>
-                <div class="stats-info">
-                    <div class="stats-title">Shipped Orders</div>
-                    <div class="stats-value">0</div>
+                    <div class="card-content">
+                        <h5 class="card-title">Shipped Orders</h5>
+                        <p class="card-text"></p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="stats-icon users">
+            <div class="card users-card">
+                <div class="card-body">
                     <i class="fas fa-users"></i>
-                </div>
-                <div class="stats-info">
-                    <div class="stats-title">Total Users</div>
-                    <div class="stats-value">5</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="stats-card">
-                <div class="stats-icon discount">
-                    <i class="fas fa-percent"></i>
-                </div>
-                <div class="stats-info">
-                    <div class="stats-title">Total Discount</div>
-                    <div class="stats-value">₹100</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Analytics Chart -->
-    <div class="chart-container">
-        <div class="mb-3">
-            <div class="d-flex align-items-center">
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: var(--blue);"></div>
-                    <span>Sales Amount (₹)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: var(--green);"></div>
-                    <span>Orders Count</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background-color: var(--red);"></div>
-                    <span>Discounts (₹)</span>
-                </div>
-            </div>
-        </div>
-        <div class="chart-inner" id="analyticsChart"></div>
-    </div>
-    
-    <!-- Best Sellers -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="top-products">
-                <h5 class="mb-4">Top 10 Best Selling Products</h5>
-                
-                <div class="product-item">
-                    <div class="product-rank">1</div>
-                    <div class="product-info">
-                        <div class="product-name">Eco Writing Table in Sonoma Dark Finish</div>
-                        <div class="product-meta">
-                            <span>Sold: 71</span>
-                            <span>Revenue: ₹22594.00</span>
-                        </div>
+                    <div class="card-content">
+                        <h5 class="card-title">Total Users</h5>
+                        <p class="card-text"></p>
                     </div>
                 </div>
-                
-                <div class="product-item">
-                    <div class="product-rank">2</div>
-                    <div class="product-info">
-                        <div class="product-name">Indigo Fabric 1 Seater Sofa in Blue Colour</div>
-                        <div class="product-meta">
-                            <span>Sold: 52</span>
-                            <span>Revenue: ₹46295.00</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="product-item">
-                    <div class="product-rank">3</div>
-                    <div class="product-info">
-                        <div class="product-name">Eames Plastic Iconic Chair in White Colour</div>
-                        <div class="product-meta">
-                            <span>Sold: 41</span>
-                            <span>Revenue: ₹12995.00</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="product-item">
-                    <div class="product-rank">4</div>
-                    <div class="product-info">
-                        <div class="product-name">Calvary Sheesham Wood Arm Chair in Provincial Teak Finish with Cane Mesh</div>
-                        <div class="product-meta">
-                            <span>Sold: 31</span>
-                            <span>Revenue: ₹9899.00</span>
-                        </div>
+            </div>
+            <div class="card discount-card">
+                <div class="card-body">
+                    <i class="fas fa-tags"></i>
+                    <div class="card-content">
+                        <h5 class="card-title">Total Discount</h5>
+                        <p class="card-text"></p>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-6">
-            <div class="top-products">
-                <h5 class="mb-4">Top 10 Best Selling Categories</h5>
-                
-                <div class="product-item">
-                    <div class="product-rank">1</div>
-                    <div class="product-info">
-                        <div class="product-name">Sofa</div>
-                        <div class="product-meta">
-                            <span>Sold: 31</span>
-                            <span>Revenue: ₹68038.00</span>
+        <div class="chart-container">
+            <div class="chart-controls">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleSales" checked>
+                    <span class="slider">Sales</span>
+                </label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleOrders" checked>
+                    <span class="slider">Orders</span>
+                </label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleDiscounts" checked>
+                    <span class="slider">Discounts</span>
+                </label>
+            </div>
+            <canvas id="salesChart"></canvas>
+        </div>
+        <div class="top-sellers-container">
+            <div class="top-seller-section">
+                <h3>Top 10 Best Selling Products</h3>
+                <div class="top-seller-list" id="topProducts">
+                        <div class="top-seller-item">
+                            <span class="rank"></span>
+                            <div class="item-details">
+                                <span class="item-name"></span>
+                                <span class="item-stats"></span>
+                            </div>
                         </div>
-                    </div>
+                 
                 </div>
-                
-                <div class="product-item">
-                    <div class="product-rank">2</div>
-                    <div class="product-info">
-                        <div class="product-name">Chairs</div>
-                        <div class="product-meta">
-                            <span>Sold: 23</span>
-                            <span>Revenue: ₹7586.00</span>
+            </div>
+            <div class="top-seller-section">
+                <h3>Top 10 Best Selling Categories</h3>
+                <div class="top-seller-list" id="topCategories">
+                  
+                        <div class="top-seller-item">
+                            <span class="rank"></span>
+                            <div class="item-details">
+                                <span class="item-name"></span>
+                                <span class="item-stats"></span>
+                            </div>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+  :root {
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --success-color: #4cc9f0;
+    --danger-color: #f72585;
+    --warning-color: #f8961e;
+    --info-color: #4895ef;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --transition-speed: 0.3s;
+    --border-radius: 12px;
+  }
+
+  .top-sellers-container {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  .top-seller-section {
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 20px;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+  }
+
+  .top-seller-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .top-seller-section h3 {
+    margin: 0 0 15px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--dark-color);
+    border-bottom: 1px solid #eaedf2;
+    padding-bottom: 10px;
+  }
+
+  .top-seller-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .top-seller-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #f9fafd;
+    border-radius: 8px;
+    transition: background-color var(--transition-speed);
+  }
+
+  .top-seller-item:hover {
+    background-color: #f0f5ff;
+  }
+
+  .rank {
+    width: 30px;
+    height: 30px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .item-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .item-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1e293b;
+  }
+
+  .item-stats {
+    font-size: 14px;
+    color: #64748b;
+  }
+
+  .chart-container {
+    margin-top: 230px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  #salesChart {
+    max-height: 400px;
+    width: 100%;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+
+  .main-content {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .content {
+    flex: 1;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    margin: 15px;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eaedf2;
+  }
+
+  .topbar h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--dark-color);
+  }
+
+  .profile {
+    width: 40px;
+    height: 40px;
+    background-color: #e2e8f0;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .date-filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #f9fafd;
+    border-radius: var(--border-radius);
+  }
+
+  .filter-group, .custom-date-group, .export-group {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+  }
+
+  .date-filters .date-filter {
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    padding: 10px 16px;
+    margin-right: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .date-filters .date-filter.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+  }
+
+  .date-filters .date-filter:hover:not(.active) {
+    background-color: #e2e8f0;
+  }
+
+  .date-separator {
+    margin: 0 8px;
+    color: #64748b;
+  }
+
+  .date-filters input[type="date"] {
+    padding: 10px 14px;
+    margin-right: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #333;
+    font-size: 14px;
+    transition: border-color var(--transition-speed);
+  }
+
+  .date-filters input[type="date"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+  }
+
+  .date-filters .apply-filter {
+    background-color: var(--primary-color);
+    border: none;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .date-filters .apply-filter:hover {
+    background-color: var(--secondary-color);
+  }
+
+  .date-filters .export-btn {
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    padding: 10px 16px;
+    margin-left: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .date-filters .export-btn:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+  }
+
+  .date-filters .export-btn i {
+    margin-right: 8px;
+  }
+
+  #exportExcel {
+    color: #059669;
+  }
+
+  #exportExcel:hover {
+    background-color: #ecfdf5;
+    border-color: #059669;
+  }
+
+  #exportPdf {
+    color: #dc2626;
+  }
+
+  #exportPdf:hover {
+    background-color: #fef2f2;
+    border-color: #dc2626;
+  }
+
+  .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 24px;
+  }
+
+  .card {
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .card-body {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+  }
+
+  .card-body i {
+    font-size: 36px;
+    margin-right: 16px;
+    background-color: #f0f5ff;
+    padding: 16px;
+    border-radius: 12px;
+    color: var(--primary-color);
+  }
+
+  .card-content {
+    flex: 1;
+  }
+
+  .card-title {
+    font-size: 16px;
+    margin: 0 0 8px 0;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .card-text {
+    font-size: 24px;
+    margin: 0;
+    color: #1e293b;
+    font-weight: 600;
+  }
+
+  .sales-card .card-body i {
+    background-color: #f0f7ff;
+    color: #3b82f6;
+  }
+
+  .orders-card .card-body i {
+    background-color: #f0f5ff;
+    color: #4f46e5;
+  }
+
+  .returns-card .card-body i {
+    background-color: #fff0f6;
+    color: #e11d48;
+  }
+
+  .pending-card .card-body i {
+    background-color: #fff7ed;
+    color: #ea580c;
+  }
+
+  .delivered-card .card-body i {
+    background-color: #ecfdf5;
+    color: #10b981;
+  }
+
+  .shipped-card .card-body i {
+    background-color: #eff6ff;
+    color: #2563eb;
+  }
+
+  .users-card .card-body i {
+    background-color: #f5f3ff;
+    color: #8b5cf6;
+  }
+
+  .discount-card .card-body i {
+    background-color: #fdf2f8;
+    color: #db2777;
+  }
+
+  @media (max-width: 1024px) {
+    .dashboard-cards {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    .top-sellers-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .content {
+      padding: 20px;
+      margin: 10px;
+    }
+    
+    .date-filters {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .filter-group, .custom-date-group, .export-group {
+      width: 100%;
+      margin-bottom: 10px;
+      justify-content: space-between;
+    }
+    
+    .date-filters .export-btn {
+      margin-left: 0;
+      margin-right: 8px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .dashboard-cards {
+      grid-template-columns: 1fr;
+    }
+    
+    .topbar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .topbar h1 {
+      margin-bottom: 10px;
+    }
+  }
+
+  .card {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out, box-shadow var(--transition-speed), background-color var(--transition-speed);
+  }
+  
+  .card-clicked {
+    animation: card-pulse 0.3s ease-in-out;
+  }
+  
+  @keyframes card-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.98); }
+    100% { transform: scale(1); }
+  }
+  
+  .date-filters.stacked .filter-group,
+  .date-filters.stacked .custom-date-group,
+  .date-filters.stacked .export-group {
+    margin-bottom: 15px;
+  }
+  
+  [data-tooltip] {
+    position: relative;
+    cursor: help;
+  }
+  
+  [data-tooltip]:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background-color: #333;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 10;
+  }
+  
+  [data-tooltip]:hover:before {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  @media print {
+    .date-filters, .profile, .chart-controls, .top-sellers-container {
+      display: none !important;
+    }
+    
+    .card {
+      break-inside: avoid;
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+    }
+    
+    .dashboard-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .main-content, .content {
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+    }
+    
+    .topbar {
+      margin-bottom: 20px !important;
+      border-bottom: 2px solid #000 !important;
+    }
+    
+    .topbar h1 {
+      font-size: 24px !important;
+    }
+    
+    .card-body i {
+      font-size: 24px !important;
+      padding: 10px !important;
+    }
+    
+    .card-text {
+      font-size: 18px !important;
+    }
+    
+    body {
+      background-color: white !important;
+    }
+    
+    @page {
+      margin: 1cm;
+    }
+  }
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="/admin-assets/js/vendors/jquery-3.6.0.min.js"></script>
+<script src="/admin-assets/js/vendors/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <%- include("../../views/partials/admin/footer") %>

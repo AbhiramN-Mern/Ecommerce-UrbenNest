@@ -1,5 +1,6 @@
 const { error } = require('console');
 const User=require('../models/userSchema');
+
 const userAuth=(req,res,next)=>{
     if(req.session.user){
         UserfindById(req.session.user)

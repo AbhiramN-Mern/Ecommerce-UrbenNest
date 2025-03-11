@@ -1,11 +1,10 @@
-const User=require('../models/userSchema')
+const User=require('../../models/userSchema')
 const mongoose=require('mongoose')
 const bcrypt=require('bcrypt')
-const { log, error } = require('console')
 
 const loadlogin=async(req,res)=>{
     if(req.session.admin){
-        return res.redirect('/dashbord')
+        return res.redirect('/admin/dashbord')
     }
     res.render('adminlogin',{message:null})
 
@@ -43,9 +42,13 @@ const loadDashbord=async (req,res)=>{
     }
 }
 const logout=async(req,res)=>{
+    console.log("kasar");
+    
    try {
     req.session.destroy(err=>{
         if(err){
+            console.log("god");
+            
         console.log('Error in Admin Logout',err)
         return res.redirect('/pageNotFound');
         }

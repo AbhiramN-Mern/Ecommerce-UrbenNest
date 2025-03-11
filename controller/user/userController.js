@@ -1,5 +1,5 @@
 const { log, Console, error } = require('console');
-const User = require('../models/userSchema');
+const User = require('../../models/userSchema');
 const nodemailer = require('nodemailer');
 require('dotenv').config(); // Corrected env import
 const bcrypt = require('bcrypt');

@@ -1,0 +1,426 @@
+<%- include("../../views/partials/admin/header") %>
+
+<style>
+    
+    .admin-dashboard {
+        padding: 2rem;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+        width: 100%;
+    }
+
+    .dashboard-title {
+        font-size: 1.75rem;
+        color: #2d3748;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .profile-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .profile-badge:hover {
+        transform: scale(1.05);
+    }
+
+    
+    .search-section {
+        margin: 2rem 0;
+        width: 100%;
+    }
+
+    .search-container {
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        background: white;
+        border-radius: 30px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border: none;
+        outline: none;
+        font-size: 0.95rem;
+        width: 100%;
+    }
+
+    .search-button {
+        padding: 0.75rem 2rem;
+        background: #4299e1;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+        white-space: nowrap;
+    }
+
+    .search-button:hover {
+        background: #3182ce;
+    }
+
+    .clear-button {
+        background: #edf2f7;
+        color: #2d3748;
+        border: none;
+        padding: 0.75rem 2rem;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .clear-button:hover {
+        background: #e2e8f0;
+        color: #1a202c;
+    }
+
+    
+    .table-section {
+        margin: 2rem 0;
+        width: 100%;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .customer-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+    }
+
+    .customer-table th {
+        background: #f7fafc;
+        padding: 1.25rem 1.5rem;
+        font-weight: 600;
+        color: #4a5568;
+        text-align: left;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .customer-table td {
+        padding: 1.25rem 1.5rem;
+        color: #2d3748;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .customer-table tr:hover {
+        background: #f7fafc;
+    }
+
+    
+    .action-cell {
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .action-button {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: transform 0.2s, opacity 0.2s;
+        min-width: 100px;
+    }
+
+    .action-button:hover {
+        transform: translateY(-1px);
+        opacity: 0.9;
+    }
+
+    .block-button {
+        background: #fc8181;
+        color: white;
+    }
+
+    .unblock-button {
+        background: #68d391;
+        color: white;
+    }
+
+    /* Pagination */
+    .pagination-section {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .pagination-list {
+        display: flex;
+        gap: 0.5rem;
+        list-style: none;
+        padding: 0;
+    }
+
+    .pagination-item {
+        margin: 0 0.25rem;
+    }
+
+    .pagination-link {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        background: white;
+        color: #4a5568;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .pagination-item.active .pagination-link {
+        background: #4299e1;
+        color: white;
+    }
+
+    .pagination-link:hover {
+        background: #e2e8f0;
+    }
+
+    
+    @media (max-width: 1200px) {
+        .admin-dashboard {
+            padding: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .admin-dashboard {
+            padding: 1rem;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .search-container {
+            flex-direction: column;
+            border-radius: 12px;
+        }
+
+        .search-button {
+            border-radius: 0;
+            padding: 1rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .action-button {
+            min-width: 80px;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .customer-table th,
+        .customer-table td {
+            padding: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .admin-dashboard {
+            padding: 0.5rem;
+        }
+
+        .dashboard-header {
+            padding: 0.5rem;
+        }
+
+        .search-container {
+            border-radius: 8px;
+        }
+
+        .search-input {
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .search-button {
+            padding: 0.75rem 1.5rem;
+        }
+
+        .table-container {
+            border-radius: 8px;
+        }
+
+        .customer-table th,
+        .customer-table td {
+            padding: 0.75rem 1rem;
+        }
+
+        .action-button {
+            padding: 0.3rem 0.6rem;
+            min-width: 60px;
+        }
+
+        .pagination-link {
+            padding: 0.4rem 0.8rem;
+        }
+    }
+</style>
+
+<div class="admin-dashboard">
+    <!-- Header Section -->
+    <header class="dashboard-header">
+        <h1 class="dashboard-title">Customers</h1>
+        <div class="profile-badge"></div>
+    </header>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <form action="/admin/customers" method="get" id="customerSearchForm">
+            <div class="search-container">
+                <input
+                    type="text"
+                    class="search-input"
+                    placeholder="Search customers..."
+                    name="search"
+                    id="searchInput"
+                >
+                <button type="submit" class="search-button">
+                    Search
+                </button>
+                <button type="button" class="clear-button" onclick="clearSearch()">
+                    Clear
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Table Section -->
+    <section class="table-section">
+        <div class="table-container">
+            <table class="customer-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone No</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for (let i = 0; i < data.length; i++) { %>
+                        <tr>
+                            <td><%= data[i].name %></td>
+                            <td><%= data[i].email %></td>
+                            <td><%= data[i].phone %></td>
+                            <td class="action-cell">
+                                <% if (data[i].isBlocked === false) { %>
+                                    <button onclick="blockCustomer('<%= data[i]._id %>')" class="action-button block-button">
+                                        Block
+                                    </button>
+                                <% } else { %>
+                                    <button onclick="unblockCustomer('<%= data[i]._id %>')" class="action-button unblock-button">
+                                        Unblock
+                                    </button>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Pagination Section -->
+    <section class="pagination-section">
+        <nav aria-label="Page navigation">
+            <ul class="pagination-list">
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <li class="pagination-item <%= i === currentPage ? 'active' : '' %>">
+                        <a href="?page=<%= i %>" class="pagination-link"><%= i %></a>
+                    </li>
+                <% } %>
+            </ul>
+        </nav>
+    </section>
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    async function blockCustomer(id) {
+        try {
+            const response = await fetch(`/admin/customers/${id}/block`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            const data = await response.json();
+            if (data.success) {
+                Swal.fire("Success", data.message, "success").then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire("Error", data.message, "error");
+            }
+        } catch (error) {
+            Swal.fire("Error", "An error occurred while blocking the customer", "error");
+        }
+    }
+
+    async function unblockCustomer(id) {
+        try {
+            const response = await fetch(`/admin/customers/${id}/unblock`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            const data = await response.json();
+            if (data.success) {
+                Swal.fire("Success", data.message, "success").then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire("Error", data.message, "error");
+            }
+        } catch (error) {
+            Swal.fire("Error", "An error occurred while unblocking the customer", "error");
+        }
+    }
+
+    function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('customerSearchForm').submit();
+    }
+</script>
+<script src="/admin-assets/js/vendors/jquery-3.6.0.min.js"></script>
+<script src="/admin-assets/js/vendors/bootstrap.bundle.min.js"></script>
+
+<%- include("../../views/partials/admin/footer") %>

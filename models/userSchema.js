@@ -78,7 +78,7 @@ const userSchema = new Schema({
             default:Date.now
         }
     }]
-})
+},{timestamps:true})
 
 const user=mongoose.model('user',userSchema)
 module.exports=user
