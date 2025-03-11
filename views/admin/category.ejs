@@ -289,7 +289,6 @@
                             <tr>
                                 <td><%= category.name %></td>
                                 <td><%= category.description %></td>
-
                                 <td>
                                     <% if(category.isListed) { %>
                                         <span class="badge badge-success">Listed</span>
@@ -300,9 +299,13 @@
                                 <td>
                                     <div style="display: flex; gap: 0.5rem;">
                                         <% if(category.isListed) { %>
-                                            <button onclick="unlistCategory('<%= category._id %>')" class="btn btn-danger">Unlist</button>
+                                            <button class="btn btn-danger">
+                                                <a href="/admin/listCategory?id=<%= category._id %>"> Unlist</a>
+                                            </button>
                                         <% } else { %>
-                                            <button onclick="listCategory('<%= category._id %>')" class="btn btn-success">List</button>
+                                            <button class="btn btn-success">
+                                                <a href="/admin/unlistCategory?id=<%= category._id %>"> List</a>
+                                            </button>
                                         <% } %>
                                         <a href="/admin/category/<%= category._id %>/edit" class="btn btn-info">Edit</a>
                                     </div>

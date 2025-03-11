@@ -18,5 +18,7 @@ router.patch('/customers/:id/unblock', customerUnblocked);
 //catogery management
 router.get('/category',adminAuth,categoryController.categoryInfo)
 router.post('/Category',adminAuth,categoryController.addCategory)
+router.get('/listCategory',adminAuth,categoryController.getlisteCategory)
+router.get('/unlistCategory',adminAuth,categoryController.getunlisteCategory)
 
 module.exports = router;
