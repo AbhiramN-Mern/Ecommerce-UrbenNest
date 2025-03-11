@@ -1,9 +1,13 @@
 const { skip } = require('node:test');
-const category=require('../../models/categoryScheema');
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 const { create } = require('../../models/userSchema');
+const category = require('../../models/categoryScheema');
 const { error } = require('console');
-
-
 
 const categoryInfo=async(req,res)=>{
 try{
@@ -71,11 +75,46 @@ const getunlisteCategory=async(req,res)=>{
 }
 }
 
+const getEditCategory = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const categoryData = await category.findOne({ _id: id });
+        res.render('edit-category', { category: categoryData });
+    } catch (error) {
+        res.redirect('/pageNotFound');
+    }
+};
 
+const editCategory = async (req, res) => {
+    try {
+        const id = req.params.id;
+        // Note: using the same case as in the fetch payload ("categoryName")
+        const { categoryName, description } = req.body;
+        const existCategory = await category.findOne({ name: categoryName });
+        if (existCategory) {
+            return res.status(400).json({ error: 'Category exists, Please choose another name' });
+        }
+        const updateCategory = await category.findByIdAndUpdate(
+            id,
+            { name: categoryName, description: description },
+            { new: true }
+        );
+        if (updateCategory) {
+            // Return JSON response when using AJAX
+            return res.json({ message: "Category updated successfully" });
+        } else {
+            return res.status(404).json({ error: 'Category not found' });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
 module.exports={
     categoryInfo,
     addCategory,
     getlisteCategory,
-    getunlisteCategory
+    getunlisteCategory,
+    getEditCategory,
+    editCategory
 }
