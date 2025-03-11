@@ -57,7 +57,11 @@ const addCategory=async(req,res)=>{
 const getlisteCategory=async(req,res)=>{
     try {
         let id=req.query.id
-        await category.updateOne(({_id:id},{$set:{isListed:false}}))
+        // Fix: Correct syntax for updateOne
+        await category.updateOne(
+            { _id: id },  // Fix: Correct syntax for query
+            { $set: { isListed: false } }
+        )
         res.redirect('/admin/category')
     } catch (error) {
         res.redirect('/pageNotFound')
@@ -68,7 +72,11 @@ const getlisteCategory=async(req,res)=>{
 const getunlisteCategory=async(req,res)=>{
     try{
     let id=req.query.id
-    await category.updateOne(({_i:id},{$set:{isListed:true}}))
+    
+    await category.updateOne(
+        { _id: id },
+        { $set: { isListed: true } }
+    )
     res.redirect('/admin/category')
 }catch(error){
     res.redirect('/pageNotFound')
