@@ -41,14 +41,10 @@ const loadDashbord=async (req,res)=>{
         }
     }
 }
-const logout=async(req,res)=>{
-    console.log("kasar");
-    
+const logout=async(req,res)=>{    
    try {
     req.session.destroy(err=>{
-        if(err){
-            console.log("god");
-            
+        if(err){            
         console.log('Error in Admin Logout',err)
         return res.redirect('/pageNotFound');
         }

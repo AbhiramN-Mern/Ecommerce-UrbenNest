@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const adminController = require('../controller/admin/adminController')
 const { userAuth, adminAuth } = require('../middlewares/auth')
+const categoryController=require('../controller/admin/categoryController')
 const { customerInfo, customerBlocked, customerUnblocked } = require('../controller/admin/customerController')
 
 router.get('/login', adminController.loadlogin)
@@ -13,5 +14,9 @@ router.get('/logout', adminController.logout)
 router.get('/customers',adminAuth, customerInfo);
 router.patch('/customers/:id/block', customerBlocked);
 router.patch('/customers/:id/unblock', customerUnblocked);
+
+//catogery management
+router.get('/category',adminAuth,categoryController.categoryInfo)
+router.post('/Category',adminAuth,categoryController.addCategory)
 
 module.exports = router;

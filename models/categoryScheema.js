@@ -1,6 +1,6 @@
 const mongoose=require('mongoose')
-const {schema}=mongoose
-const categorySchema=new schema({
+const {Schema}=mongoose
+const categorySchema = new Schema({
     name:{
         type:String,
         required:true,
@@ -22,7 +22,7 @@ const categorySchema=new schema({
         type:Date,
         default:Date.now
     }
-})
+},{timestamps:true})
 
 const category=mongoose.model('category',categorySchema)
 
