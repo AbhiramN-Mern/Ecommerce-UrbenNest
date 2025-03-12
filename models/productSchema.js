@@ -1,8 +1,8 @@
 // const { default: mongoose } = require('mongoose')
 // const { timeStamp } = require('console');
 // const { default: mongoose } = require('mongoose');
-const monogoose=require('mongoose')
-const {schema}=mongoose;
+const mongoose=require('mongoose')
+const {Schema}=mongoose;
 
 const productSchema=new Schema({
     productName:{

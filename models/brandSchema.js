@@ -1,5 +1,5 @@
 const mongoose=require('mongoose')
-const {schema}=mongoose
+const {Schema}=mongoose
 
 const brandSchema=new Schema({
     brandName:{
@@ -21,4 +21,4 @@ const brandSchema=new Schema({
 })
 
 const Brand=mongoose.model("brand",brandSchema)
-module.exports=brand
+module.exports=Brand

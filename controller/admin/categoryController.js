@@ -57,9 +57,8 @@ const addCategory=async(req,res)=>{
 const getlisteCategory=async(req,res)=>{
     try {
         let id=req.query.id
-        // Fix: Correct syntax for updateOne
         await category.updateOne(
-            { _id: id },  // Fix: Correct syntax for query
+            { _id: id },
             { $set: { isListed: false } }
         )
         res.redirect('/admin/category')
