@@ -5,10 +5,12 @@ const { userAuth, adminAuth } = require('../middlewares/auth')
 const brandController=require('../controller/admin/brandController')
 const categoryController=require('../controller/admin/categoryController')
 const { customerInfo, customerBlocked, customerUnblocked } = require('../controller/admin/customerController')
+const Prouctontrollr=require('../controller/admin/productController')
 const multer=require('multer')
 const storege=require("../helpers/multer")
 const getBrandPage = require('../controller/admin/brandController')
 const upload = require('../helpers/multer');  // Import the multer instance directly
+const product = require('../models/productSchema')
 
 const uplods=multer({storage:storege})
 
@@ -36,4 +38,8 @@ router.post('/addBrand',adminAuth,upload.single('image'),brandController.addBran
 router.get('/blockBrand',adminAuth,brandController.blockBrand)
 router.get('/unblockBrand',adminAuth,brandController.unblockBrand)
 router.get('/deleteBrand',adminAuth,brandController.deleteBrand)
+
+//prodect ManageMent
+router.get('/product-add',adminAuth,Prouctontrollr.getProductPage)
+
 module.exports = router;

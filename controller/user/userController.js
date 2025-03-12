@@ -255,6 +255,10 @@ const logout=async(req,res)=>{
     }
 }
 
+
+
+
+
 module.exports = {
     loadhomepage,
     pageNotFound,
