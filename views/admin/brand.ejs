@@ -415,7 +415,7 @@
         hideMethod: "fadeOut"
     };
 
-    const allowedFormats = ['jpg', 'jpeg', 'png'];
+    const allowedFormats = ['jpg', 'jpeg', 'png','webp'];
     
     document.getElementById("brandlogo").addEventListener('change', (event) => {
         const file = event.target.files[0];
@@ -433,6 +433,34 @@
     function confirmDelete() {
         return confirm("Are you sure you want to delete this brand?");
     }
+
+    // Add form submission handler
+    document.querySelector('.brand-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        
+        try {
+            const response = await fetch('/admin/addBrand', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                toastr.error(data.error, 'Error');
+            } else {
+                toastr.success('Brand added successfully');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+        } catch (error) {
+            toastr.error('Something went wrong', 'Error');
+        }
+    });
+
 </script>
 
 <%- include("../../views/partials/admin/footer") %>
