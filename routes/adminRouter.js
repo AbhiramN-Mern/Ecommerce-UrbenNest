@@ -8,6 +8,8 @@ const { customerInfo, customerBlocked, customerUnblocked } = require('../control
 const multer=require('multer')
 const storege=require("../helpers/multer")
 const getBrandPage = require('../controller/admin/brandController')
+const upload = require('../helpers/multer');  // Import the multer instance directly
+
 const uplods=multer({storage:storege})
 
 router.get('/login', adminController.loadlogin)
@@ -29,6 +31,7 @@ router.get('/editCategory/:id',adminAuth,categoryController.getEditCategory)
 router.post('/editCategory/:id',adminAuth,categoryController.editCategory)
 
 //Brand Management
-router.get('/brands',adminAuth,brandController,getBrandPage)
+router.get('/brands',adminAuth,brandController.getBrandPage)
+router.post('/addBrand',adminAuth,upload.single('image'),brandController.addBrand)
 
 module.exports = router;

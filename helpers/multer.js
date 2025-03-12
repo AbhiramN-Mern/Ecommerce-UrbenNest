@@ -1,13 +1,16 @@
-const multer=require('multer')
-const path=require('path')
+const multer = require('multer');
+const path = require('path');
 
-const storege=multer.diskStorage({
-    destination:(req,res,cb)=>{
-        cb(null,path.join(__dirname,"../public/uplods/re-image"))
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, "../public/uploads/re-image"));  // Fixed typo in 'uploads'
     },
-    filename:(req,res,cb)=>{
-        cb(null,Date.now()+"-"+file.orginal)
-
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));  // Fixed filename generation
     }
-})
-module.exports=storege;
+});
+
+const upload = multer({ storage: storage });  // Create multer instance
+
+module.exports = upload;  // Export the multer instance instead of just storage

@@ -216,6 +216,43 @@
         opacity: 0.9;
     }
 
+    .pagination-container {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        gap: 0.5rem;
+    }
+
+    .page-item {
+        margin: 0 2px;
+    }
+
+    .page-link {
+        padding: 0.5rem 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        color: #007bff;
+        text-decoration: none;
+        background-color: #fff;
+    }
+
+    .page-item.active .page-link {
+        background-color: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .page-link:hover {
+        background-color: #e9ecef;
+        color: #0056b3;
+    }
 
     @media (max-width: 768px) {
         .content-main {
@@ -322,6 +359,32 @@
                                 <% }) %>
                             </tbody>
                         </table>
+                    </div>
+                    <!-- Add this after your brand table -->
+                    <div class="pagination-container">
+                        <% if (totalPages > 1) { %>
+                            <nav aria-label="Brand pagination">
+                                <ul class="pagination">
+                                    <% if (hasPrevPage) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="/admin/brands?page=<%= prevPage %>">Previous</a>
+                                        </li>
+                                    <% } %>
+
+                                    <% for(let i = 1; i <= totalPages; i++) { %>
+                                        <li class="page-item <%= currentPage == i ? 'active' : '' %>">
+                                            <a class="page-link" href="/admin/brands?page=<%= i %>"><%= i %></a>
+                                        </li>
+                                    <% } %>
+
+                                    <% if (hasNextPage) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="/admin/brands?page=<%= nextPage %>">Next</a>
+                                        </li>
+                                    <% } %>
+                                </ul>
+                            </nav>
+                        <% } %>
                     </div>
                 </div>
             </div>
