@@ -13,4 +13,4 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });  // Create multer instance
 
-module.exports = upload;  // Export the multer instance instead of just storage
+module.exports = upload;  // Export the multer instance instead of just storage</form>

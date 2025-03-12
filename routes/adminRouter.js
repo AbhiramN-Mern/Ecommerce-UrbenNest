@@ -41,5 +41,6 @@ router.get('/deleteBrand',adminAuth,brandController.deleteBrand)
 
 //prodect ManageMent
 router.get('/product-add',adminAuth,Prouctontrollr.getProductPage)
+router.post('/product-add',adminAuth,uplods.array('image',5),Prouctontrollr.addProduct)
 
 module.exports = router;
