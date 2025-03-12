@@ -1,5 +1,9 @@
 <%- include("../../views/partials/admin/header") %>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
 <style>
     
     .content-main {
@@ -303,7 +307,7 @@
                         <div class="mb-4">
                             <label for="brand_image" class="form-label">Brand Image</label>
                             <div class="input-upload">
-                                <input class="form-control" name="image" type="file" />
+                                <input class="form-control" id="brandlogo" name="image" type="file" />
                             </div>
                         </div>
 
@@ -393,6 +397,39 @@
 </section>
 
 <script>
+   
+    toastr.options = {
+        closeButton: true,
+        newestOnTop: false,
+        progressBar: true,
+        positionClass: "toast-top-right",
+        preventDuplicates: false,
+        onclick: null,
+        showDuration: "300",
+        hideDuration: "1000",
+        timeOut: "5000",
+        extendedTimeOut: "1000",
+        showEasing: "swing",
+        hideEasing: "linear",
+        showMethod: "fadeIn",
+        hideMethod: "fadeOut"
+    };
+
+    const allowedFormats = ['jpg', 'jpeg', 'png'];
+    
+    document.getElementById("brandlogo").addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const fileName = file.name;
+        const fileExtension = fileName.split('.').pop().toLowerCase();
+        
+        if (!allowedFormats.includes(fileExtension)) {
+            toastr.error(`Allowed formats: ${allowedFormats.join(", ")}`, 'Invalid File Format');
+            event.target.value = ''; // Clear the file input
+        }
+    });
+
     function confirmDelete() {
         return confirm("Are you sure you want to delete this brand?");
     }
