@@ -1,5 +1,6 @@
 const Brand = require('../../models/brandSchema');
 const product = require('../../models/productSchema');
+const { updateOne } = require('../../models/userSchema');
 
 const getBrandPage = async (req, res) => {
     try {
@@ -60,7 +61,45 @@ const addBrand = async (req, res) => {
     }
 };
 
+const blockBrand=async (req,res)=>{
+    try {
+        const {id}=req.query
+    await Brand.updateOne({_id:id},{$set:{isBlocked:true}})
+    res.redirect('/admin/brands')
+    } catch (error) {
+        console.error('Eror IN Block Brand',error)
+        res.status(500).json({error:'internel server error'})
+        
+    }
+}
+const unblockBrand=async(req,res)=>{
+    try {
+        const {id}=req.query
+        await Brand.updateOne({_id:id},{$set:{isBlocked:false}})
+        res.redirect('/admin/brands')
+    } catch (error) {
+        console.error('Eror IN UnBlock Brand',error)
+        res.status(500).json({error:'internel server error'})
+    }
+}
+const deleteBrand=async(req,res)=>{
+    try {
+        const {id}=req.query
+        if(!id){
+            return res.status(500).redirect('/pageNotFound')
+        }else{
+            await Brand.deleteOne({_id:id})
+            res.redirect('/admin/brands')
+        }
+    } catch (error) {
+        
+    }
+}
+
 module.exports={
     getBrandPage,
-    addBrand
+    addBrand,
+    blockBrand,
+    unblockBrand,
+    deleteBrand
 }
