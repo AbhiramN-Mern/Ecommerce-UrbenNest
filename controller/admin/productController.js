@@ -130,9 +130,31 @@ const getAllProducts = async (req, res) => {  // Renamed the function from gertA
         res.redirect("/pageNotFound");       
     }
 };
+const blockProdeucts=async(req,res)=>{
+    try {
+        let id=req.query.id
+        await Product.updateOne({_id:id},{$set:{isBlocked:true}})
+         res.redirect('/admin/products')
+    } catch (error) {
+        res.redirect('/pageNotFound')
+        
+    }
+}
+const unblockProdeucts=async(req,res)=>{
+    try {
+        const id=req.query.id
+        await Product.updateOne({_id:id},{$set:{isBlocked:false}})
+        res.redirect('/admin/products')
+    } catch (error) {
+        res.redirect('/pageNotFound')
+    }
+}
+
 
 module.exports = {
     getProductAddPage,
     addProducts,
-    getAllProducts
+    getAllProducts,
+    blockProdeucts,
+    unblockProdeucts
 };
