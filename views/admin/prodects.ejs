@@ -213,10 +213,15 @@
                             const product = data[i];
                         %>
                             <tr>
-                                <td><%= data[i].productName %></td>
-                                <td><%= data[i].brand %></td>
-                                <td><%= data[i].category ? data[i].category.name : 'Uncategorized' %></td>
-                                <td><%= data[i].salePrice %></td>
+                                <td><%= product.productName %></td>
+                                <td><%= product.brand %></td>
+                                <td>
+                                    <%= (product.category && product.category.name) 
+                                            ? product.category.name 
+                                            : (typeof product.category === 'string' ? product.category : 'Uncategorized') 
+                                    %>
+                                </td>
+                                <td><%= product.salePrice ? product.salePrice : 'N/A' %></td>
                                 <td><%= product.productOffer ? product.productOffer : '0%' %></td>
                                 <td>
                                     <button 
@@ -225,7 +230,7 @@
                                         <%= product.productOffer === 0 ? 'Add Offer' : 'Remove' %>
                                     </button>
                                 </td>
-                                <td><%= product.quantity %></td>
+                                <td><%= product.quantity ? product.quantity : 'N/A' %></td>
                                 <td>
                                     <button 
                                         class="btn btn-custom <%= product.isBlocked ? 'btn-unblock' : 'btn-block' %>"
