@@ -6,7 +6,6 @@ const fs=require('fs')
 const path=require('path')
 const sharp=require('sharp')
 // const Category = require("../../models/categoryScheema")
-const { count } = require("console")
 // const category = require("../../models/categoryScheema")
 
 const getProductAddPage = async (req, res, next) => {
@@ -149,6 +148,84 @@ const unblockProdeucts=async(req,res)=>{
         res.redirect('/pageNotFound')
     }
 }
+const geteditProduct=async(req,res)=>{
+    try{
+        const id=req.query.id
+        const product=await Product.findOne({_id:id})
+        const category=await Category.find({})
+        const brand =await Brand.find({})
+        res.render('editProduct',{
+            product:product,
+            cat:category,
+            brand:brand
+        })
+    }catch(error){
+        res.redirect('/pageNotFound')
+    }
+}
+const editProduct=async(req,res)=>{
+    try {
+        const id=req.params.id
+        const product=await Product.findOne({_id:id})
+        const data=req.body
+        const existsProduct=await Product.findOne({
+            productName:data.productName,
+            _id:{$ne:id}
+        })
+        if(existsProduct){
+            return res.status(400).json({error:"Product With This Name ALready Exists. please try another name"})
+        }
+        const images=[]
+
+        if(req.files&&req.files.length>0){
+            for(let i=0;i<req.files.length;i++){
+                images.push(req.files[i].filename);
+            }
+        }
+
+        const updateFileds={
+            productName:data.productName,
+            description:data.description,
+            brand:data.brand,
+            category:data.category,
+            regularPrice:data.regularPrice,
+            salePrice:data.salePrice,
+            quantity:data.quantity,
+            size:data.size,
+            color:data.color,
+            }
+
+        if(req.files.length>0){
+            updateFiles.$push={productImage:{$each:images}}
+        }
+        await Product.findByIdAndUpdate(id,updateFileds,{new:true})
+        res.redirect('/admin/products')
+
+    } catch (error) {
+       console.error(error)
+       res.redirect('/pageNotFound')
+    }
+
+}
+const deleteSingleImage=async(req,res)=>{
+    try {
+        const {imageNameToServer,productIdToServer}=req.body;
+        const prouct=await Product.fincById(productIdToServer,{$pull:{productImage:imageNameToServer}})
+        const imagePath=path.join('public','uploads','re-image',imageNameToServer)
+        if(fs.existsProduct(imagePath)){
+            await fs.unlinkSync(imagePath)
+            console.log(`Image ${imageNameToServer}delete SucsesFull`);
+        }else{
+            console.log(`Image ${imageNameToServer}Not Found`);
+
+        }
+        res.send({status:true})
+    } catch (error) {
+        res.redirect('/pageNotFound')
+
+    }
+}
+
 
 
 module.exports = {
@@ -156,5 +233,8 @@ module.exports = {
     addProducts,
     getAllProducts,
     blockProdeucts,
-    unblockProdeucts
+    unblockProdeucts,
+    geteditProduct,
+    editProduct,
+    deleteSingleImage
 };

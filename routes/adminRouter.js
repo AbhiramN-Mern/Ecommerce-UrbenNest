@@ -45,5 +45,7 @@ router.post('/product-add',adminAuth, upload.array("images", 4), prouctControllr
 router.get('/products',adminAuth,prouctControllr.getAllProducts)
 router.get('/blockProduct',adminAuth,prouctControllr.blockProdeucts)
 router.get('/unblockProduct',adminAuth,prouctControllr.unblockProdeucts)
-
+router.get('/editProduct',adminAuth,prouctControllr.geteditProduct)
+router.post('/editProduct/:id',adminAuth,upload.array('images',4),prouctControllr.editProduct)
+router.post('/deleteImage',adminAuth,prouctControllr.deleteSingleImage)
 module.exports = router
