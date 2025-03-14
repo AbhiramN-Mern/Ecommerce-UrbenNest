@@ -12,7 +12,7 @@ const categorySchema = new Schema({
     },
     isListed:{
         type:Boolean,
-        default:0
+        default:true
     },
     categoryOffer:{
         type:Number,
@@ -24,6 +24,6 @@ const categorySchema = new Schema({
     }
 },{timestamps:true})
 
-const category=mongoose.model('category',categorySchema)
+const Category=mongoose.model('Category',categorySchema)
 
-module.exports=category
+module.exports=Category

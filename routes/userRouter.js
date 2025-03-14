@@ -4,6 +4,7 @@ const usercontroller = require('../controller/user/userController');
 const Passport = require('passport');
 const {userAuth,adminAuth}=require('../middlewares/auth')
 const customerController = require('../controller/admin/customerController')
+const productController=require('../controller/user/productController')
 
 router.get('/pageNotFound', usercontroller.pageNotFound);
 
@@ -31,4 +32,6 @@ router.get('/filter', usercontroller.filterProduct);
 router.get('/filterByPrice', usercontroller.filterByPrice);
 router.get("/search", usercontroller.searchProducts);
 
+//product Management
+router.get('/product-details',productController.productDetails)
 module.exports = router;

@@ -12,6 +12,7 @@ const productSchema = new Schema({
     },
     brand: {
         type: String,
+        ref: "Brand",
         required: true
     },
     category: {

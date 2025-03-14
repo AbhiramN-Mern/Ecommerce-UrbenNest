@@ -317,9 +317,11 @@ const filterProduct = async (req, res) => {
         const user = req.session.user;
         const categoryParam = req.query.category;
         const brandParam = req.query.brand;
+        console.log("Brand param received:", brandParam);
 
         const findCategory = categoryParam ? await Category.findOne({ _id: categoryParam }) : null;
         const findBrand = brandParam ? await Brand.findOne({ _id: brandParam }) : null;
+        console.log("Found brand:", findBrand);
 
         const brands = await Brand.find({}).lean();
         const query = {
