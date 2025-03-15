@@ -328,6 +328,7 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone No</th>
+                        <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -337,7 +338,12 @@
                             <td><%= data[i].name %></td>
                             <td><%= data[i].email %></td>
                             <td><%= data[i].phone %></td>
-                            <td class="action-cell">
+                            <td>
+                                <span class="status-badge <%= data[i].isBlocked ? 'blocked' : 'active' %>">
+                                    <%= data[i].isBlocked ? 'Blocked' : 'Active' %>
+                                </span>
+                            </td>
+                            <td  class="action-cell">
                                 <% if (data[i].isBlocked === false) { %>
                                     <button onclick="blockCustomer('<%= data[i]._id %>')" class="action-button block-button">
                                         Block

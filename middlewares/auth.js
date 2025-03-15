@@ -2,24 +2,11 @@ const User=require('../models/userSchema');
 
 const userAuth=(req,res,next)=>{
     if(req.session.user){
-        User.findById(req.session.user)
-            .then(data=>{
-                if(data&&!data.isBlocked){
-                    next()
-                }else{
-                    res.redirect('/login')
-                }
-
-            })
-            .catch(error=>{
-                console.log("Error In USer Auth Middlewere");
-                res.status(500).send({message:"Internal Server Error"})
-                
-            })
-        }else{
-            res.redirect('/login')
-        }
+        res.redirect('/')
+    }
+    next()
 }
+
 
 // const adminAuth=(req,res,next)=>{
 //     User.findOne({isAdmin:true})
@@ -38,20 +25,12 @@ const userAuth=(req,res,next)=>{
 // }
 
 const adminAuth = (req, res, next) => {
-    User.findOne({ isAdmin: true })
-        .then(admin => {
-            if (admin) {
-                next();
-            } else {
-                res.redirect('/login');
-            }
-        })
-        .catch(error => {
-            console.error('Error in AdminAuth Middleware:', error);
-            res.status(500).send({ message: "Internal Server Error" });
-        });
-};
+    if(!req.session.admin){
+        res.redirect('/admin/login')
+     }
+     next()
 
+}
 module.exports={
     userAuth,
     adminAuth
