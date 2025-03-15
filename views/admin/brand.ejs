@@ -302,13 +302,13 @@
                     <form class="brand-form" method="post" action="/admin/addBrand" enctype="multipart/form-data">
                         <div class="mb-4">
                             <label for="brand_name" class="form-label">Brand Name</label>
-                            <input type="text" name="name" placeholder="Enter brand name" class="form-control" />
+                            <input type="text" name="name" placeholder="Enter brand name" class="form-control" required />
                         </div>
                         
                         <div class="mb-4">
                             <label for="brand_image" class="form-label">Brand Image</label>
                             <div class="input-upload">
-                                <input class="form-control" id="brandlogo" name="image" type="file" />
+                                <input class="form-control" id="brandlogo" name="image" type="file" required />
                             </div>
                         </div>
 

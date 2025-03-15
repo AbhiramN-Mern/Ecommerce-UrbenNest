@@ -1,175 +1,4 @@
 <%- include("../../views/partials/user/header", { currentPage: 'productDetails' }) %>
-
-<main class="main">
-    <!-- Breadcrumb -->
-    <div class="page-header">
-        <div class="container">
-            <nav class="breadcrumb-nav">
-                <a href="/">Home</a>
-                <span>/</span>
-                <a href="/shop">Shop</a>
-                <span>/</span>
-                <span>Product Detail Page</span>
-            </nav>
-        </div>
-    </div>
-
-    <section class="product-section">
-        <div class="container">
-            <div class="row">
-                <!-- Left Column - Product Images -->
-                <div class="col-md-6">
-                    <div class="product-gallery">
-                        <!-- Main Image with Dynamic Zoom -->
-                        <div class="main-image-container">
-                            <div class="zoom-wrapper">
-                                <img src="/uploads/re-image/<%= product.productImage[0] %>"
-                                     alt="<%= product.productName %>"
-                                     class="main-image"
-                                     id="mainImage">
-                            </div>
-                        </div>
-
-                        <!-- Thumbnail Images -->
-                        <div class="thumbnail-container">
-                            <% product.productImage.forEach((image, index) => { %>
-                                <div class="thumbnail-item <%= index === 0 ? 'active' : '' %>">
-                                    <img src="/uploads/re-image/<%= image %>" alt="Thumbnail <%= index + 1 %>">
-                                </div>
-                            <% }) %>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="product-details">
-                        <h1 class="product-title"><%= product.productName %></h1>
-
-                        <div class="product-meta">
-                            <div class="brand">
-                                Brands: <a href="#"><%= product.brand %></a>
-                            </div>
-                            <div class="reviews">
-                                <div class="stars">
-                                    <%
-                                        const reviews = product.reviews || [];
-                                        const avgRating = reviews.length > 0
-                                            ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-                                            : 0;
-                                        for (let i = 1; i <= 5; i++) { %>
-                                            <i class="fas fa-star <%= i <= Math.round(avgRating) ? '' : 'empty-star' %>"></i>
-                                    <% } %>
-                                </div>
-                                <span>(<%= (product.reviews || []).length %> reviews)</span>
-                            </div>
-                        </div>
-
-                        <div class="product-price">
-                            <span class="current-price">₹<%= product.salePrice %></span>
-                            <span class="original-price">₹<%= product.regularPrice %></span>
-                            <% if(totalOffer) { %>
-                                <span class="discount"><%= totalOffer %>% Offer</span>
-                            <% } %>
-                        </div>
-
-                        <p class="product-description">
-                            <%= product.description %>
-                        </p>
-
-                        <ul class="product-features">
-                            <li><i class="fi-rs-crown"></i> 1 Year Brand Warranty</li>
-                            <li><i class="fi-rs-refresh"></i> 30 Day Return Policy</li>
-                            <li><i class="fi-rs-credit-card"></i> Cash on Delivery available</li>
-                        </ul>
-
-                        <div class="add-to-cart-section">
-                            <div class="quantity-selector">
-                                <button class="qty-btn minus">-</button>
-                                <input type="number" value="1" min="1" class="qty-input">
-                                <button class="qty-btn plus">+</button>
-                            </div>
-                            <button class="add-to-cart-btn" onclick="addToCart('<%= product._id %>')">Add to cart</button>
-                            <button class="wishlist-btn <%= wishlist && wishlist.includes(product._id.toString()) ? 'in-wishlist' : '' %>" 
-                                    id="wishlistBtn" 
-                                    onclick="toggleWishlist('<%= product._id %>')">
-                                <i class="fas fa-heart" id="wishlistHeart"></i>
-                            </button>
-                        </div>
-
-                        <div class="product-meta-info">
-                            <div>Stock Code: <span>FWM15VKT</span></div>
-                             <div>Tags: <a href="#"><%= product.category.name %></a></div>
-                      <div>Availability: <span class="in-stock"><%= product.quantity %> Items in Stock</span></div>
-
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <% if (relatedProducts && relatedProducts.length > 0) { %>
-        <section class="related-products-section">
-            <div class="container">
-                <h2 class="section-title">Related Products</h2>
-                <div class="related-products-slider">
-                    <% relatedProducts.forEach(relatedProduct => { %>
-                        <div class="product-card">
-                            <div class="product-image">
-                                <a href="/product-details?id=<%= relatedProduct._id %>">
-                                    <img src="/uploads/re-image/<%= relatedProduct.productImage[0] %>"
-                                         alt="<%= relatedProduct.productName %>">
-                                </a>
-                            </div>
-                            <div class="product-info">
-                                <h3 class="product-name">
-                                    <a href="/product-details?id=<%= relatedProduct._id %>">
-                                        <%= relatedProduct.productName %>
-                                    </a>
-                                </h3>
-                                <div class="product-price">
-                                    <span class="current-price">₹<%= relatedProduct.salePrice %></span>
-                                    <% if (relatedProduct.regularPrice) { %>
-                                        <span class="original-price">₹<%= relatedProduct.regularPrice %></span>
-                                    <% } %>
-                                </div>
-                            </div>
-                        </div>
-                    <% }) %>
-                </div>
-            </div>
-        </section>
-    <% } %>
-
-    <!-- Reviews Section -->
-    <div class="reviews-section mt-5">
-        <div class="container">
-            <h2 class="section-title">Customer Reviews</h2>
-            <% if (product.reviews && product.reviews.length > 0) { %>
-                <div class="review-list">
-                    <% product.reviews.forEach(review => { %>
-                        <div class="review-item">
-                            <div class="review-header">
-                                <span class="review-user"><%= review.userName %></span>
-                                <div class="review-rating">
-                                    <% for (let i = 1; i <= 5; i++) { %>
-                                        <i class="fas fa-star <%= i <= review.rating ? '' : 'empty-star' %>"></i>
-                                    <% } %>
-                                </div>
-                            </div>
-                            <p class="review-text"><%= review.reviewText %></p>
-                            <span class="review-date"><%= review.date.toLocaleDateString() %></span>
-                        </div>
-                    <% }) %>
-                </div>
-            <% } else { %>
-                <p>No reviews yet. Be the first to review this product!</p>
-            <% } %>
-        </div>
-    </div>
-</main>
-
 <style>
 .main {
     padding-top: 20px;
@@ -503,6 +332,182 @@
     }
 }
 </style>
+<main class="main">
+    <!-- Breadcrumb -->
+    <div class="page-header">
+        <div class="container">
+            <nav class="breadcrumb-nav">
+                <a href="/">Home</a>
+                <span>/</span>
+                <a href="/shop">Shop</a>
+                <span>/</span>
+                <span>Product Detail Page</span>
+            </nav>
+        </div>
+    </div>
+
+    <section class="product-section">
+        <div class="container">
+            <div class="row">
+                <!-- Left Column - Product Images -->
+                <div class="col-md-6">
+                    <div class="product-gallery">
+                        <!-- Main Image with Dynamic Zoom -->
+                        <div class="main-image-container">
+                            <div class="zoom-wrapper">
+                                <img src="/uploads/re-image/<%= product.productImage[0] %>"
+                                     alt="<%= product.productName %>"
+                                     class="main-image"
+                                     id="mainImage">
+                            </div>
+                        </div>
+
+                        <!-- Thumbnail Images -->
+                        <div class="thumbnail-container">
+                            <% product.productImage.forEach((image, index) => { %>
+                                <div class="thumbnail-item <%= index === 0 ? 'active' : '' %>">
+                                    <img src="/uploads/re-image/<%= image %>" alt="Thumbnail <%= index + 1 %>">
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="product-details">
+                        <h1 class="product-title"><%= product.productName %></h1>
+
+                        <div class="product-meta">
+                            <div class="brand">
+                                Brands: <a href="#"><%= product.brand %></a>
+                            </div>
+                            <div class="reviews">
+                                <div class="stars">
+                                    <%
+                                        const reviews = product.reviews || [];
+                                        const avgRating = reviews.length > 0
+                                            ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+                                            : 0;
+                                        for (let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star <%= i <= Math.round(avgRating) ? '' : 'empty-star' %>"></i>
+                                    <% } %>
+                                </div>
+                                <span>(<%= (product.reviews || []).length %> reviews)</span>
+                            </div>
+                        </div>
+
+                        <div class="product-price">
+                            <span class="current-price">₹<%= product.salePrice %></span>
+                            <span class="original-price">₹<%= product.regularPrice %></span>
+                            <% if(totalOffer) { %>
+                                <span class="discount"><%= totalOffer %>% Offer</span>
+                            <% } %>
+                        </div>
+
+                        <p class="product-description">
+                            <%= product.description %>
+                        </p>
+
+                        <ul class="product-features">
+                            <li><i class="fi-rs-crown"></i> 1 Year Brand Warranty</li>
+                            <li><i class="fi-rs-refresh"></i> 30 Day Return Policy</li>
+                            <li><i class="fi-rs-credit-card"></i> Cash on Delivery available</li>
+                        </ul>
+
+                        <div class="add-to-cart-section">
+                            <div class="quantity-selector">
+                                
+                                <button class="qty-btn minus">-</button>
+                                <input type="number" value="1" min="1" class="qty-input">
+                                <button class="qty-btn plus">+</button>
+                            </div>
+                            <% if (product.quantity > 0) { %>
+                                <button class="add-to-cart-btn" onclick="addToCart('<%= product._id %>')">Add to cart</button>
+                            <% } else { %>
+                                <button class="add-to-cart-btn" disabled>Out of stock</button>
+                            <% } %>
+                            <button class="wishlist-btn <%= wishlist && wishlist.includes(product._id.toString()) ? 'in-wishlist' : '' %>" 
+                                    id="wishlistBtn" 
+                                    onclick="toggleWishlist('<%= product._id %>')">
+                                <i class="fas fa-heart" id="wishlistHeart"></i>
+                            </button>
+                        </div>
+
+                        <div class="product-meta-info">
+                            <div>Stock Code: <span>FWM15VKT</span></div>
+                             <div>Tags: <a href="#"><%= product.category.name %></a></div>
+                      <div>Availability: <span class="in-stock"><%= product.quantity %> Items in Stock</span></div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <% if (relatedProducts && relatedProducts.length > 0) { %>
+        <section class="related-products-section">
+            <div class="container">
+                <h2 class="section-title">Related Products</h2>
+                <div class="related-products-slider">
+                    <% relatedProducts.forEach(relatedProduct => { %>
+                        <div class="product-card">
+                            <div class="product-image">
+                                <a href="/product-details?id=<%= relatedProduct._id %>">
+                                    <img src="/uploads/re-image/<%= relatedProduct.productImage[0] %>"
+                                         alt="<%= relatedProduct.productName %>">
+                                </a>
+                            </div>
+                            <div class="product-info">
+                                <h3 class="product-name">
+                                    <a href="/product-details?id=<%= relatedProduct._id %>">
+                                        <%= relatedProduct.productName %>
+                                    </a>
+                                </h3>
+                                <div class="product-price">
+                                    <span class="current-price">₹<%= relatedProduct.salePrice %></span>
+                                    <% if (relatedProduct.regularPrice) { %>
+                                        <span class="original-price">₹<%= relatedProduct.regularPrice %></span>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        </section>
+    <% } %>
+
+    <!-- Reviews Section -->
+    <div class="reviews-section mt-5">
+        <div class="container">
+            <h2 class="section-title">Customer Reviews</h2>
+            <% if (product.reviews && product.reviews.length > 0) { %>
+                <div class="review-list">
+                    <% product.reviews.forEach(review => { %>
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="review-user"><%= review.userName %></span>
+                                <div class="review-rating">
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                        <i class="fas fa-star <%= i <= review.rating ? '' : 'empty-star' %>"></i>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <p class="review-text"><%= review.reviewText %></p>
+                            <span class="review-date"><%= review.date.toLocaleDateString() %></span>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <p>No reviews yet. Be the first to review this product!</p>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

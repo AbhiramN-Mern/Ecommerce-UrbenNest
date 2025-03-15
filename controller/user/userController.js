@@ -283,7 +283,7 @@ const loadShoppingPage = async (req, res) => {
         const products = await Product.find({
             isBlocked: false,
             category: { $in: categoryIds },
-            quantity: { $gt: 0 }
+            // quantity: { $gt: 0 }
         }).sort({ [sortField]: sortOrder }).skip(skip).limit(limit);
 
         const totalProducts = await Product.countDocuments({
@@ -326,7 +326,7 @@ const filterProduct = async (req, res) => {
         const brands = await Brand.find({}).lean();
         const query = {
             isBlocked: false,
-            quantity: { $gt: 0 }
+            // quantity: { $gt: 0 }
         };
         if (findCategory) {
             query.category = findCategory._id;
