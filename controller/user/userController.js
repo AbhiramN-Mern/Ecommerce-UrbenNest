@@ -1,55 +1,54 @@
 const User = require('../../models/userSchema');
 const nodemailer = require('nodemailer');
+const twilio = require("twilio");
 const env=require('dotenv').config();
 const bcrypt = require('bcrypt');
 const Brand=require('../../models/brandSchema')
 const Category = require('../../models/categoryScheema');
 const Product = require('../../models/productSchema');
 const category = require('../../models/categoryScheema');
-
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const loadhomepage = async (req, res) => {
     try {
         const user = req.session.user;
         const categories = await Category.find({ isListed: true });
-        let productData=await Product.find({
-            isBlocked:false,
-            category:{$in:categories.map((cat)=>cat._id)},quantity:{$gt:0}
-        })
 
-        productData.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))
-        productData=productData.slice(0,3)
+        let productData = await Product.find({
+            isBlocked: false,
+            category: { $in: categories.map((cat) => cat._id) },
+            quantity: { $gt: 0 }
+        });
+
+        productData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        productData = productData.slice(0, 3);
 
         if (user) {
             const userData = await User.findOne({ _id: user });
-            res.render('home', { user: userData,products:productData });
-            console.log(userData);
+            res.render('home', { user: userData, products: productData });
         } else {
-            res.render('home', 
-                {products:productData,
-                    user:req.user
-                 });
+            res.render('home', { products: productData, user: req.user });
         }
     } catch (error) {
-        console.log('Home Page Not Found');
-        res.status(500).send('Server Error');
+        console.error("Home Page Not Found:", error);
+        res.status(500).send("Server Error");
     }
 };
 
 const pageNotFound = async (req, res) => {
     try {
-        res.render('page-404');
+        res.render("page-404");
     } catch (error) {
-        res.redirect('/pageNotFound');
+        res.redirect("/pageNotFound");
     }
 };
 
 const loadsignup = async (req, res) => {
     try {
-        return res.render('signup');
+        return res.render("signup");
     } catch (error) {
-        console.log('Signup page not loading');
-        res.status(500).send('Server error');
+        console.error("Signup page not loading:", error);
+        res.status(500).send("Server error");
     }
 };
 
@@ -60,7 +59,7 @@ function generateOTP() {
 async function sendVerificationEmail(email, otp) {
     try {
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            service: "gmail",
             port: 587,
             secure: false,
             requireTLS: true,
@@ -73,22 +72,43 @@ async function sendVerificationEmail(email, otp) {
         const info = await transporter.sendMail({
             from: process.env.NODEMAILER_EMAIL,
             to: email,
-            subject: 'Your OTP Code for Verification',
-            html: `
-                <div style="font-family: Arial, sans-serif; text-align: center; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                    <h2 style="color: #007bff;">OTP Verification</h2>
-                    <p style="font-size: 16px;">Your One-Time Password (OTP) for verification is:</p>
-                    <p style="font-size: 24px; font-weight: bold; color: #333; background: #f4f4f4; padding: 10px; display: inline-block; border-radius: 5px;">${otp}</p>
-                    <p style="font-size: 14px; color: #555;">This OTP is valid for 10 minutes. Do not share it with anyone.</p>
-                    <hr style="margin: 20px 0;">
-                    <p style="font-size: 12px; color: #888;">If you did not request this OTP, please ignore this email.</p>
-                </div>
-            `,
+            subject: "Your OTP Code for Verification",
+            html: `<div style="font-family: Arial, sans-serif; text-align: center;">
+                    <h2>OTP Verification</h2>
+                    <p>Your One-Time Password (OTP) is:</p>
+                    <p style="font-size: 24px; font-weight: bold;">${otp}</p>
+                    <p>This OTP is valid for 10 minutes.</p>
+                </div>`
         });
 
         return info.accepted.length > 0;
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error("Error sending email:", error);
+        return false;
+    }
+}
+
+function formatPhoneNumber(phone) {
+    if (!phone.startsWith("+")) {
+        return "+91" + phone; // Add +91 for India
+    }
+    return phone;
+}
+
+async function sendVerificationSMS(phone, otp) {
+    try {
+        const formattedPhone = formatPhoneNumber(phone);
+
+        await twilioClient.messages.create({
+            body: `Your OTP is: ${otp}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: formattedPhone
+        });
+
+        console.log("OTP sent via SMS to:", formattedPhone);
+        return true;
+    } catch (error) {
+        console.error("Error sending SMS:", error);
         return false;
     }
 }
@@ -99,23 +119,22 @@ const signup = async (req, res) => {
 
         const { email, phone, name, password, confirmPassword } = req.body;
         if (password !== confirmPassword) {
-            console.log("Passwords do not match:", password, confirmPassword);
-            return res.render('signup', { message: 'Passwords do not match' });
+            return res.render("signup", { message: "Passwords do not match" });
         }
 
         const findUser = await User.findOne({ email });
         if (findUser) {
-            console.log("User already exists:", email);
-            return res.render('signup', { message: "User with this email already exists" });
+            return res.render("signup", { message: "User with this email already exists" });
         }
 
         const otp = generateOTP();
         console.log("Generated OTP:", otp);
 
         const emailSent = await sendVerificationEmail(email, otp);
-        if (!emailSent) {
-            console.log("Email sending failed.");
-            return res.render('signup', { message: 'Failed to send OTP. Try again!' });
+        const smsSent = await sendVerificationSMS(phone, otp);
+
+        if (!emailSent && !smsSent) {
+            return res.render("signup", { message: "Failed to send OTP. Try again!" });
         }
 
         req.session.userOtp = otp;
@@ -123,25 +142,23 @@ const signup = async (req, res) => {
 
         res.render("verifyOTP");
     } catch (error) {
-        console.error('Signup error:', error);
-        res.redirect('/pageNotFound');
+        console.error("Signup error:", error);
+        res.redirect("/pageNotFound");
     }
 };
 
 const securePassword = async (password) => {
     try {
-        const passwordHash = await bcrypt.hash(password, 10);
-        return passwordHash;
+        return await bcrypt.hash(password, 10);
     } catch (error) {
-        console.error('Error hashing password:', error);
-        throw error; // Throw error to handle it in the calling function
+        console.error("Error hashing password:", error);
+        throw error;
     }
 };
 
 const verifyOTP = async (req, res) => {
     try {
         const { otp } = req.body;
-        console.log("Entered OTP:", otp);
         if (otp === req.session.userOtp) {
             const userData = req.session.userData;
             const passwordHash = await securePassword(userData.password);
@@ -150,33 +167,19 @@ const verifyOTP = async (req, res) => {
                 name: userData.name,
                 email: userData.email,
                 phone: userData.phone,
-                password: passwordHash,
+                password: passwordHash
             });
 
             await saveUserData.save();
             req.session.user = saveUserData._id;
-            
-            // Respond based on the request type
-            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-                return res.json({ success: true, redirectUrl: '/' });
-            } else {
-                return res.redirect('/');
-            }
+
+            return res.redirect("/");
         } else {
-            console.error("Invalid OTP entered:", otp);
-            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-                return res.json({ success: false, message: 'Invalid OTP, please try again' });
-            } else {
-                return res.render('verifyOTP', { message: 'Invalid OTP, please try again' });
-            }
+            return res.render("verifyOTP", { message: "Invalid OTP, please try again" });
         }
     } catch (error) {
         console.error("Error in verifyOTP:", error);
-        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-            return res.json({ success: false, message: 'Server error' });
-        } else {
-            return res.redirect('/pageNotFound');
-        }
+        res.redirect("/pageNotFound");
     }
 };
 
@@ -184,24 +187,28 @@ const resendOTP = async (req, res) => {
     try {
         const userData = req.session.userData;
         if (!userData || !userData.email) {
-            return res.status(400).json({ success: false, message: 'No user data found in session' });
+            return res.status(400).json({ success: false, message: "No user data found in session" });
         }
 
         const newOtp = generateOTP();
         console.log("Resent OTP:", newOtp);
 
         const emailSent = await sendVerificationEmail(userData.email, newOtp);
-        if (!emailSent) {
-            return res.status(500).json({ success: false, message: 'Failed to resend OTP' });
+        const smsSent = await sendVerificationSMS(userData.phone, newOtp);
+
+        if (!emailSent && !smsSent) {
+            return res.status(500).json({ success: false, message: "Failed to resend OTP" });
         }
 
-        req.session.userOtp = newOtp; // Update OTP in session
-        res.status(200).json({ success: true, message: 'OTP resent successfully' });
+        req.session.userOtp = newOtp;
+        res.status(200).json({ success: true, message: "OTP resent successfully" });
     } catch (error) {
-        console.error('Error in resendOTP:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error("Error in resendOTP:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+
 
 const loadlogin=async (req,res)=>{
     try {
@@ -351,6 +358,7 @@ const filterProduct = async (req, res) => {
         if (user) {
             userData = await User.findOne({ _id: user });
             if (userData) {
+                            
                 const searchEntry = {
                     category: findCategory ? findCategory._id : null,
                     brand: findBrand ? findBrand.brandName : null,
