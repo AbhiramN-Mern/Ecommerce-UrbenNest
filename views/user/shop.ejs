@@ -477,7 +477,11 @@
                   </div>
                 </a>
               </div>
-              <button class="add-to-cart-btn" onclick="addToCart('<%= product._id %>', this)">Add to Cart</button>
+              <% if (product.quantity > 0) { %>
+                <button class="add-to-cart-btn" onclick="addToCart('<%= product._id %>')">Add to cart</button>
+            <% } else { %>
+                <button class="add-to-cart-btn" disabled>Out of stock</button>
+            <% } %>
             </div>
           <% }) %>
         </div>

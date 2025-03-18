@@ -90,7 +90,7 @@ async function sendVerificationEmail(email, otp) {
 
 function formatPhoneNumber(phone) {
     if (!phone.startsWith("+")) {
-        return "+91" + phone; // Add +91 for India
+        return "+91" + phone;
     }
     return phone;
 }
@@ -100,7 +100,7 @@ async function sendVerificationSMS(phone, otp) {
         const formattedPhone = formatPhoneNumber(phone);
 
         await twilioClient.messages.create({
-            body: `Your OTP is: ${otp}`,
+            body: `UrbanNest Verification Code: ${otp}. This code is valid for 10 minutes. Do not share it with anyone`,
             from: process.env.TWILIO_PHONE_NUMBER,
             to: formattedPhone
         });
@@ -159,7 +159,8 @@ const securePassword = async (password) => {
 const verifyOTP = async (req, res) => {
     try {
         const { otp } = req.body;
-        if (otp === req.session.userOtp) {
+        console.log("OTP from form:", otp, "Session OTP:", req.session.userOtp);
+        if (otp.toString() === req.session.userOtp.toString()) {
             const userData = req.session.userData;
             const passwordHash = await securePassword(userData.password);
 
@@ -172,14 +173,24 @@ const verifyOTP = async (req, res) => {
 
             await saveUserData.save();
             req.session.user = saveUserData._id;
+            delete req.session.userOtp;
+            delete req.session.userData;
 
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                return res.json({ success: true, redirectUrl: "/" });
+            }
+            
             return res.redirect("/");
         } else {
+        
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                return res.json({ success: false, message: "Invalid OTP, please try again" });
+            }
             return res.render("verifyOTP", { message: "Invalid OTP, please try again" });
         }
     } catch (error) {
         console.error("Error in verifyOTP:", error);
-        res.redirect("/pageNotFound");
+        return res.redirect("/pageNotFound");
     }
 };
 
@@ -336,7 +347,7 @@ const filterProduct = async (req, res) => {
         const brands = await Brand.find({}).lean();
         const query = {
             isBlocked: false,
-            quantity: { $gt: 0 }
+            // quantity: { $gt: 0 }
         };
         if (findCategory) {
             query.category = findCategory._id;
