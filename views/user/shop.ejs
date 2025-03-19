@@ -519,76 +519,81 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     
-
-    function performSearch() {
+  // Called when the search form is submitted
+  function performSearch() {
       const query = document.getElementById('product-search').value;
-      console.log('Search query:', query); 
+      console.log('Search query:', query);
       fetch(`/search?query=${encodeURIComponent(query)}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json',
+          },
       })
       .then(response => {
-        console.log('Response status:', response.status); 
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
+          console.log('Response status:', response.status);
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.json();
       })
       .then(data => {
-        console.log('Search results:', data); 
-        updateProductContainer(data);
+          console.log('Search results:', data);
+          updateProductContainer(data);
       })
       .catch(error => {
-        console.error('Error fetching search results:', error); 
+          console.error('Error fetching search results:', error);
       });
-    }
+  }
 
-    function updateProductContainer(data) {
-      console.log('Updating container with:', data); 
+  // This function updates the product grid with search results
+  function updateProductContainer(products) {
+      console.log('Updating container with:', products);
       const productContainer = document.getElementById('productContainer');
       productContainer.innerHTML = '';
-      if (data.length === 0) {
-        productContainer.innerHTML = '<p>No products found.</p>';
-        return;
+
+      if (products.length === 0) {
+          productContainer.innerHTML = '<p>No products found.</p>';
+          return;
       }
-      data.forEach(product => {
-        const reviews = product.reviews ?? [];
-        const avgRating = reviews.length > 0
-          ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-          : 0;
-        let stars = '';
-        for (let i = 1; i <= 5; i++) {
-          stars += `<i class="fas fa-star ${i <= Math.round(avgRating) ? '' : 'empty-star'}"></i>`;
-        }
-        const isInWishlist = wishlist.includes(product._id);
-        const productHTML = `
-          <div class="product-item">
-            <button class="wishlist-btn ${isInWishlist ? 'active' : ''}" 
-                    onclick="addToWishlist('${product._id}')">
-              <i class="fas fa-heart"></i>
-            </button>
-            <div class="product-content">
-              <a href="/product-details?id=${product._id}" style="text-decoration: none;">
-                <img src="/uploads/re-image/${product.productImage[0]}" class="img-fluid product-thumbnail" loading="lazy">
-                <div class="product-title-container">
-                  <h3 class="product-title">${product.productName}</h3>
-                </div>
-                <div class="product-info-container">
-                  <p class="product-brand">Brand: ${product.brand}</p>
-                  <div class="rating-stars">${stars}</div>
-                  <div class="product-pricing">
-                    <strong class="product-price">₹${product.regularPrice}</strong>
-                    <strong class="productsale-price">₹${product.salePrice}</strong>
+      
+      // Loop through each returned product and build the HTML
+      products.forEach(product => {
+          // Calculate average rating (if reviews field exists)
+          const reviews = product.reviews || [];
+          const avgRating = reviews.length > 0
+              ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+              : 0;
+          let stars = '';
+          for (let i = 1; i <= 5; i++) {
+              stars += `<i class="fas fa-star ${i <= Math.round(avgRating) ? '' : 'empty-star'}"></i>`;
+          }
+
+          // Build a product HTML snippet. Ensure your field names (productName, brand, productImage, regularPrice, salePrice) match your schema.
+          const productHTML = `
+            <div class="product-item">
+              <div class="product-content">
+                <a href="/product-details?id=${product._id}" style="text-decoration: none;">
+                  <img src="/uploads/re-image/${product.productImage[0]}" class="img-fluid product-thumbnail" loading="lazy">
+                  <div class="product-title-container">
+                    <h3 class="product-title">${product.productName}</h3>
                   </div>
-                </div>
-              </a>
+                  <div class="product-info-container">
+                    <p class="product-brand">Brand: ${product.brand}</p>
+                    <div class="rating-stars">${stars}</div>
+                    <div class="product-pricing">
+                      <strong class="product-price">₹${product.regularPrice}</strong>
+                      <strong class="productsale-price">₹${product.salePrice}</strong>
+                    </div>
+                  </div>
+                </a>
+              </div>
+              ${ product.quantity > 0
+                ? `<button class="add-to-cart-btn" onclick="addToCart('${product._id}', this)">Add to Cart</button>`
+                : `<button class="add-to-cart-btn" disabled>Out of stock</button>` }
             </div>
-            <button class="add-to-cart-btn" onclick="addToCart('${product._id}', this)">Add to Cart</button>
-          </div>
-        `;
-        productContainer.innerHTML += productHTML;
+          `;
+          productContainer.innerHTML += productHTML;
       });
-    }
+  }
+
 
     function initWishlistButtons() {
       document.querySelectorAll('.wishlist-btn').forEach(btn => {

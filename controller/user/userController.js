@@ -472,44 +472,26 @@ const filterByPrice = async (req, res, next) => {
         next(error);
     }
 };
-const searchProducts = async (req, res, next) => {
-    try {
-        const user = req.session.user;
-        let userData = null;
-        if (user) {
-            userData = await User.findOne({ _id: user });
-        }
-        let search = req.query.query;
-
-        const brands = await Brand.find({}).lean();
-        const categories = await Category.find({ isListed: true }).lean();
-        const categoryIds = categories.map(category => category._id.toString());
-        let searchResult = [];
-
-        if (req.session.filteredProducts && req.session.filteredProducts.length > 0) {
-            searchResult = req.session.filteredProducts.filter(product =>
-                product.productName.toLowerCase().includes(search.toLowerCase())
-            );
-        } else {
-            searchResult = await Product.find({
-                productName: { $regex: ".*" + search + ".*", $options: "i" },
-                isBlocked: false,
-                quantity: { $gt: 0 },
-                category: { $in: categoryIds }
-            }).lean();
-        }
-
-        searchResult = searchResult.map(product => ({
-            ...product,
-            reviews: product.reviews || []
-        }));
-
-        searchResult.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
-        res.json(searchResult);
-    } catch (error) {
-        console.error('Error in searchProducts:', error);
-        next(error);
+const searchProducts = async (req, res) => {
+  try {
+    const query = req.query.query;
+    console.log('Server search query:', query);
+    if (!query) {
+      return res.json([]); // return empty array if no query
     }
+    // Using case-insensitive search on productName field
+    const products = await Product.find({
+      isBlocked: false,
+      productName: { $regex: query, $options: 'i' },
+      quantity: { $gt: 0 }
+    }).lean();
+
+    console.log('Found products:', products.length);
+    return res.json(products);
+  } catch (error) {
+    console.error("Error searching products:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 module.exports = {
