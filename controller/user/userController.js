@@ -291,22 +291,46 @@ const logout=async(req,res)=>{
 const loadShoppingPage = async (req, res) => {
     try {
         const user = req.session.user;
-        const userData = await User.findOne({_id: user});
-        const categories = await Category.find({isListed: true});
+        const userData = user ? await User.findOne({ _id: user }) : null;
+        const categories = await Category.find({ isListed: true });
         const categoryIds = categories.map((cat) => cat._id.toString());
         const page = parseInt(req.query.page) || 1;
         const limit = 9;
         const skip = (page - 1) * limit;
 
-        const sortOption = req.query.sort || 'createdOn';
-        const sortOrder = sortOption.includes('desc') ? -1 : 1;
-        const sortField = sortOption.replace('-desc', '').replace('-asc', '');
+        // Create an explicit sort mapping
+        const sortOption = req.query.sort || 'created-new';  
+        let sortQuery = {};
+        switch(sortOption) {
+            case "price-high":
+                // descending by salePrice; adjust field name if needed
+                sortQuery = { salePrice: -1 };
+                break;
+            case "price-low":
+                sortQuery = { salePrice: 1 };
+                break;
+            case "name-asc":
+                sortQuery = { productName: 1 };
+                break;
+            case "name-desc":
+                sortQuery = { productName: -1 };
+                break;
+            case "created-new":
+                sortQuery = { createdOn: -1 };
+                break;
+            case "created-old":
+                sortQuery = { createdOn: 1 };
+                break;
+            default:
+                sortQuery = { createdOn: -1 };
+                break;
+        }
 
         const products = await Product.find({
             isBlocked: false,
             category: { $in: categoryIds },
             quantity: { $gt: 0 }
-        }).sort({ [sortField]: sortOrder }).skip(skip).limit(limit);
+        }).sort(sortQuery).skip(skip).limit(limit);
 
         const totalProducts = await Product.countDocuments({
             isBlocked: false,
@@ -315,8 +339,7 @@ const loadShoppingPage = async (req, res) => {
         });
 
         const totalPages = Math.ceil(totalProducts / limit);
-        const brands = await Brand.find({isBlocked: false});
-
+        const brands = await Brand.find({ isBlocked: false });
         const categoryWithIds = categories.map(cat => ({ _id: cat._id, name: cat.name }));
 
         res.render('shop', {
