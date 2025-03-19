@@ -400,61 +400,55 @@ const filterProduct = async (req, res, next) => {
         next(error);
     }
 };
-  
-const filterByPrice = async (req, res) => {
+const filterByPrice = async (req, res, next) => {
     try {
         const user = req.session.user;
-        const userData = await User.findOne({ _id: user });
+        let userData = null;
+        let wishlist = [];
+        if (user) {
+            userData = await User.findOne({ _id: user });
+            wishlist = userData.wishlist || [];
+        }
+
+        // Get price filter values from query parameters
+        // 'gt' means minimum price, and 'lt' means maximum price
+        const minPrice = req.query.gt ? Number(req.query.gt) : 0;
+        const maxPrice = req.query.lt ? Number(req.query.lt) : Number.MAX_SAFE_INTEGER;
+
         const brands = await Brand.find({}).lean();
         const categories = await Category.find({ isListed: true }).lean();
 
-        const { gt, lt, brand, page } = req.query;
-        console.log("Brand param received:", brand);
-
-        // Build the query dynamically
-        let productQuery = {
-            salePrice: { $gt: gt, $lt: lt },
+        // Find products that are not blocked, available, and within the price range.
+        let findProducts = await Product.find({
             isBlocked: false,
-            // quantity: { $gt: 0 }
-        };
-
-        // Add brand filter if provided
-        if (brand) {
-            const foundBrand = await Brand.findOne({ name: brand });
-            console.log("Found brand:", foundBrand);
-
-            if (foundBrand) {
-                productQuery.brand = foundBrand._id; // Assuming brand is stored by ObjectId in Product
-            }
-        }
-
-        const findProducts = await Product.find(productQuery).lean();
+            quantity: { $gt: 0 },
+            // Use salePrice if you want to filter by sale, or regularPrice if desired.
+            salePrice: { $gte: minPrice, $lte: maxPrice }
+        }).lean();
 
         findProducts.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
 
-        const itemsPerPage = 6;
-        const currentPage = parseInt(page) || 1;
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const totalPages = Math.ceil(findProducts.length / itemsPerPage);
-        const currentProducts = findProducts.slice(startIndex, startIndex + itemsPerPage);
+        let itemsPerPage = 12;
+        let currentPage = parseInt(req.query.page) || 1;
+        let startIndex = (currentPage - 1) * itemsPerPage;
+        let endIndex = startIndex + itemsPerPage;
+        let totalPages = Math.ceil(findProducts.length / itemsPerPage);
+        const currentProduct = findProducts.slice(startIndex, endIndex);
+        req.session.filteredProducts = findProducts;
 
-        req.session.filterProduct = findProducts;
-
-        res.render('shop', {
+        res.render("shop", {
             user: userData,
-            products: currentProducts,
+            products: currentProduct,
             categories: categories,
             brands: brands,
-            totalPages: totalPages,
-            currentPage: currentPage
+            totalPages,
+            currentPage,
+            wishlist: wishlist 
         });
     } catch (error) {
-        console.error("Error in filterByPrice:", error);
-        res.redirect('/pageNotFound');
+        next(error);
     }
 };
-
-
 const searchProducts = async (req, res, next) => {
     try {
         const user = req.session.user;

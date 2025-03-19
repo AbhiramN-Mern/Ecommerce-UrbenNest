@@ -420,8 +420,16 @@
               <option value="created-old">Oldest Arrivals</option>
             </select>
           </div>
-
           <div class="filter-section">
+            <div class="filter-title">Price</div>
+            <div class="price-options">
+              <input type="number" id="minPrice" placeholder="Min Price" style="width: 100%; margin-bottom: 5px;">
+              <input type="number" id="maxPrice" placeholder="Max Price" style="width: 100%; margin-bottom: 5px;">
+              <button type="button" class="price-button" onclick="filterByPrice()">Apply</button>
+            </div>
+          </div>
+          <div class="filter-section">
+            
             <div class="filter-title">Categories</div>
             <div class="category-brand-container">
               <ul>
@@ -446,6 +454,8 @@
               </ul>
             </div>
           </div>
+
+          
         </aside>
 
         <div class="product-grid" id="productContainer">
@@ -716,6 +726,28 @@
         url += `&brand=${brand}`;
       }
       window.location.href = url;
+    }
+
+    function filterByPrice(){
+      // Get the input values
+      const minPrice = document.getElementById('minPrice').value;
+      const maxPrice = document.getElementById('maxPrice').value;
+      // Read current query parameters from URL
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Set or remove min and max price parameters
+      if(minPrice){
+        urlParams.set('gt', minPrice);
+      } else {
+        urlParams.delete('gt');
+      }
+      if(maxPrice){
+        urlParams.set('lt', maxPrice);
+      } else {
+        urlParams.delete('lt');
+      }
+      // Build the new URL. Preserve sort, category, or brand if needed.
+      window.location.href = `/filterByPrice?${urlParams.toString()}`;
     }
 
     $(document).ready(function() {
