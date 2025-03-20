@@ -66,6 +66,7 @@ const getForgetPassPage = async (req,res) =>{
 
 const forgotEmailValid = async (req, res) => {
     try {
+        console.log(req.body)
       const { email } = req.body;
       const findUser = await User.findOne({ email: email });
       if(findUser){
