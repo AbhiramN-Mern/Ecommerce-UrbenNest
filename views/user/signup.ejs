@@ -256,7 +256,6 @@
             </nav>
         </div>
     </header>
-    
     <main>
         <section class="signup-section">
             <div class="container">
@@ -273,7 +272,7 @@
                                 <input type="text" id="name" name="name" class="form-control" placeholder="Enter your full name" required>
                                 <div id="error1" class="error-message"></div>
                             </div>
-
+    
                             <div class="form-group">
                                 <label for="email" class="form-label">Email Address</label>
                                 <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
@@ -298,6 +297,12 @@
                                 <div id="error5" class="error-message"></div>
                             </div>
                             
+                            <!-- Google reCAPTCHA -->
+                            <div class="form-group">
+                                <div class="g-recaptcha" data-sitekey="6Lejo_oqAAAAAN99Osw5gDSAotLXOU68W2zgnt1w"></div>
+                                <div id="captcha-error" class="error-message"></div>
+                            </div>
+    
                             <button type="submit" class="submit-button">Sign Up</button>
                             
                             <div class="or-divider">or</div>
@@ -430,6 +435,20 @@
                 }
             });
         });
+
+        document.getElementById("signform").addEventListener("submit", function(event) {
+    var response = grecaptcha.getResponse();
+    if (response.length == 0) {
+        event.preventDefault(); // Prevent form submission
+        document.getElementById("captcha-error").innerText = "Please complete the CAPTCHA";
+    }
+});
     </script>
+
+
+
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
+
 </html>

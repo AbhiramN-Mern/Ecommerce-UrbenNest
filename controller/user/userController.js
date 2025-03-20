@@ -9,6 +9,7 @@ const Product = require('../../models/productSchema');
 const category = require('../../models/categoryScheema');
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const mongoose = require("mongoose");
+const axios = require('axios');
 
 const loadhomepage = async (req, res) => {
     try {
@@ -113,12 +114,36 @@ async function sendVerificationSMS(phone, otp) {
         return false;
     }
 }
-
 const signup = async (req, res) => {
     try {
         console.log("Received signup request:", req.body);
 
-        const { email, phone, name, password, confirmPassword } = req.body;
+        const { email, phone, name, password, confirmPassword, "g-recaptcha-response": recaptchaToken } = req.body;
+
+        // Check if reCAPTCHA token exists
+        if (!recaptchaToken) {
+            return res.render("signup", { message: "reCAPTCHA verification failed. Please try again." });
+        }
+
+        // Verify reCAPTCHA with Google
+        const recaptchaVerifyURL = `https://www.google.com/recaptcha/api/siteverify`;
+        const recaptchaResponse = await axios.post(
+            recaptchaVerifyURL,
+            {},
+            {
+                params: {
+                    secret: process.env.RECAPTCHA_SECRET,
+                    response: recaptchaToken,
+                },
+            }
+        );
+
+        // Check if verification was successful
+        if (!recaptchaResponse.data.success) {
+            return res.render("signup", { message: "reCAPTCHA verification failed. Try again." });
+        }
+
+        // Proceed with signup logic
         if (password !== confirmPassword) {
             return res.render("signup", { message: "Passwords do not match" });
         }
@@ -147,7 +172,6 @@ const signup = async (req, res) => {
         res.redirect("/pageNotFound");
     }
 };
-
 const securePassword = async (password) => {
     try {
         return await bcrypt.hash(password, 10);
