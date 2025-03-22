@@ -79,7 +79,6 @@ const addProducts = async (req, res, next) => {
             await newProduct.save();
             return res.redirect("/admin/product-add");
         } catch (error) {
-            // Catch duplicate key errors due to race conditions
             if (error.code === 11000) {
                 return res.status(400).json({ error: "Product already exists, please try with another name" });
             }
@@ -102,9 +101,10 @@ const getAllProducts = async (req, res) => {
                 { brand: { $regex: new RegExp(search, 'i') } },
             ]
         })
+        .populate('category', 'name')  
         .limit(limit)
         .skip((page - 1) * limit)
-        .exec();
+        .lean();
 
         const count = await Product.countDocuments({
             $or: [
@@ -113,7 +113,7 @@ const getAllProducts = async (req, res) => {
             ]
         });
 
-        const totelPages = Math.ceil(count / limit); // ✅ Now matches your EJS spelling
+        const totelPages = Math.ceil(count / limit);  
         const category = await Category.find({ isListed: true });
         const brand = await Brand.find({ isBlocked: false });
 
@@ -123,7 +123,7 @@ const getAllProducts = async (req, res) => {
         res.render("admin/prodects", {
             data: productData,
             currentPage: page,
-            totelPages: totelPages, // ✅ Now using `totelPages` to match your .ejs file
+            totelPages: totelPages, 
             cat: category,
             brand: brand,
         });
@@ -132,6 +132,7 @@ const getAllProducts = async (req, res) => {
         res.redirect("/pageNotFound");
     }
 };
+
 
 const blockProdeucts=async(req,res)=>{
     try {
