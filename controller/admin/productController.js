@@ -90,7 +90,6 @@ const addProducts = async (req, res, next) => {
         next(error);
     }
 };
-
 const getAllProducts = async (req, res) => {
     try {
         const search = req.query.search || "";
@@ -99,22 +98,22 @@ const getAllProducts = async (req, res) => {
 
         const productData = await Product.find({
             $or: [
-                { productName: { $regex: new RegExp("." + search + ".*", 'i') } },
-                { brand: { $regex: new RegExp("." + search + ".*", 'i') } },
+                { productName: { $regex: new RegExp(search, 'i') } },
+                { brand: { $regex: new RegExp(search, 'i') } },
             ]
         })
         .limit(limit)
         .skip((page - 1) * limit)
         .exec();
 
-        const count = await Product.find({
+        const count = await Product.countDocuments({
             $or: [
-                { productName: { $regex: new RegExp("." + search + ".", "i") } },
-                { brand: { $regex: new RegExp("." + search + ".*", "i") } }
+                { productName: { $regex: new RegExp(search, "i") } },
+                { brand: { $regex: new RegExp(search, "i") } }
             ]
-        }).countDocuments();
+        });
 
-        const totelPages = Math.ceil(count / limit);
+        const totelPages = Math.ceil(count / limit); // ✅ Now matches your EJS spelling
         const category = await Category.find({ isListed: true });
         const brand = await Brand.find({ isBlocked: false });
 
@@ -124,7 +123,7 @@ const getAllProducts = async (req, res) => {
         res.render("admin/prodects", {
             data: productData,
             currentPage: page,
-            totelPages: totelPages,
+            totelPages: totelPages, // ✅ Now using `totelPages` to match your .ejs file
             cat: category,
             brand: brand,
         });
@@ -133,6 +132,7 @@ const getAllProducts = async (req, res) => {
         res.redirect("/pageNotFound");
     }
 };
+
 const blockProdeucts=async(req,res)=>{
     try {
         let id=req.query.id

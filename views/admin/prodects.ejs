@@ -181,15 +181,20 @@
                             class="form-control" 
                             placeholder="Search products or brands" 
                             name="search"
+                            id="searchInput"
                             aria-label="Search products"
                         >
                         <button class="btn btn-custom btn-offer" type="submit">
                             Search
                         </button>
+                        <button type="button" class="btn btn-secondary" id="clearSearch">
+                            Clear
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
+        
 
         <!-- Products Table -->
         <div class="products-table">
@@ -410,6 +415,12 @@
                 });
             }
         }
+
+        document.getElementById('clearSearch').addEventListener('click', function() {
+    document.getElementById('searchInput').value = ''; // Clear input field
+    window.location.href = window.location.pathname; // Refresh page
+});
+ 
 
 
      
