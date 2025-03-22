@@ -73,6 +73,18 @@
       transform: scale(1.05);
     }
 
+    .clear-button{
+      padding: 12px 25px;
+      background-color: #a72828;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 25px;
+      margin-right: 5px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
     .product-list-container {
       display: flex;
       gap: 30px;
@@ -344,6 +356,9 @@
       flex-grow: 1;
     }
 
+
+ 
+
     .page-header {
       background-color: #f7f8fa;
       padding: 15px 0;
@@ -398,11 +413,11 @@
   <div class="main-container">
     <div class="shop-container">
       <h1 class="shop-title">Shop</h1>
-
       <div>
         <form action="/search" method="GET" class="search-form" onsubmit="event.preventDefault(); performSearch();">
           <input type="text" id="product-search" name="query" placeholder="Search products..." class="search-input">
           <button type="submit" class="search-button">Search</button>
+          <button type="button" class="clear-button" onclick="clearSearch()">Clear</button>
         </form>
       </div>
 
@@ -625,6 +640,10 @@
       });
     }
 
+    function clearSearch() {
+    document.getElementById('product-search').value = '';
+    location.reload();
+  }
     function updateWishlistCount() {
       $.ajax({
         url: '/getWishlistCount',
