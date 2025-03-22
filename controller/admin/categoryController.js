@@ -18,7 +18,7 @@ const categoryInfo = async (req, res) => {
 
         let filter = {};
         if (searchQuery) {
-            filter = { name: { $regex: searchQuery, $options: 'i' } }; // Case-insensitive search
+            filter = { name: { $regex: searchQuery, $options: 'i' } }; 
         }
 
         const categoryData = await category.find(filter)

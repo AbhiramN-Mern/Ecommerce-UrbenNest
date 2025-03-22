@@ -399,27 +399,41 @@ function validateAndSubmit() {
     if (validateForm()) {
         const formData = new FormData(document.getElementById('productForm'));
 
-    // Remove the image field from formData
-    formData.delete('images');
-
-
+        // Remove the image field from formData
+        formData.delete('images');
 
         selectedImages.forEach((file, index) => {
             formData.append(`images`, file);
         });
-        
+
         fetch('/admin/product-add', {
             method: 'POST',
             body: formData
         }).then(response => {
             if (response.ok) {
-                window.location.href = '/admin/product-add';
+                // Display SweetAlert on successful product addition
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Product Added',
+                    text: 'The product has been successfully added!',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // Redirect or perform any other action after the alert is closed
+                    window.location.href = '/admin/product-add';
+                });
             } else {
                 console.error('Error submitting form');
+                // Optionally, display an error alert
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Something went wrong! Please try again.',
+                });
             }
         });
     }
 }
+
 
 function validateForm() {
     let imageDatas = false;
@@ -493,5 +507,7 @@ function dataURLtoFile(dataURL, filename) {
     return new File([u8arr], filename, { type: mime });
 }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </body>
 </html>

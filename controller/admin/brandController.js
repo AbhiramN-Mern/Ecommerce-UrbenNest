@@ -37,21 +37,24 @@ const getBrandPage = async (req, res) => {
         res.redirect('/pageNotFound');
     }
 }
-
 const addBrand = async (req, res) => {
     try {
         const brandName = req.body.name;
-        const findBrand = await Brand.findOne({ brandName: brandName });
-        
+
+        // Case-sensitive brand search
+        const findBrand = await Brand.findOne({
+            brandName: { $regex: `^${brandName}$`, $options: '' } // Ensure correct field name
+        });
+
         if (findBrand) {
             return res.status(400).json({ error: 'Brand already exists' });
         }
 
         const newBrand = new Brand({
-            brandName: brandName,
+            brandName: brandName, // ✅ Correct field name
             brandImage: req.file ? [req.file.filename] : []
         });
-        
+
         await newBrand.save();
         res.status(200).json({ message: 'Brand added successfully' });
 
@@ -60,6 +63,7 @@ const addBrand = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 
 const blockBrand=async (req,res)=>{
     try {
