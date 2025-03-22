@@ -311,7 +311,6 @@ const logout=async(req,res)=>{
         
     }
 }
-
 const loadShoppingPage = async (req, res) => {
     try {
         const user = req.session.user;
@@ -380,6 +379,7 @@ const loadShoppingPage = async (req, res) => {
         res.redirect('/pageNotFound');
     }
 };
+
 
 const filterProduct = async (req, res, next) => {
     try {

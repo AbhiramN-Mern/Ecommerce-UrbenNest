@@ -75,7 +75,7 @@
 
     .clear-button{
       padding: 12px 25px;
-      background-color: #a72828;
+      background-color: #c52700;
       color: #fff;
       border: none;
       cursor: pointer;
@@ -83,6 +83,7 @@
       border-radius: 25px;
       margin-right: 5px;
       transition: background-color 0.3s, transform 0.2s;
+
     }
 
     .product-list-container {
@@ -356,9 +357,6 @@
       flex-grow: 1;
     }
 
-
- 
-
     .page-header {
       background-color: #f7f8fa;
       padding: 15px 0;
@@ -413,6 +411,7 @@
   <div class="main-container">
     <div class="shop-container">
       <h1 class="shop-title">Shop</h1>
+
       <div>
         <form action="/search" method="GET" class="search-form" onsubmit="event.preventDefault(); performSearch();">
           <input type="text" id="product-search" name="query" placeholder="Search products..." class="search-input">
@@ -420,7 +419,6 @@
           <button type="button" class="clear-button" onclick="clearSearch()">Clear</button>
         </form>
       </div>
-
       <div class="product-list-container">
         <aside class="sidebar">
           <div class="filter-section">
@@ -640,10 +638,6 @@
       });
     }
 
-    function clearSearch() {
-    document.getElementById('product-search').value = '';
-    location.reload();
-  }
     function updateWishlistCount() {
       $.ajax({
         url: '/getWishlistCount',
@@ -662,7 +656,9 @@
           console.error('Error fetching wishlist count:', error.responseText || error);
           $('#wishlistCount').hide();
         }
-      });678px
+      });
+    }
+
     function addToCart(productId, button) {
       button.disabled = true;
       button.textContent = 'Adding...';
@@ -693,6 +689,10 @@
         }
       });
     }
+    function clearSearch() {
+    document.getElementById('product-search').value = '';
+    location.reload(); // Refresh the page
+  }
 
     function addToWishlist(productId) {
       const button = event.currentTarget;
