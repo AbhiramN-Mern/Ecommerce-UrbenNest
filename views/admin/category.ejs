@@ -54,25 +54,43 @@
         }
 
         .search-container {
-            max-width: 500px;
-            margin: 0 auto 2rem;
-        }
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
 
-        .search-input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 9999px;
-            background-color: var(--surface);
-            transition: all 0.2s;
-        }
+  .search-input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+  }
 
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
+  .search-button, .clear-button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
 
+  .search-button {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .search-button:hover {
+    background-color: #0056b3;
+  }
+
+  .clear-button {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .clear-button:hover {
+    background-color: #a71d2a;
+  }
         .content-grid {
             display: grid;
             grid-template-columns: 300px 1fr;
@@ -246,8 +264,10 @@
         </header>
 
         <div class="search-container">
-            <form action="/admin/category" method="get">
-                <input type="text" class="search-input" placeholder="Search categories" name="search">
+            <form action="/admin/category" method="get" id="category-search-form">
+                <input type="text" class="search-input" placeholder="Search categories" name="search" id="category-search">
+                <button type="submit" class="search-button">Search</button>
+                <button type="button" class="clear-button" onclick="clearCategorySearch()">Clear</button>
             </form>
         </div>
 
@@ -400,6 +420,10 @@
                 element.style.display = "none";
             });
         }
+        function clearCategorySearch() {
+    document.getElementById('category-search').value = '';
+    location.href = '/admin/category';
+  }
 
        
     </script>

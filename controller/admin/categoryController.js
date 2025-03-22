@@ -9,33 +9,39 @@ const { create } = require('../../models/userSchema');
 const category = require('../../models/categoryScheema');
 const { error } = require('console');
 
-const categoryInfo=async(req,res)=>{
-try{
-    const page=parseInt(req.query.page)||1;
-    const limit=4
-    const skip=(page-1)*limit
-    
-    const categoryData=await category.find({})
-    .sort({createAt:-1})
-    .skip(skip)
-    .limit(limit)
+const categoryInfo = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 4;
+        const skip = (page - 1) * limit;
+        const searchQuery = req.query.search ? req.query.search.trim() : '';
 
-    const totelCategory=await category.find({}).countDocuments()
-    const totalPages=Math.ceil(totelCategory/limit)
-    res.render('category',{
-        cat:categoryData,
-        currentPage:page,
-        totalPages:totalPages,
-        totelCategory:totelCategory
+        let filter = {};
+        if (searchQuery) {
+            filter = { name: { $regex: searchQuery, $options: 'i' } }; // Case-insensitive search
+        }
 
-    })
-}catch(error){
-    console.error(error)
-    res.redirect('/pageNotFound')
-    
+        const categoryData = await category.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-}
-}
+        const totalCategory = await category.find(filter).countDocuments();
+        const totalPages = Math.ceil(totalCategory / limit);
+
+        res.render('category', {
+            cat: categoryData,
+            currentPage: page,
+            totalPages: totalPages,
+            totalCategory: totalCategory,
+            searchQuery // Send back search query for maintaining input value
+        });
+    } catch (error) {
+        console.error(error);
+        res.redirect('/pageNotFound');
+    }
+};
+
 const addCategory=async(req,res)=>{
     const {name,description}=req.body;
     try {
