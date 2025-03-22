@@ -105,8 +105,6 @@ const getAllProducts = async (req, res) => {
         })
         .limit(limit)
         .skip((page - 1) * limit)
-        // Remove or comment out the following line if category is not an ObjectId reference:
-        // .populate('category')
         .exec();
 
         const count = await Product.find({

@@ -19,7 +19,7 @@ const loadhomepage = async (req, res) => {
         let productData = await Product.find({
             isBlocked: false,
             category: { $in: categories.map((cat) => cat._id) },
-            quantity: { $gt: 0 }
+            // quantity: { $gt: 0 }
         });
 
         productData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -353,13 +353,13 @@ const loadShoppingPage = async (req, res) => {
         const products = await Product.find({
             isBlocked: false,
             category: { $in: categoryIds },
-            quantity: { $gt: 0 }
+            // quantity: { $gt: 0 }
         }).sort(sortQuery).skip(skip).limit(limit);
 
         const totalProducts = await Product.countDocuments({
             isBlocked: false,
             category: { $in: categoryIds },
-            quantity: { $gt: 0 }
+            // quantity: { $gt: 0 }
         });
 
         const totalPages = Math.ceil(totalProducts / limit);
@@ -468,7 +468,7 @@ const filterByPrice = async (req, res, next) => {
         // Find products that are not blocked, available, and within the price range.
         let findProducts = await Product.find({
             isBlocked: false,
-            quantity: { $gt: 0 },
+            // quantity: { $gt: 0 },
             // Use salePrice if you want to filter by sale, or regularPrice if desired.
             salePrice: { $gte: minPrice, $lte: maxPrice }
         }).lean();
@@ -507,7 +507,7 @@ const searchProducts = async (req, res) => {
     const products = await Product.find({
       isBlocked: false,
       productName: { $regex: query, $options: 'i' },
-      quantity: { $gt: 0 }
+    //   quantity: { $gt: 0 }
     }).lean();
 
     console.log('Found products:', products.length);
