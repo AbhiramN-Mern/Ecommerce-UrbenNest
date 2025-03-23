@@ -42,23 +42,14 @@ const loadDashbord=async (req,res)=>{
     }
 }
 const logout=async(req,res)=>{    
-   try {
-    req.session.destroy(err=>{
-        if(err){            
-        console.log('Error in Admin Logout',err)
-        return res.redirect('/pageNotFound');
-        }
-        res.redirect('/admin/login')
-        console.log('Admin Logout Successfully')
-    })
-    
-   } catch (error) {
-    console.log('Unexpected Error in Admin Logout',error);
-    res.redirect('/pageNotFound')
-    
-    
-   }
-}
+    try {
+        delete req.session.admin; 
+        res.redirect('/admin/login');
+    } catch (error) {
+        console.error('Unexpected Error in Admin Logout:', error.message);
+        res.redirect('/pageNotFound');
+    }
+};
 
 
 

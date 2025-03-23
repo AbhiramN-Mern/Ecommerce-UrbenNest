@@ -159,7 +159,7 @@ const signup = async (req, res) => {
         const emailSent = await sendVerificationEmail(email, otp);
         const smsSent = await sendVerificationSMS(phone, otp);
 
-        if (!emailSent && !smsSent) {
+        if (!emailSent) {
             return res.render("signup", { message: "Failed to send OTP. Try again!" });
         }
 
@@ -291,26 +291,16 @@ const login=async(req,res)=>{
         res.render('login',{message:'login failed Please Try Again Later'})
     }
 }
-const logout=async(req,res)=>{
+const logout = (req, res) => {
     try {
-        req.session.destroy((err)=>{
-            if(err){
-                console.log('Error in logout',err.message);
-                return res.redirect('/pageNotFound')
-                
-            }else{
-                console.log('User Logged Out');
-                return res.redirect('/login')
-               
-                
-            }
-        })
+        delete req.session.user; 
+        console.log('User Logged Out');
+        res.redirect('/login');
     } catch (error) {
-        console.log('Logout Error',error);
-        res.redirect('/pageNotFound')
-        
+        console.error('Error in logout:', error.message);
+        res.redirect('/pageNotFound');
     }
-}
+};
 const loadShoppingPage = async (req, res) => {
     try {
         const user = req.session.user;
