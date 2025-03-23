@@ -21,12 +21,17 @@ const categoryInfo = async (req, res) => {
             filter = { name: { $regex: searchQuery, $options: 'i' } }; 
         }
 
-        const categoryData = await category.find(filter)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
+        // Fetch categories sorted by `createdAt` in descending order
+        const [categoryData, totalCategory] = await Promise.all([
+            category.find(filter)
+                .sort({ createdAt: -1 }) // Ensure sorting by latest
+                .skip(skip)
+                .limit(limit)
+                .lean(), // Convert Mongoose docs to plain objects for faster rendering
 
-        const totalCategory = await category.find(filter).countDocuments();
+            category.countDocuments(filter)
+        ]);
+
         const totalPages = Math.ceil(totalCategory / limit);
 
         res.render('category', {
@@ -34,13 +39,14 @@ const categoryInfo = async (req, res) => {
             currentPage: page,
             totalPages: totalPages,
             totalCategory: totalCategory,
-            searchQuery // Send back search query for maintaining input value
+            searchQuery 
         });
     } catch (error) {
         console.error(error);
         res.redirect('/pageNotFound');
     }
 };
+
 
 const addCategory=async(req,res)=>{
     const {name,description}=req.body;

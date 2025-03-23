@@ -87,6 +87,11 @@ const customerBlocked = async (req, res) => {
           return res.status(404).json({ success: false, message: "Customer not found" });
       }
 
+      if (req.session?.user && req.session.user._id?.toString() === id) {
+        delete req.session.user; // Force logout
+        console.log(`User ${id} session deleted (Blocked)`);
+    }
+
       // Send block notification email
       const emailSent = await sendBlockNotificationEmail(customer.email, customer.name, reason);
 
