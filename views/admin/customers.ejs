@@ -379,47 +379,76 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    async function blockCustomer(id) {
-        try {
-            const response = await fetch(`/admin/customers/${id}/block`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            const data = await response.json();
-            if (data.success) {
-                Swal.fire("Success", data.message, "success").then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire("Error", data.message, "error");
+   async function blockCustomer(id) {
+    Swal.fire({
+        title: "Enter Block Reason",
+        input: "text",
+        inputPlaceholder: "Type reason here...",
+        showCancelButton: true,
+        confirmButtonText: "Block",
+        preConfirm: (reason) => {
+            if (!reason) {
+                Swal.showValidationMessage("Reason is required!");
             }
-        } catch (error) {
-            Swal.fire("Error", "An error occurred while blocking the customer", "error");
-        }
-    }
+            return reason;
+        },
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/admin/customers/${id}/block`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ reason: result.value }),
+                });
 
-    async function unblockCustomer(id) {
-        try {
-            const response = await fetch(`/admin/customers/${id}/unblock`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            const data = await response.json();
-            if (data.success) {
-                Swal.fire("Success", data.message, "success").then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire("Error", data.message, "error");
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire("Success", data.message, "success").then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire("Error", data.message, "error");
+                }
+            } catch (error) {
+                Swal.fire("Error", "An error occurred while blocking the customer", "error");
             }
-        } catch (error) {
-            Swal.fire("Error", "An error occurred while unblocking the customer", "error");
         }
-    }
+    });
+}
+
+async function unblockCustomer(id) {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "This will unblock the user.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, Unblock!",
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/admin/customers/${id}/unblock`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire("Success", data.message, "success").then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire("Error", data.message, "error");
+                }
+            } catch (error) {
+                Swal.fire("Error", "An error occurred while unblocking the customer", "error");
+            }
+        }
+    });
+}
 
     function clearSearch() {
         document.getElementById('searchInput').value = '';
