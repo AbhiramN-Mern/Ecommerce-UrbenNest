@@ -28,11 +28,11 @@ const productSchema = new Schema({
         type: Number,
         required: true,
     },
-    productOffer: {           // fixed spelling here
+    productOffer: {
         type: Number,
         default: 0,
     },
-    quantity: {               // renamed field and fixed default
+    quantity: {               
         type: Number,
         default: 0,
     },
