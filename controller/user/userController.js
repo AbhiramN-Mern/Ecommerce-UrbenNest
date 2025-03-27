@@ -545,9 +545,15 @@ const filterProducts = async (req, res) => {
             console.log('Added all categories filter:', filterQuery);
         }
 
+        
+
         if (brand) {
-            filterQuery.brand = brand;
-            console.log('Added brand filter:', filterQuery);
+            // Fetch the brand document to get the brandName
+            const brandDoc = await Brand.findById(brand);
+            if (!brandDoc) {
+                return res.json({ products: [] }); // No brand found, return empty
+            }
+            filterQuery.brand = brandDoc.brandName; // Use the brand name instead of _id
         }
 
         let sortQuery = {};
@@ -587,7 +593,8 @@ module.exports = {
     loadlogin,
     login,
     logout,
-    loadShoppingPage,filterProducts
+    loadShoppingPage,
+    filterProducts
 };
 
 
