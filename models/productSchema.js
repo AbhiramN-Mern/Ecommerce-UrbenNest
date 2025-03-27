@@ -54,7 +54,7 @@ const productSchema = new Schema({
         required: true,
         default: 'Availble'
     },
-}, { timeStamp: true });
+}, { timestamps: true });
 
 const Product = mongoose.model('product', productSchema);
 module.exports = Product;

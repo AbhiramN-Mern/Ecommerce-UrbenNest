@@ -20,5 +20,5 @@ const brandSchema=new Schema({
     }
 })
 
-const Brand=mongoose.model("brand",brandSchema)
+const Brand=mongoose.model("Brand",brandSchema)
 module.exports=Brand

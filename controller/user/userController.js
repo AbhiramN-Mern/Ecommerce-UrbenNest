@@ -14,25 +14,21 @@ const axios = require('axios');
 const loadhomepage = async (req, res) => {
     try {
         const user = req.session.user;
-        const categories = await Category.find({ isListed: true });
+        
+        // Fetch categories that are listed
+        const categories = await Category.find({ isListed: true }).select('_id');
 
-        let productData = await Product.find({
+        // Fetch latest products directly with sorting and limiting
+        const productData = await Product.find({
             isBlocked: false,
-            category: { $in: categories.map((cat) => cat._id) },
-            // quantity: { $gt: 0 }
-        });
+            category: { $in: categories.map(cat => cat._id) }
+        })
+        .sort({ createdAt: -1 }) // Sort by latest first
+        .limit(3); // Limit to 3 products
 
-        productData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        productData = productData.slice(0, 3);
-
-        if (user) {
-            const userData = await User.findOne({ _id: user });
-            res.render('home', { user: userData, products: productData });
-        } else {
-            res.render('home', { products: productData, user: req.user });
-        }
+        res.render('home', { user: user ? await User.findById(user) : req.user, products: productData });
     } catch (error) {
-        console.error("Home Page Not Found:", error);
+        console.error("Error loading home page:", error);
         res.status(500).send("Server Error");
     }
 };
