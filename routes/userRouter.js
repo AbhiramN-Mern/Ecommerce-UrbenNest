@@ -30,9 +30,14 @@ router.get('/users', adminAuth, customerController.customerInfo)
 //shopPage&&homePage
 router.get('/',usercontroller.loadhomepage)
 router.get('/shop', usercontroller.loadShoppingPage);
-router.get('/filter', usercontroller.filterProduct);
-router.get('/filterByPrice', usercontroller.filterByPrice);
-router.get("/search", usercontroller.searchProducts);
+// router.get('/filter', usercontroller.filterProduct);
+// router.get('/filterByPrice', usercontroller.filterByPrice);
+// router.get("/search", usercontroller.searchProducts);
+
+
+
+
+router.get('/filter', usercontroller.filterProducts);
 
 //product Management
 router.get('/product-details',productController.productDetails)
