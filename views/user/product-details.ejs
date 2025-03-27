@@ -686,17 +686,15 @@ function toggleWishlist(productId) {
  -->
 
 
-
-
  <script>
     const wishlist = <%- JSON.stringify(wishlist || []) %>;
-    
+
     document.addEventListener('DOMContentLoaded', function () {
         const minusBtn = document.querySelector('.minus');
         const plusBtn = document.querySelector('.plus');
         const qtyInput = document.querySelector('.qty-input');
         const MAX_QUANTITY = 3; // Maximum allowed quantity per product
-    
+
         // Decrease quantity
         minusBtn.addEventListener('click', () => {
             const currentValue = parseInt(qtyInput.value);
@@ -704,7 +702,7 @@ function toggleWishlist(productId) {
                 qtyInput.value = currentValue - 1;
             }
         });
-    
+
         // Increase quantity with limit check
         plusBtn.addEventListener('click', () => {
             const currentValue = parseInt(qtyInput.value);
@@ -714,7 +712,7 @@ function toggleWishlist(productId) {
                 showQuantityLimitToast();
             }
         });
-    
+
         // Prevent manual input above limit
         qtyInput.addEventListener('input', () => {
             const currentValue = parseInt(qtyInput.value);
@@ -725,12 +723,12 @@ function toggleWishlist(productId) {
                 qtyInput.value = 1;
             }
         });
-    
+
         const thumbnails = document.querySelectorAll('.thumbnail-item img');
         const mainImage = document.getElementById('mainImage');
         const zoomWrapper = document.querySelector('.zoom-wrapper');
         const mainImageContainer = document.querySelector('.main-image-container');
-    
+
         function adjustContainerHeight() {
             const img = new Image();
             img.src = mainImage.src;
@@ -739,9 +737,9 @@ function toggleWishlist(productId) {
                 mainImageContainer.style.paddingTop = `${aspectRatio * 100}%`;
             };
         }
-    
+
         adjustContainerHeight();
-    
+
         thumbnails.forEach(thumbnail => {
             thumbnail.addEventListener('click', function () {
                 thumbnails.forEach(t => t.parentElement.classList.remove('active'));
@@ -751,34 +749,34 @@ function toggleWishlist(productId) {
                 adjustContainerHeight();
             });
         });
-    
+
         const zoomFactor = 2;
         zoomWrapper.addEventListener('mousemove', (e) => {
             const rect = zoomWrapper.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-    
+
             const originX = (x / rect.width) * 100;
             const originY = (y / rect.height) * 100;
-    
+
             mainImage.style.transformOrigin = `${originX}% ${originY}%`;
             mainImage.style.transform = `scale(${zoomFactor})`;
         });
-    
+
         zoomWrapper.addEventListener('mouseleave', () => {
             mainImage.style.transform = 'scale(1)';
             mainImage.style.transformOrigin = 'center center';
         });
     });
-    
-    // Stylish Toastify message for quantity limit (2025 vibe)
+
+    // Stylish Toastify message for quantity limit (unchanged)
     function showQuantityLimitToast() {
         Toastify({
             text: "Oops! Max 3 items per product allowed!",
             duration: 3000,
             close: true,
-            gravity: "top", // top or bottom
-            position: "right", // left, center, or right
+            gravity: "top",
+            position: "right",
             stopOnFocus: true,
             style: {
                 background: "linear-gradient(135deg, #ff6f61, #de4d4d)",
@@ -789,23 +787,23 @@ function toggleWishlist(productId) {
                 padding: "12px 20px",
                 color: "#fff"
             },
-            onClick: function() {} // Optional: Add click behavior if needed
+            onClick: function() {}
         }).showToast();
     }
-    
+
     function updateCartCount(count) {
         document.getElementById('cart-count').innerText = count;
     }
-    
+
     function addToCart(productId) {
         const quantity = parseInt(document.querySelector('.qty-input').value);
         const MAX_QUANTITY = 3;
-    
+
         if (quantity > MAX_QUANTITY) {
             showQuantityLimitToast();
-            return; // Prevent adding to cart
+            return;
         }
-    
+
         $.ajax({
             url: '/addToCart',
             method: 'POST',
@@ -816,9 +814,10 @@ function toggleWishlist(productId) {
                     text: response.message,
                     icon: 'success',
                     timer: 3000,
-                    background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
-                    color: '#fff',
-                    confirmButtonColor: '#6b48ff'
+                    background: '#ffffff', // White background
+                    color: '#333333', // Dark gray text for contrast
+                    confirmButtonColor: '#28a745', // Green for success
+                    iconColor: '#28a745'
                 });
                 if (response.cartCount) updateCartCount(response.cartCount);
             },
@@ -828,18 +827,19 @@ function toggleWishlist(productId) {
                     text: error.responseJSON?.message || 'There was an error adding the product to your cart',
                     icon: 'error',
                     timer: 3000,
-                    background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
-                    color: '#fff',
-                    confirmButtonColor: '#ff6f61'
+                    background: '#ffffff',
+                    color: '#333333',
+                    confirmButtonColor: '#dc3545', // Red for error
+                    iconColor: '#dc3545'
                 });
             }
         });
     }
-    
+
     function toggleWishlist(productId) {
         const wishlistBtn = document.getElementById('wishlistBtn');
         const isInWishlist = wishlistBtn.classList.contains('in-wishlist');
-    
+
         if (isInWishlist) {
             $.ajax({
                 url: '/removeFromWishlist',
@@ -855,9 +855,10 @@ function toggleWishlist(productId) {
                             text: 'The product has been removed from your wishlist',
                             icon: 'success',
                             timer: 2000,
-                            background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
-                            color: '#fff',
-                            confirmButtonColor: '#6b48ff'
+                            background: '#ffffff',
+                            color: '#333333',
+                            confirmButtonColor: '#28a745',
+                            iconColor: '#28a745'
                         });
                     }
                 },
@@ -867,9 +868,10 @@ function toggleWishlist(productId) {
                         text: 'There was an error removing the product from your wishlist',
                         icon: 'error',
                         timer: 2000,
-                        background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
-                        color: '#fff',
-                        confirmButtonColor: '#ff6f61'
+                        background: '#ffffff',
+                        color: '#333333',
+                        confirmButtonColor: '#dc3545',
+                        iconColor: '#dc3545'
                     });
                 }
             });
@@ -887,9 +889,10 @@ function toggleWishlist(productId) {
                             text: 'The product has been added to your wishlist',
                             icon: 'success',
                             timer: 2000,
-                            background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
-                            color: '#fff',
-                            confirmButtonColor: '#6b48ff'
+                            background: '#ffffff',
+                            color: '#333333',
+                            confirmButtonColor: '#28a745',
+                            iconColor: '#28a745'
                         });
                     } else {
                         Swal.fire({
@@ -897,9 +900,10 @@ function toggleWishlist(productId) {
                             text: response.message,
                             icon: 'info',
                             timer: 2000,
-                            background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
-                            color: '#fff',
-                            confirmButtonColor: '#6b48ff'
+                            background: '#ffffff',
+                            color: '#333333',
+                            confirmButtonColor: '#17a2b8', // Teal for info
+                            iconColor: '#17a2b8'
                         });
                     }
                 },
@@ -909,17 +913,18 @@ function toggleWishlist(productId) {
                         text: 'There was an error adding the product to your wishlist',
                         icon: 'error',
                         timer: 2000,
-                        background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
-                        color: '#fff',
-                        confirmButtonColor: '#ff6f61'
+                        background: '#ffffff',
+                        color: '#333333',
+                        confirmButtonColor: '#dc3545',
+                        iconColor: '#dc3545'
                     });
                 }
             });
         }
     }
-    </script>
-    
-    <!-- Optional: Add Poppins font for better styling -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</script>
+
+<!-- Optional: Add Poppins font for better styling -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
 <%- include("../../views/partials/user/footer") %>
