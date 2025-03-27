@@ -380,7 +380,7 @@
                         <div class="product-meta">
                             <div class="brand">
                                 Brands: <a href="#"><%= product.brand %></a>
-                            </div>
+                            
                             <div class="reviews">
                                 <div class="stars">
                                     <%
@@ -394,6 +394,7 @@
                                 </div>
                                 <span>(<%= (product.reviews || []).length %> reviews)</span>
                             </div>
+                        </div>
                         </div>
 
                         <div class="product-price">
@@ -511,6 +512,13 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+
+
+<!-- 
 
 <script>
 
@@ -675,5 +683,243 @@ function toggleWishlist(productId) {
     }
 }
 </script>
+ -->
+
+
+
+
+ <script>
+    const wishlist = <%- JSON.stringify(wishlist || []) %>;
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        const minusBtn = document.querySelector('.minus');
+        const plusBtn = document.querySelector('.plus');
+        const qtyInput = document.querySelector('.qty-input');
+        const MAX_QUANTITY = 3; // Maximum allowed quantity per product
+    
+        // Decrease quantity
+        minusBtn.addEventListener('click', () => {
+            const currentValue = parseInt(qtyInput.value);
+            if (currentValue > 1) {
+                qtyInput.value = currentValue - 1;
+            }
+        });
+    
+        // Increase quantity with limit check
+        plusBtn.addEventListener('click', () => {
+            const currentValue = parseInt(qtyInput.value);
+            if (currentValue < MAX_QUANTITY) {
+                qtyInput.value = currentValue + 1;
+            } else {
+                showQuantityLimitToast();
+            }
+        });
+    
+        // Prevent manual input above limit
+        qtyInput.addEventListener('input', () => {
+            const currentValue = parseInt(qtyInput.value);
+            if (currentValue > MAX_QUANTITY) {
+                qtyInput.value = MAX_QUANTITY;
+                showQuantityLimitToast();
+            } else if (currentValue < 1 || isNaN(currentValue)) {
+                qtyInput.value = 1;
+            }
+        });
+    
+        const thumbnails = document.querySelectorAll('.thumbnail-item img');
+        const mainImage = document.getElementById('mainImage');
+        const zoomWrapper = document.querySelector('.zoom-wrapper');
+        const mainImageContainer = document.querySelector('.main-image-container');
+    
+        function adjustContainerHeight() {
+            const img = new Image();
+            img.src = mainImage.src;
+            img.onload = function() {
+                const aspectRatio = img.height / img.width;
+                mainImageContainer.style.paddingTop = `${aspectRatio * 100}%`;
+            };
+        }
+    
+        adjustContainerHeight();
+    
+        thumbnails.forEach(thumbnail => {
+            thumbnail.addEventListener('click', function () {
+                thumbnails.forEach(t => t.parentElement.classList.remove('active'));
+                this.parentElement.classList.add('active');
+                const newImageSrc = this.getAttribute('src');
+                mainImage.src = newImageSrc;
+                adjustContainerHeight();
+            });
+        });
+    
+        const zoomFactor = 2;
+        zoomWrapper.addEventListener('mousemove', (e) => {
+            const rect = zoomWrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+    
+            const originX = (x / rect.width) * 100;
+            const originY = (y / rect.height) * 100;
+    
+            mainImage.style.transformOrigin = `${originX}% ${originY}%`;
+            mainImage.style.transform = `scale(${zoomFactor})`;
+        });
+    
+        zoomWrapper.addEventListener('mouseleave', () => {
+            mainImage.style.transform = 'scale(1)';
+            mainImage.style.transformOrigin = 'center center';
+        });
+    });
+    
+    // Stylish Toastify message for quantity limit (2025 vibe)
+    function showQuantityLimitToast() {
+        Toastify({
+            text: "Oops! Max 3 items per product allowed!",
+            duration: 3000,
+            close: true,
+            gravity: "top", // top or bottom
+            position: "right", // left, center, or right
+            stopOnFocus: true,
+            style: {
+                background: "linear-gradient(135deg, #ff6f61, #de4d4d)",
+                borderRadius: "8px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                fontFamily: "'Poppins', sans-serif",
+                fontSize: "16px",
+                padding: "12px 20px",
+                color: "#fff"
+            },
+            onClick: function() {} // Optional: Add click behavior if needed
+        }).showToast();
+    }
+    
+    function updateCartCount(count) {
+        document.getElementById('cart-count').innerText = count;
+    }
+    
+    function addToCart(productId) {
+        const quantity = parseInt(document.querySelector('.qty-input').value);
+        const MAX_QUANTITY = 3;
+    
+        if (quantity > MAX_QUANTITY) {
+            showQuantityLimitToast();
+            return; // Prevent adding to cart
+        }
+    
+        $.ajax({
+            url: '/addToCart',
+            method: 'POST',
+            data: { productId: productId, quantity: quantity },
+            success: (response) => {
+                Swal.fire({
+                    title: 'Success',
+                    text: response.message,
+                    icon: 'success',
+                    timer: 3000,
+                    background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
+                    color: '#fff',
+                    confirmButtonColor: '#6b48ff'
+                });
+                if (response.cartCount) updateCartCount(response.cartCount);
+            },
+            error: (error) => {
+                Swal.fire({
+                    title: 'Error',
+                    text: error.responseJSON?.message || 'There was an error adding the product to your cart',
+                    icon: 'error',
+                    timer: 3000,
+                    background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
+                    color: '#fff',
+                    confirmButtonColor: '#ff6f61'
+                });
+            }
+        });
+    }
+    
+    function toggleWishlist(productId) {
+        const wishlistBtn = document.getElementById('wishlistBtn');
+        const isInWishlist = wishlistBtn.classList.contains('in-wishlist');
+    
+        if (isInWishlist) {
+            $.ajax({
+                url: '/removeFromWishlist',
+                method: 'GET',
+                data: { productId: productId },
+                success: (response) => {
+                    if (response.success) {
+                        wishlistBtn.classList.remove('in-wishlist');
+                        const index = wishlist.indexOf(productId);
+                        if (index > -1) wishlist.splice(index, 1);
+                        Swal.fire({
+                            title: 'Removed from Wishlist',
+                            text: 'The product has been removed from your wishlist',
+                            icon: 'success',
+                            timer: 2000,
+                            background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
+                            color: '#fff',
+                            confirmButtonColor: '#6b48ff'
+                        });
+                    }
+                },
+                error: (error) => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'There was an error removing the product from your wishlist',
+                        icon: 'error',
+                        timer: 2000,
+                        background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
+                        color: '#fff',
+                        confirmButtonColor: '#ff6f61'
+                    });
+                }
+            });
+        } else {
+            $.ajax({
+                url: '/addToWishlist',
+                method: 'POST',
+                data: { productId: productId },
+                success: (response) => {
+                    if (response.status) {
+                        wishlistBtn.classList.add('in-wishlist');
+                        wishlist.push(productId);
+                        Swal.fire({
+                            title: 'Added to Wishlist',
+                            text: 'The product has been added to your wishlist',
+                            icon: 'success',
+                            timer: 2000,
+                            background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
+                            color: '#fff',
+                            confirmButtonColor: '#6b48ff'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Already in Wishlist',
+                            text: response.message,
+                            icon: 'info',
+                            timer: 2000,
+                            background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
+                            color: '#fff',
+                            confirmButtonColor: '#6b48ff'
+                        });
+                    }
+                },
+                error: (error) => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'There was an error adding the product to your wishlist',
+                        icon: 'error',
+                        timer: 2000,
+                        background: 'linear-gradient(135deg, #1e1e2f 0%, #2a2a4a 100%)',
+                        color: '#fff',
+                        confirmButtonColor: '#ff6f61'
+                    });
+                }
+            });
+        }
+    }
+    </script>
+    
+    <!-- Optional: Add Poppins font for better styling -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
 <%- include("../../views/partials/user/footer") %>

@@ -1,6 +1,9 @@
 const Category = require('../../models/categoryScheema');
 const User = require('../../models/userSchema');
 const Product = require('../../models/productSchema');
+
+
+
 const productDetails = async (req, res, next) => {
     try {
         const userId = req.session.user;
