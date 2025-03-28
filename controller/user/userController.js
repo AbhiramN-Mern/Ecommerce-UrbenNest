@@ -16,16 +16,14 @@ const loadhomepage = async (req, res) => {
     try {
         const user = req.session.user;
         
-        // Fetch categories that are listed
         const categories = await Category.find({ isListed: true }).select('_id');
 
-        // Fetch latest products directly with sorting and limiting
         const productData = await Product.find({
             isBlocked: false,
             category: { $in: categories.map(cat => cat._id) }
         })
-        .sort({ createdAt: -1 }) // Sort by latest first
-        .limit(3); // Limit to 3 products
+        .sort({ createdAt: -1 }) 
+        .limit(3);
 
         res.render('home', { user: user ? await User.findById(user) : req.user, products: productData });
     } catch (error) {
@@ -308,12 +306,11 @@ const loadShoppingPage = async (req, res) => {
         const limit = 9;
         const skip = (page - 1) * limit;
 
-        // Create an explicit sort mapping
         const sortOption = req.query.sort || 'created-new';  
         let sortQuery = {};
         switch(sortOption) {
             case "price-high":
-                // descending by salePrice; adjust field name if needed
+              
                 sortQuery = { salePrice: -1 };
                 break;
             case "price-low":
@@ -548,12 +545,12 @@ const filterProducts = async (req, res) => {
         
 
         if (brand) {
-            // Fetch the brand document to get the brandName
+        
             const brandDoc = await Brand.findById(brand);
             if (!brandDoc) {
-                return res.json({ products: [] }); // No brand found, return empty
+                return res.json({ products: [] }); 
             }
-            filterQuery.brand = brandDoc.brandName; // Use the brand name instead of _id
+            filterQuery.brand = brandDoc.brandName; 
         }
 
         let sortQuery = {};
@@ -583,6 +580,8 @@ const filterProducts = async (req, res) => {
 
 
 
+
+
 module.exports = {
     loadhomepage,
     pageNotFound,
@@ -594,7 +593,7 @@ module.exports = {
     login,
     logout,
     loadShoppingPage,
-    filterProducts
+    filterProducts,
 };
 
 

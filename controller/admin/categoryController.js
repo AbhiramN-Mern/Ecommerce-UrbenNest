@@ -8,6 +8,7 @@ app.use(express.urlencoded({ extended: true }));
 const { create } = require('../../models/userSchema');
 const category = require('../../models/categoryScheema');
 const { error } = require('console');
+const Category = require('../../models/categoryScheema');
 
 const categoryInfo = async (req, res) => {
     try {
@@ -129,11 +130,13 @@ const editCategory = async (req, res) => {
     }
 };
 
+
 module.exports={
     categoryInfo,
     addCategory,
     getlisteCategory,
     getunlisteCategory,
     getEditCategory,
-    editCategory
+    editCategory,
+    
 }
