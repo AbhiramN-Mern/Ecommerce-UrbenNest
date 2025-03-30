@@ -287,6 +287,21 @@ const getVerifyForgotOTPPage = async (req, res) => {
       res.redirect("/pageNotFound");
   }
 };
+const userProfile = async (req, res) => {
+    try {
+        const userId = req.session.user;
+        const userData = await User.findById(userId);
+        if (!userData) {
+            console.error("No user found for ID:", userId);
+            return res.redirect('/login');
+        }
+        // Override currentPage here for the header
+        res.render('profile', { user: userData, currentPage: 'profile' });
+    } catch (error) {
+        console.error("Error in ProfileData", error);
+        res.redirect('/pageNotFound');
+    }
+};
 
 
 
@@ -302,5 +317,6 @@ module.exports = {
     changePasswordValid,
     verifyChangePassOtp,
     postNewPassword,
-    getVerifyForgotOTPPage
+    getVerifyForgotOTPPage,
+    userProfile
 }

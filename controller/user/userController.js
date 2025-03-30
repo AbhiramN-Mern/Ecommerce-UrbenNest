@@ -605,6 +605,8 @@ const googleAuthCallback = (req, res) => {
     res.redirect('/');
 };
 
+
+
 module.exports = {
     loadhomepage,
     pageNotFound,
@@ -617,7 +619,8 @@ module.exports = {
     logout,
     loadShoppingPage,
     filterProducts,
-    googleAuthCallback 
+    googleAuthCallback ,
+    
 };
 
 
