@@ -41,13 +41,13 @@ app.use('/',userRouter)
 app.use('/admin',adminRouter)
 
 app.use((req, res, next) => {
-    console.log(`404 - Route not found: ${req.originalUrl}`);
+    // console.log(`404 - Route not found: ${req.originalUrl}`);
     res.status(404).render('page-404');
 });
 
 // Global Error Handler (for errors thrown in controllers)
 app.use((err, req, res, next) => {
-    console.error(`Error occurred: ${err.message}`, err.stack);
+    // console.error(`Error occurred: ${err.message}`, err.stack);
 
     // Handle Mongoose CastError (e.g., invalid ObjectId)
     if (err.name === 'CastError') {

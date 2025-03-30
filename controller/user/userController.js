@@ -578,7 +578,12 @@ const filterProducts = async (req, res) => {
 };
 
 const googleAuthCallback = (req, res) => {
-    req.session.user = req.user._id;
+    const user = req.user;
+    if (user.isBlocked) {
+        // Render the login page with a blocked message if the user is blocked
+        return res.render("login", { message: "User is Blocked by Admin" });
+    }
+    req.session.user = user._id;
     res.redirect('/');
 };
 
@@ -594,10 +599,8 @@ module.exports = {
     logout,
     loadShoppingPage,
     filterProducts,
-    googleAuthCallback  // Export the new function
+    googleAuthCallback 
 };
-
-
 
 
 
