@@ -27,10 +27,12 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 
-app.use((req,res,next)=>{
-    res.set('cache-control','no-store')
-    next()
-})
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+});
 
 app.set('view engine','ejs')
 app.set('views', [path.join(__dirname, 'views'),path.join(__dirname, 'views/admin'),path.join(__dirname, 'views/user')

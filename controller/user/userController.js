@@ -580,7 +580,10 @@ const filterProducts = async (req, res) => {
 const googleAuthCallback = (req, res) => {
     const user = req.user;
     if (user.isBlocked) {
-        // Render the login page with a blocked message if the user is blocked
+        // Delete only the user session variable,
+        // leaving any other session data (like admin session) intact.
+        delete req.session.user;
+        res.set('Cache-Control', 'no-store'); // prevent caching
         return res.render("login", { message: "User is Blocked by Admin" });
     }
     req.session.user = user._id;
