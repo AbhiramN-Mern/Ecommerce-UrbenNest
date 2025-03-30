@@ -40,14 +40,29 @@ const pageNotFound = async (req, res) => {
     }
 };
 
-const loadsignup = async (req, res) => {
+// const loadsignup = async (req, res) => {
+//     try {
+//         return res.render("signup");
+//     } catch (error) {
+//         console.error("Signup page not loading:", error);
+//         res.status(500).send("Server error");
+//     }
+// };
+
+const loadsignup=async (req,res)=>{
     try {
-        return res.render("signup");
+        if(!req.session.user){
+            return res.render('signup')
+        }else{
+            res.redirect('/')
+        }
     } catch (error) {
-        console.error("Signup page not loading:", error);
-        res.status(500).send("Server error");
+        res.redirect('/pageNotFound')
+        
     }
-};
+}
+
+
 
 function generateOTP() {
     return Math.floor(1000 + Math.random() * 9000).toString();
