@@ -154,7 +154,7 @@ const signup = async (req, res) => {
         const emailSent = await sendVerificationEmail(email, otp);
         const smsSent = await sendVerificationSMS(phone, otp);
 
-        if (!emailSent) {
+       if (!emaailSent) {
             return res.render("signup", { message: "Failed to send OTP. Try again!" });
         }
 
@@ -577,10 +577,10 @@ const filterProducts = async (req, res) => {
     }
 };
 
-
-
-
-
+const googleAuthCallback = (req, res) => {
+    req.session.user = req.user._id;
+    res.redirect('/');
+};
 
 module.exports = {
     loadhomepage,
@@ -594,6 +594,7 @@ module.exports = {
     logout,
     loadShoppingPage,
     filterProducts,
+    googleAuthCallback  // Export the new function
 };
 
 
