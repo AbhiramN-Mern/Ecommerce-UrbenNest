@@ -246,7 +246,7 @@ const loadlogin=async (req,res)=>{
         if(!req.session.user){
             return res.render('login')
         }else{
-            res.redirect('/home')
+            res.redirect('/')
         }
     } catch (error) {
         res.redirect('/pageNotFound')
