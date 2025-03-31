@@ -368,10 +368,14 @@ const addAddress=async(req,res)=>{
 }
 const postAddAddress = async (req, res) => {
     try {
-        // Log the request body for debugging
+        // Debug logging
         console.log("Address form submission:", req.body);
-        
-        // Build the new address object using the proper field names
+        // Ensure user is logged in
+        const userId = req.session.user;
+        if (!userId) {
+            console.error("No user found in session");
+            return res.redirect('/login');
+        }
         const newAddress = {
             addressType: req.body.addressType,
             name: req.body.name,
@@ -384,14 +388,12 @@ const postAddAddress = async (req, res) => {
         };
 
         // Find an existing address document for the current user
-        let addressDoc = await Address.findOne({ userId: req.session.user });
+        let addressDoc = await Address.findOne({ userId: userId });
         if (addressDoc) {
-            // Push the new address into the existing addresses array
             addressDoc.address.push(newAddress);
             await addressDoc.save();
         } else {
-            // Otherwise, create a new document with the address array
-            addressDoc = await Address.create({ userId: req.session.user, address: [newAddress] });
+            addressDoc = await Address.create({ userId: userId, address: [newAddress] });
         }
         res.redirect('/userProfile');
     } catch (error) {
