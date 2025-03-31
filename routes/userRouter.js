@@ -57,4 +57,5 @@ router.get("/addAddress",profileController.addAddress)
 router.post('/addAddress',profileController.postAddAddress)
 router.get('/editAddress',profileController.editAddress)
 router.post('/editAddress',profileController.postEditAddress)
+router.get('/deleteAddress',profileController.deleteAddress)
 module.exports = router;

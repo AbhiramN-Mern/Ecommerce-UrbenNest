@@ -464,6 +464,43 @@ const editAddress = async (req, res) => {
         }
     }
 
+    const deleteAddress = async (req, res) => {
+        try {
+          const addressId = req.query.id;
+          console.log("Address ID:", addressId); // Log to verify the ID
+      
+          // Validate addressId
+          if (!addressId) {
+            return res.status(400).send("Address ID is required");
+          }
+      
+          // Find the document containing the address subdocument
+          const findAddress = await Address.findOne({ "address._id": addressId });
+          console.log("Found Address:", findAddress); // Log to debug
+      
+          if (!findAddress) {
+            return res.status(404).send("Address Not Found");
+          }
+      
+          // Remove the specific address from the array
+          const updateResult = await Address.updateOne(
+            { "address._id": addressId }, // Match the document
+            { $pull: { address: { _id: addressId } } } // Pull the matching subdocument
+          );
+      
+          console.log("Update Result:", updateResult); // Log the result
+      
+          if (updateResult.modifiedCount === 0) {
+            return res.status(500).send("Failed to delete address");
+          }
+      
+          res.redirect('/userProfile');
+        } catch (error) {
+          console.error("Error in Delete Address:", error);
+          res.redirect('/pageNotFound');
+        }
+      };
+
 module.exports = {
     getForgetPassPage,
     forgotEmailValid,
@@ -483,6 +520,7 @@ module.exports = {
     addAddress,
     postAddAddress,
     editAddress,
-    postEditAddress
+    postEditAddress,
+    deleteAddress
     
 }
