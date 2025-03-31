@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require('dotenv').config();
 const session = require("express-session");
+const { log } = require("console");
 
 
 
@@ -303,7 +304,55 @@ const userProfile = async (req, res) => {
     }
 };
 
+const changeEmail=async(req,res)=>{
+    try {
+        res.render('change-email')
+    } catch (error) {
+        res.redirect('pageNotFound')
+        
+    }
+}
+const changeEmailValid=async(req,res)=>{
+    try {
+        const {email}=req.body
+        const userExists=await User.findOne({email})
 
+        if(userExists){
+            const otp=generateOtp()
+            const emailSent=await sendVerificationEmail(email,otp)
+            if(emailSent){
+                req.session.userOtp=otp;
+                req.session.userData=req.body;
+                req.session.email=email;
+                res.render('change-email-otp')
+                console.log("email-send to",email);
+                console.log('OTP: ',otp)
+                
+            }else{
+                res.json('email-error')
+            }
+        }else{
+            res.render('change-email',{
+                message:"User With This Email NOt Exixt"
+            })
+        }
+    } catch (error) {
+        res.redirect('/pageNotFound')
+    }
+}
+
+const updateEmail=async(req,res)=>{
+    try {
+        
+    const newEmail=req.body.newEmail
+    const userId=req.session.user
+    await User.findByIdAndUpdate(userId,{email:newEmail})
+    res.redirect('/userProfile')
+    } catch (error) {
+        console.error(error)
+        res.redirect('/pageNotFound')
+    }
+}
 
 
 module.exports = {
@@ -318,5 +367,10 @@ module.exports = {
     verifyChangePassOtp,
     postNewPassword,
     getVerifyForgotOTPPage,
-    userProfile
+    userProfile,
+    changeEmail,
+    changeEmailValid,
+    updateEmail
+    
+    
 }
