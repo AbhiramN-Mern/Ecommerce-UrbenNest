@@ -55,5 +55,6 @@ router.post('/update-email',profileController.updateEmail)
 //Address Managememnt
 router.get("/addAddress",profileController.addAddress)
 router.post('/addAddress',profileController.postAddAddress)
-
+router.get('/editAddress',profileController.editAddress)
+router.post('/editAddress',profileController.postEditAddress)
 module.exports = router;

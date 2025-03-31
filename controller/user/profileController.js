@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const env = require('dotenv').config();
 const session = require("express-session");
 const { log } = require("console");
+const address = require("../../models/addressSchema");
 
 
 
@@ -398,6 +399,70 @@ const postAddAddress = async (req, res) => {
         res.redirect('/pageNotFound');
     }
 };
+const editAddress = async (req, res) => {
+    try {
+        console.log("Session data:", req.session);
+        const addressId = req.query.id;
+        console.log("Editing address with id:", addressId);
+        const user = req.session.user;
+        if (!user) {
+            console.error("No user found in session.");
+            return res.redirect("/login");
+        }
+        // Filter by userId as well as the subdocument's _id
+        const currAddress = await Address.findOne({ 
+            userId: req.session.user, 
+            "address._id": addressId 
+        });
+        console.log("Found address document:", currAddress);
+        if (!currAddress) {
+            return res.redirect('/pageNotFound');
+        }
+        const addressData = currAddress.address.find((item) => {
+            return item._id.toString() === addressId.toString();
+        });
+        if (!addressData) {
+            return res.redirect('/pageNotFound');
+        }
+        res.render('edit-address', { address: addressData, user: user });
+    } catch (error) {
+        console.error("Error in edit address", error);
+        res.redirect('/pageNotFound');
+    }
+};
+    const postEditAddress=async(req,res)=>{
+        try {
+            const data=req.body
+            const addressId=req.query.id
+            const findAddress=await Address.findOne({"address._id":addressId})
+            if(!findAddress){
+                res.redirect('/pageNotFound')
+            }
+            await Address.updateOne(
+                {"address._id":addressId},
+                {$set:{
+                    "address.$":{
+                        _id:addressId,
+                        addressType:data.addressType,
+                        name:data.name,
+                        city:data.city,
+                        landMark:data.landMark,
+                        state:data.state,
+                        pinCode:data.pinCode,
+                        phone:data.phone,
+                        altPhone:data.altPhone
+
+                    }
+                }}
+            )
+            res.redirect('/userProfile')
+        } catch (error) {
+            console.error("Error In Edit Address",error);
+            res.redirect('/pageNotFound')
+            
+            
+        }
+    }
 
 module.exports = {
     getForgetPassPage,
@@ -416,6 +481,8 @@ module.exports = {
     changeEmailValid,
     updateEmail,
     addAddress,
-    postAddAddress
+    postAddAddress,
+    editAddress,
+    postEditAddress
     
 }
