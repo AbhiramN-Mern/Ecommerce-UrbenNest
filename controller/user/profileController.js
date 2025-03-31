@@ -1,4 +1,5 @@
 const User = require("../../models/userSchema");
+const Address=require('../../models/addressSchema')
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require('dotenv').config();
@@ -292,12 +293,13 @@ const userProfile = async (req, res) => {
     try {
         const userId = req.session.user;
         const userData = await User.findById(userId);
+        const addressData=await Address.findOne({userId:userId})
         if (!userData) {
             console.error("No user found for ID:", userId);
             return res.redirect('/login');
         }
         // Override currentPage here for the header
-        res.render('profile', { user: userData, currentPage: 'profile' });
+        res.render('profile', { user: userData,userAddress:addressData, currentPage: 'profile' });
     } catch (error) {
         console.error("Error in ProfileData", error);
         res.redirect('/pageNotFound');
@@ -353,7 +355,49 @@ const updateEmail=async(req,res)=>{
         res.redirect('/pageNotFound')
     }
 }
+const addAddress=async(req,res)=>{
+    try {
+        const user=req.session.user
+        res.render('add-address',{user:user})
 
+
+    } catch (error) {
+        res.redirect('pageNotFound')
+    }
+}
+const postAddAddress = async (req, res) => {
+    try {
+        // Log the request body for debugging
+        console.log("Address form submission:", req.body);
+        
+        // Build the new address object using the proper field names
+        const newAddress = {
+            addressType: req.body.addressType,
+            name: req.body.name,
+            city: req.body.city,
+            landMark: req.body.landMark,
+            state: req.body.state,
+            pinCode: req.body.pinCode,
+            phone: req.body.phone,
+            altPhone: req.body.altPhone
+        };
+
+        // Find an existing address document for the current user
+        let addressDoc = await Address.findOne({ userId: req.session.user });
+        if (addressDoc) {
+            // Push the new address into the existing addresses array
+            addressDoc.address.push(newAddress);
+            await addressDoc.save();
+        } else {
+            // Otherwise, create a new document with the address array
+            addressDoc = await Address.create({ userId: req.session.user, address: [newAddress] });
+        }
+        res.redirect('/userProfile');
+    } catch (error) {
+        console.error(error);
+        res.redirect('/pageNotFound');
+    }
+};
 
 module.exports = {
     getForgetPassPage,
@@ -370,7 +414,8 @@ module.exports = {
     userProfile,
     changeEmail,
     changeEmailValid,
-    updateEmail
-    
+    updateEmail,
+    addAddress,
+    postAddAddress
     
 }

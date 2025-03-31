@@ -186,78 +186,80 @@
            <div class="col-md-8">
              <div class="tab-content dashboard-content">
 
-
-               <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
-                 <div class="card card-green">
-                   <div class="card-header">
-                     <h5 class="mb-0 text-center">User Profile</h5>
-                   </div>
-                   <div class="card-body text-center">
-                     <h5 class="card-title"><%=user.name%></h5>
-                     <p class="card-text">
-                       <strong>Phone:</strong><%=user.phone%>
-                     </p>
-                     <p class="card-text">
-                       <strong>Email:</strong><%=user.email%>
-                     </p>
-                     <a href="/change-email" class="btn btn-sm btn-success ml-2">Change Email</a>
-                     <a href="/change-password" class="btn btn-sm btn-success">Change Password</a>
-                   </div>
-                 </div>
-               </div>
-
-
-               <div
-                 class="tab-pane fade"
-                 id="address"
-                 role="tabpanel"
-                 aria-labelledby="address-tab"
-               >
-                 <div class="row">
-                
-                   <div class="col-lg-6">
-                     <div class="card mb-3 mb-lg-0">
-                       <div class="card-header">
-                         <h5 class="mb-0"></h5>
-                       </div>
-
-
-                       <div class="card-body">
-                         <address>
-                        
-                        
-                         </address>
-                         <p></p>
-                      
-                         <div class="d-flex justify-content-between">
-                           <a href="#" class="btn-small">Edit</a>
-                           <a href="#" class="btn-small" onclick="">Delete</a>
-                         </div>
-                        
-                       </div>
-                     </div>
-                   </div>
-                
-                   <div class="col-lg-6">
-                     <div class="card mb-3 mb-lg-0">
-                       <div class="card-header">
-                         <h5 class="mb-0"></h5>
-                       </div>
-                       <div class="card-body">
-                         <address>No address</address>
-                       </div>
-                     </div>
-                   </div>
+              <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                <div class="card card-green">
+                  <div class="card-header bg-success text-white">
+                    <h4 class="mb-0 text-center">User Profile Information</h4>
+                  </div>
+                  <div class="card-body text-center">
+                    <h5 class="card-title mb-4"><%= user.name %></h5>
+                    <div class="user-details mb-4">
+                      <p class="card-text">
+                        <strong>Phone Number:</strong> <%= user.phone %>
+                      </p>
+                      <p class="card-text">
+                        <strong>Email Address:</strong> <%= user.email %>
+                      </p>
+                    </div>
+                    <div class="account-actions">
+                      <a href="/change-email" class="btn btn-sm btn-success mx-2">Change Email</a>
+                      <a href="/change-password" class="btn btn-sm btn-success mx-2">Change Password</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
-                   <div>
-                     <a href="#">
-                       <button class="btn btn-primary w-70">
-                         Add address
-                       </button>
-                     </a>
-                   </div>
-                 </div>
-               </div>
+              <div class="tab-pane fade" id="address" role="tabpanel" aria-labelledby="address-tab">
+                <div class="row">
+                  <% if (userAddress && userAddress.address.length > 0) { %>
+                    <% userAddress.address.forEach((address) => { %>
+                      <div class="col-lg-6">
+                        <div class="card mb-3 mb-lg-0 address-card">
+                          <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><%= address.addressType %> Address</h5>
+                          </div>
+                          <div class="card-body">
+                            <address class="mb-3">
+                              <h5 class="mb-3"><%= address.name %></h5>
+                              <p class="mb-1"><strong>Address:</strong> <%= address.city %></p>
+                              <p class="mb-1"><strong>Landmark:</strong> <%= address.landMark %></p>
+                              <p class="mb-1"><strong>State:</strong> <%= address.state %></p>
+                              <p class="mb-1"><strong>Pincode:</strong> <%= address.pinCode %></p>
+                              <p class="mb-1"><strong>Phone:</strong> <%= address.phone %></p>
+                              <p class="mb-1"><strong>Alternative Phone:</strong> <%= address.altPhone %></p>
+                            </address>
+              
+                            <div class="d-flex justify-content-between mt-3">
+                              <a href="/edit-address/<%= address._id %>" class="btn btn-sm btn-outline-primary">Edit Address</a>
+                              <a href="#" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteAddress('<%= address._id %>')">Delete Address</a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <div class="col-12">
+                      <div class="card mb-4">
+                        <div class="card-header bg-warning">
+                          <h5 class="mb-0">No Address Found</h5>
+                        </div>
+                        <div class="card-body text-center">
+                          <p class="mb-3">You haven't added any addresses to your profile yet.</p>
+                          <p>Please add an address to continue with your orders.</p>
+                        </div>
+                      </div>
+                    </div>
+                  <% } %>
+                </div>
+                
+                <div class="text-center mt-4 mb-5">
+                  <a href="/addAddress">
+                    <button class="btn btn-primary btn-lg">
+                      <i class="fas fa-plus-circle mr-2"></i> Add New Address
+                    </button>
+                  </a>
+                </div>
+              </div>
 
 
                <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">

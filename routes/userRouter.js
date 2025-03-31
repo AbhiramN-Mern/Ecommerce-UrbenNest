@@ -52,4 +52,8 @@ router.post('/verify-email-otp',profileController.verifyEmailOtp)
 router.post('/update-email',profileController.updateEmail)
 // router.get('/change-password',profileController.changePassword)
 
+//Address Managememnt
+router.get("/addAddress",profileController.addAddress)
+router.post('/addAddress',profileController.postAddAddress)
+
 module.exports = router;
