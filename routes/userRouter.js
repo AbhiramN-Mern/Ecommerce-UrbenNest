@@ -42,13 +42,14 @@ router.get("/reset-password", profileController.getResetPassPage);
 router.post("/reset-password", profileController.postNewPassword);
 router.post("/resend-forgot-otp", profileController.resendOtp);
 // router.post("/verify-email-otp", userAuth, profileController.verifyEmailOtp);
-router.get("/change-password", userAuth, profileController.changePassword);
-router.post("/change-password", userAuth, profileController.changePasswordValid);
-router.post("/verify-changepassword-otp", userAuth, profileController.verifyChangePassOtp);
+router.get("/change-password",  profileController.changePassword);
+router.post("/change-password", profileController.changePasswordValid);
+router.post("/verify-changepassword-otp", profileController.verifyChangePassOtp);
 router.get("/userProfile",profileController.userProfile)
 router.get('/change-email',profileController.changeEmail)
 router.post('/change-email',profileController.changeEmailValid)
 router.post('/verify-email-otp',profileController.verifyEmailOtp)
 router.post('/update-email',profileController.updateEmail)
+// router.get('/change-password',profileController.changePassword)
 
 module.exports = router;
