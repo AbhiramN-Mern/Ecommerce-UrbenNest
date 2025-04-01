@@ -30,7 +30,10 @@ const loadWishList = async (req, res) => {
 const addToWishlist = async (req, res) => {
     try {
         const productId = req.body.productId;
-        const userId = req.session.user; // ensure session is set properly
+        const userId = req.session.user; // or req.session.userId
+        if (!userId) {
+            return res.status(401).json({ status: false, message: "Please login to add to wishlist" });
+        }
 
         // Find the user's wishlist document; if none exists, create one.
         let wishlistDoc = await Wishlist.findOne({ userId: userId });
@@ -39,15 +42,15 @@ const addToWishlist = async (req, res) => {
         }
         // Check if product is already in the wishlist
         if (wishlistDoc.products.some(item => item.productId.toString() === productId.toString())) {
-            return res.status(200).json({status: false, message: "Product already in wishlist"});
+            return res.status(200).json({ status: false, message: "Product already in wishlist" });
         }
         // Add product to the wishlist
         wishlistDoc.products.push({ productId: productId });
         await wishlistDoc.save();
-        return res.status(200).json({status: true, message: "Product added to wishlist"});
+        return res.status(200).json({ status: true, message: "Product added to wishlist" });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({status: false, message: "Server Error"});
+        return res.status(500).json({ status: false, message: "Server Error" });
     }
 };
 
