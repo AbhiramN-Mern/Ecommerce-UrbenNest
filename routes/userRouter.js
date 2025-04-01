@@ -7,6 +7,8 @@ const customerController = require('../controller/admin/customerController');
 const productController = require('../controller/user/productController');
 const profileController = require('../controller/user/profileController');
 const wishlistController=require("../controller/user/wishlistcontroller")
+const CartController=require("../controller/user/cartController")
+
 
 router.get('/pageNotFound', usercontroller.pageNotFound);
 
@@ -65,5 +67,15 @@ router.get('/deleteAddress',profileController.deleteAddress)
 router.get('/wishlist',wishlistController.loadWishList)
 router.post("/addTOWishlist",wishlistController.addToWishlist)
 router.get('/removeFromWishlist',wishlistController.removeProduct)
+
+
+//cart Management
+
+router.get("/cart", CartController.getCartPage);
+router.post("/addToCart", CartController.addToCart);
+router.delete("/deleteItem", CartController.deleteItem);
+router.post("/changeQuantity", CartController.changeQuantity);
+router.post("/checkProductInCart", CartController.checkProductInCart);
+router.get("/getCartCount", CartController.getCartCount); 
 
 module.exports = router;
