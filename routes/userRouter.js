@@ -64,5 +64,6 @@ router.get('/deleteAddress',profileController.deleteAddress)
 //wishList Management
 router.get('/wishlist',wishlistController.loadWishList)
 router.post("/addTOWishlist",wishlistController.addToWishlist)
+router.get('/removeFromWishlist',wishlistController.removeProduct)
 
 module.exports = router;

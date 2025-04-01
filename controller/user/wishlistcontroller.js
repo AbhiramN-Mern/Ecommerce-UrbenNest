@@ -54,7 +54,37 @@ const addToWishlist = async (req, res) => {
     }
 };
 
+const removeProduct = async (req, res) => {
+    try {
+        const productId = req.query.productId;
+        const userId = req.session.user;
+        if (!userId) {
+            return res.redirect('/login');
+        }
+        // Find the user's wishlist document
+        const wishlistDoc = await Wishlist.findOne({ userId: userId });
+        if (!wishlistDoc) {
+            return res.status(404).json({ status: false, message: "Wishlist not found" });
+        }
+        // Find the index in the products array
+        const index = wishlistDoc.products.findIndex(
+            item => item.productId.toString() === productId.toString()
+        );
+        if (index === -1) {
+            return res.status(404).json({ status: false, message: "Product not in wishlist" });
+        }
+        // Remove the product
+        wishlistDoc.products.splice(index, 1);
+        await wishlistDoc.save();
+        return res.redirect('/wishlist')
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ status: false, message: "Server Error" });
+    }
+};
+
 module.exports = {
     loadWishList,
-    addToWishlist
+    addToWishlist,
+    removeProduct
 };
