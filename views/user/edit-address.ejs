@@ -5,7 +5,11 @@
        <div class="row mb-50">
            <div class="form-group col-md-4">
                <label for="addressType">Address Type:</label>
-               <input type="text" class="form-control border-3" value="<%= address.addressType %>" id="addressType" name="addressType" required>
+               <select class="form-control border-3" id="addressType" name="addressType" required>
+                   <option value="Home" <%= address.addressType === 'Home' ? 'selected' : '' %>>Home</option>
+                   <option value="Work" <%= address.addressType === 'Work' ? 'selected' : '' %>>Work</option>
+                   <option value="Other" <%= address.addressType === 'Other' ? 'selected' : '' %>>Other</option>
+               </select>
            </div>
            <div class="form-group col-md-4">
                <label for="name">Name:</label>
@@ -19,11 +23,40 @@
        <div class="row mb-3">
            <div class="form-group col-md-4">
                <label for="landMark">Landmark:</label>
-               <input type="text" class="form-control border-3" value="<%= address.landMark%>" id="landMark" name="landMark" required>
+               <input type="text" class="form-control border-3" value="<%= address.landMark %>" id="landMark" name="landMark" required>
            </div>
            <div class="form-group col-md-4">
                <label for="state">State:</label>
-               <input type="text" class="form-control border-3" value="<%= address.state %>" id="state" name="state" required>
+               <select class="form-control border-3" id="state" name="state" required>
+                   <option value="Andhra Pradesh" <%= address.state === 'Andhra Pradesh' ? 'selected' : '' %>>Andhra Pradesh</option>
+                   <option value="Arunachal Pradesh" <%= address.state === 'Arunachal Pradesh' ? 'selected' : '' %>>Arunachal Pradesh</option>
+                   <option value="Assam" <%= address.state === 'Assam' ? 'selected' : '' %>>Assam</option>
+                   <option value="Bihar" <%= address.state === 'Bihar' ? 'selected' : '' %>>Bihar</option>
+                   <option value="Chhattisgarh" <%= address.state === 'Chhattisgarh' ? 'selected' : '' %>>Chhattisgarh</option>
+                   <option value="Goa" <%= address.state === 'Goa' ? 'selected' : '' %>>Goa</option>
+                   <option value="Gujarat" <%= address.state === 'Gujarat' ? 'selected' : '' %>>Gujarat</option>
+                   <option value="Haryana" <%= address.state === 'Haryana' ? 'selected' : '' %>>Haryana</option>
+                   <option value="Himachal Pradesh" <%= address.state === 'Himachal Pradesh' ? 'selected' : '' %>>Himachal Pradesh</option>
+                   <option value="Jharkhand" <%= address.state === 'Jharkhand' ? 'selected' : '' %>>Jharkhand</option>
+                   <option value="Karnataka" <%= address.state === 'Karnataka' ? 'selected' : '' %>>Karnataka</option>
+                   <option value="Kerala" <%= address.state === 'Kerala' ? 'selected' : '' %>>Kerala</option>
+                   <option value="Madhya Pradesh" <%= address.state === 'Madhya Pradesh' ? 'selected' : '' %>>Madhya Pradesh</option>
+                   <option value="Maharashtra" <%= address.state === 'Maharashtra' ? 'selected' : '' %>>Maharashtra</option>
+                   <option value="Manipur" <%= address.state === 'Manipur' ? 'selected' : '' %>>Manipur</option>
+                   <option value="Meghalaya" <%= address.state === 'Meghalaya' ? 'selected' : '' %>>Meghalaya</option>
+                   <option value="Mizoram" <%= address.state === 'Mizoram' ? 'selected' : '' %>>Mizoram</option>
+                   <option value="Nagaland" <%= address.state === 'Nagaland' ? 'selected' : '' %>>Nagaland</option>
+                   <option value="Odisha" <%= address.state === 'Odisha' ? 'selected' : '' %>>Odisha</option>
+                   <option value="Punjab" <%= address.state === 'Punjab' ? 'selected' : '' %>>Punjab</option>
+                   <option value="Rajasthan" <%= address.state === 'Rajasthan' ? 'selected' : '' %>>Rajasthan</option>
+                   <option value="Sikkim" <%= address.state === 'Sikkim' ? 'selected' : '' %>>Sikkim</option>
+                   <option value="Tamil Nadu" <%= address.state === 'Tamil Nadu' ? 'selected' : '' %>>Tamil Nadu</option>
+                   <option value="Telangana" <%= address.state === 'Telangana' ? 'selected' : '' %>>Telangana</option>
+                   <option value="Tripura" <%= address.state === 'Tripura' ? 'selected' : '' %>>Tripura</option>
+                   <option value="Uttar Pradesh" <%= address.state === 'Uttar Pradesh' ? 'selected' : '' %>>Uttar Pradesh</option>
+                   <option value="Uttarakhand" <%= address.state === 'Uttarakhand' ? 'selected' : '' %>>Uttarakhand</option>
+                   <option value="West Bengal" <%= address.state === 'West Bengal' ? 'selected' : '' %>>West Bengal</option>
+               </select>
            </div>
            <div class="form-group col-md-4">
                <label for="pincode">Pincode:</label>
@@ -44,14 +77,19 @@
    </form>
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
    document.getElementById('submitButton').addEventListener('click', function (event) {
        if (!validateForm()) {
            event.preventDefault();
+       } else {
+           Swal.fire({
+               title: 'Success',
+               text: 'Address updated successfully!',
+               icon: 'success'
+           });
        }
    });
-
 
    function validateForm() {
        let isValid = true;
@@ -61,18 +99,52 @@
            if (input.value.trim() === "") {
                Swal.fire({
                    title: 'Error',
-                   text: `Please fill all the field.`,
+                   text: `Please fill all the fields.`,
                    icon: 'error'
                });
                isValid = false;
            }
        });
 
+       const pincode = document.getElementById('pinCode').value;
+       const phone = document.getElementById('phone').value;
+       const altPhone = document.getElementById('altPhone').value;
+       const pincodePattern = /^\d{6}$/;
+       const phonePattern = /^\d{10}$/;
 
+       if (!pincodePattern.test(pincode)) {
+           Swal.fire({
+               title: 'Error',
+               text: 'Pincode should be a 6-digit number.',
+               icon: 'error'
+           });
+           isValid = false;
+       }
+       if (!phonePattern.test(phone)) {
+           Swal.fire({
+               title: 'Error',
+               text: 'Phone number should be a 10-digit number.',
+               icon: 'error'
+           });
+           isValid = false;
+       }
+       if (!phonePattern.test(altPhone)) {
+           Swal.fire({
+               title: 'Error',
+               text: 'Alternate phone number should be a 10-digit number.',
+               icon: 'error'
+           });
+           isValid = false;
+       }
+       if (phone === altPhone) {
+           Swal.fire({
+               title: 'Error',
+               text: 'Phone number and alternate phone number should be different.',
+               icon: 'error'
+           });
+           isValid = false;
+       }
        return isValid;
    }
 </script>
 <%- include("../../views/partials/user/footer") %>
-
-
-
