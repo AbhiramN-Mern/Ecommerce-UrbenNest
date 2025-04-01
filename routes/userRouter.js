@@ -6,6 +6,7 @@ const { userAuth, adminAuth } = require('../middlewares/auth');
 const customerController = require('../controller/admin/customerController');
 const productController = require('../controller/user/productController');
 const profileController = require('../controller/user/profileController');
+const wishlistController=require("../controller/user/wishlistcontroller")
 
 router.get('/pageNotFound', usercontroller.pageNotFound);
 
@@ -58,4 +59,10 @@ router.post('/addAddress',profileController.postAddAddress)
 router.get('/editAddress',profileController.editAddress)
 router.post('/editAddress',profileController.postEditAddress)
 router.get('/deleteAddress',profileController.deleteAddress)
+
+
+//wishList Management
+router.get('/wishlist',wishlistController.loadWishList)
+router.post("/addTOWishlist",wishlistController.addToWishlist)
+
 module.exports = router;
