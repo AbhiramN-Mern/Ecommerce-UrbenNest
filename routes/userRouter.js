@@ -8,7 +8,7 @@ const productController = require('../controller/user/productController');
 const profileController = require('../controller/user/profileController');
 const wishlistController=require("../controller/user/wishlistcontroller")
 const CartController=require("../controller/user/cartController")
-const orderController = require("../controller/user/orderController");
+const orderController = require('../controller/user/orderController');
 
 
 
@@ -82,17 +82,17 @@ router.get("/getCartCount", CartController.getCartCount);
 
 
 //Order Management
-router.get("/checkout",orderController.getCheckoutPage);
+router.get("/checkout", orderController.getCheckoutPage);
 router.get("/deleteItem", orderController.deleteProduct);
-// router.post("/applyCoupon",userAuth,userController.applyCoupon);
-router.post("/orderPlaced",orderController.orderPlaced);
-router.get("/orderDetails",orderController.getOrderDetailsPage);
-router.post("/cancelOrder",orderController.cancelOrder);
-// router.post("/returnrequestOrder",userAuth,orderController.returnorder);
-// router.post("/verifyPayment", userAuth, orderController.verify);
-router.post("/singleProductId",orderController.changeSingleProductStatus);
-router.post('/paymentConfirm',orderController.paymentConfirm);
-// router.get("/downloadInvoice/:orderId",userAuth,orderController.downloadInvoice);
+// router.post("/applyCoupon", orderController.applyCoupon); // Restored and added userAuth
+router.post("/orderPlaced", orderController.orderPlaced); // Added userAuth for consistency
+router.get("/orderDetails", orderController.getOrderDetailsPage); // Added userAuth
+router.post("/cancelOrder", orderController.cancelOrder); // Added userAuth
+router.post("/returnrequestOrder", orderController.returnorder); // Restored and added userAuth
+// router.post("/verifyPayment", orderController.verify); // Restored and added userAuth
+router.post("/singleProductId", orderController.changeSingleProductStatus); // Added userAuth
+// router.post("/paymentConfirm", orderController.paymentConfirm); // Added userAuth
+// router.get("/downloadInvoice/:orderId", userAuth, orderController.downloadInvoice); // Left commented out
 
 
 

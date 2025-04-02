@@ -29,7 +29,7 @@ app.use(passport.session())
 app.use((req, res, next) => {
     // Set the current user (if any) available for all views.
     res.locals.user = req.session.user ? req.session.user : null;
-    // You can also set a default currentPage; individual routes can override this if needed.
+    // You can also set a default currentPage; individual jsroutes can override this if needed.
     res.locals.currentPage = 'default';
     next();
 });
