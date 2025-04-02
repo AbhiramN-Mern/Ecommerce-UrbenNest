@@ -1,4 +1,4 @@
-const { default: mongoose } = require("mongoose")
+const { default: mongoose, Schema } = require("mongoose")
 
 const orderSchema=new Schema({
     orderItems:[{

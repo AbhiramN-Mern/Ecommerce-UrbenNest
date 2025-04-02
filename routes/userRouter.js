@@ -8,6 +8,8 @@ const productController = require('../controller/user/productController');
 const profileController = require('../controller/user/profileController');
 const wishlistController=require("../controller/user/wishlistcontroller")
 const CartController=require("../controller/user/cartController")
+const orderController = require("../controller/user/orderController");
+
 
 
 router.get('/pageNotFound', usercontroller.pageNotFound);
@@ -77,5 +79,21 @@ router.delete("/deleteItem", CartController.deleteItem);
 router.post("/changeQuantity", CartController.changeQuantity);
 router.post("/checkProductInCart", CartController.checkProductInCart);
 router.get("/getCartCount", CartController.getCartCount); 
+
+
+//Order Management
+router.get("/checkout",orderController.getCheckoutPage);
+router.get("/deleteItem", orderController.deleteProduct);
+// router.post("/applyCoupon",userAuth,userController.applyCoupon);
+router.post("/orderPlaced",orderController.orderPlaced);
+router.get("/orderDetails",orderController.getOrderDetailsPage);
+router.post("/cancelOrder",orderController.cancelOrder);
+// router.post("/returnrequestOrder",userAuth,orderController.returnorder);
+// router.post("/verifyPayment", userAuth, orderController.verify);
+router.post("/singleProductId",orderController.changeSingleProductStatus);
+router.post('/paymentConfirm',orderController.paymentConfirm);
+// router.get("/downloadInvoice/:orderId",userAuth,orderController.downloadInvoice);
+
+
 
 module.exports = router;

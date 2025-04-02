@@ -143,8 +143,7 @@
               </table>
             </div>
             <% if (!outOfStockMessages?.length && data?.length > 0) { %>
-              <a href="/checkout?userId=<%= user?._id || '' %>" 
-                 class="btn btn-primary btn-block mt-3">
+              <a href="/checkout?userId=<%= user?._id || '' %>" class="btn btn-primary btn-block mt-3">
                 <i class="fi-rs-box-alt mr-10"></i> Proceed to Checkout
               </a>
             <% } %>
