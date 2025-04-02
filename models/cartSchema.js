@@ -21,7 +21,7 @@ const cartSchema = new Schema({
             type: Number,
             required: true
         },
-        totalPrice: {  // corrected field name
+        totalPrice: { 
             type: Number,
             default: 0
         },

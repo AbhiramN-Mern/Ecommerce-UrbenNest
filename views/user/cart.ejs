@@ -254,7 +254,7 @@
         if (result.isConfirmed) {
           $.ajax({
             url: '/deleteItem',
-            method: 'POST',
+            method: 'DELETE',
             data: JSON.stringify({ productId }),
             contentType: 'application/json',
             beforeSend: function() {
