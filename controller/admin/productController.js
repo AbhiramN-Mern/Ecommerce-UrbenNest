@@ -236,7 +236,6 @@ const deleteSingleImage = async (req, res, next) => {
     }
 };
 
-
 module.exports = {
     getProductAddPage,
     addProducts,

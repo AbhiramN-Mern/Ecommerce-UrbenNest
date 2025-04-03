@@ -113,6 +113,14 @@ const orderPlaced = async (req, res, next) => {
       return res.status(404).json({ error: "Specific address not found" });
     }
 
+    // After you've obtained `desiredAddress` and verified it exists
+    if (!desiredAddress.name) {
+      desiredAddress.name = findUser.name || "Not Available";
+    }
+    if (!desiredAddress.phone) {
+      desiredAddress.phone = findUser.phone || "Not Available";
+    }
+
     const cart = await Cart.findOne({ userId: userId }).populate("items.productId");
     if (!cart || cart.items.length === 0) {
       return res.status(404).json({ error: "Cart is empty" });
@@ -143,7 +151,7 @@ const orderPlaced = async (req, res, next) => {
       totalPrice: totalPrice,
       deliveryCharge: deliveryCharge,
       finalAmount: finalAmount,
-      address: desiredAddress,
+      address: [desiredAddress],  // <-- wrap in array
       payment: payment,
       userId: userId,
       status: "Confirmed",

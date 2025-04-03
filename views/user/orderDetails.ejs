@@ -18,9 +18,10 @@
             </span>
             <div class="text">
               <h6 class="mb-1">Customer</h6>
-              <% if (orders && orders.address && orders.address.length > 0 && orders.address[0].name && orders.address[0].phone) { %>
+              <% if (orders && orders.address && orders.address.name && orders.address.phone) { %>
                 <p class="mb-1">
-                  <%= orders.address[0].name %> <br> <%= orders.address[0].phone %>
+                  <%= orders.address.name %> <br>
+                  <%= orders.address.phone %>
                 </p>
               <% } else { %>
                 <p class="mb-1">Customer details not available</p>
@@ -40,7 +41,6 @@
                 Status: <%= orders.status || 'N/A' %> <br>
                 Grand Total: ₹<%= (totalGrant || 0).toLocaleString() %> <br>
                 Delivery Charge: ₹<%= (orders.deliveryCharge || 0).toLocaleString() %> <br>
-                Current Total: ₹<%= (totalPrice || 0).toLocaleString() %> <br>
                 Final Amount: ₹<%= (totalGrant + (orders.deliveryCharge || 0)).toLocaleString()%> <br>            </p>
             </div>
           </article>
