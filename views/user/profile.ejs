@@ -270,26 +270,32 @@
                    </div>
                    <div class="card-body">
                      <div class="table-responsive">
-                       <table class="table">
-                         <thead>
-                           <tr>
-                             <th>Order</th>
-                             <th>Status</th>
-                             <th>Total</th>
-                             <th>Actions</th>
-                           </tr>
-                         </thead>
-                         <tbody>
-                           <tr>
-                             <td></td>
-                             <td></td>
-                             <td></td>
-                             <td>
-                               <a href="" class="btn-small d-block">View</a>
-                             </td>
-                           </tr>
-                         </tbody>
-                       </table>
+                       <% if (orders && orders.length > 0) { %>
+                         <table class="table">
+                           <thead>
+                             <tr>
+                               <th>Order</th>
+                               <th>Status</th>
+                               <th>Total</th>
+                               <th>Actions</th>
+                             </tr>
+                           </thead>
+                           <tbody>
+                             <% orders.forEach(order => { %>
+                               <tr>
+                                 <td><%= order.orderId || order._id %></td>
+                                 <td><%= order.status %></td>
+                                 <td>₹<%= order.finalAmount.toLocaleString() %></td>
+                                 <td>
+                                   <a href="/orderDetails?id=<%= order._id %>" class="btn-small d-block">View</a>
+                                 </td>
+                               </tr>
+                             <% }) %>
+                           </tbody>
+                         </table>
+                       <% } else { %>
+                         <p>No orders found.</p>
+                       <% } %>
                      </div>
                    </div>
                  </div>

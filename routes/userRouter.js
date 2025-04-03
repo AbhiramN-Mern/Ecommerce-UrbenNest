@@ -83,17 +83,18 @@ router.get("/getCartCount", CartController.getCartCount);
 
 //Order Management
 router.get("/checkout", orderController.getCheckoutPage);
-router.get("/deleteItem", orderController.deleteProduct);
-// router.post("/applyCoupon", orderController.applyCoupon); // Restored and added userAuth
-router.post("/orderPlaced", orderController.orderPlaced); // Added userAuth for consistency
-router.get("/orderDetails", orderController.getOrderDetailsPage); // Added userAuth
-router.post("/cancelOrder", orderController.cancelOrder); // Added userAuth
-router.post("/returnrequestOrder", orderController.returnorder); // Restored and added userAuth
-// router.post("/verifyPayment", orderController.verify); // Restored and added userAuth
-router.post("/singleProductId", orderController.changeSingleProductStatus); // Added userAuth
-// router.post("/paymentConfirm", orderController.paymentConfirm); // Added userAuth
-// router.get("/downloadInvoice/:orderId", userAuth, orderController.downloadInvoice); // Left commented out
-
+router.get("/deleteItem", orderController.deleteProduct); 
+// router.post("/applyCoupon", userAuth, orderController.applyCoupon);
+router.post("/orderPlaced", orderController.orderPlaced);
+router.get("/orderDetails", orderController.getOrderDetailsPage);
+router.put("/cancelOrder", orderController.cancelOrder); 
+router.put("/returnrequestOrder", orderController.returnorder); 
+// router/.post("/verifyPayment", userAuth, orderController.verify);
+router.put("/singleProductId", orderController.changeSingleProductStatus); 
+// router.post('/paymentConfirm', userAuth, orderController.paymentConfirm);
+router.get("/downloadInvoice/:orderId", orderController.downloadInvoice);
+router.post("/addReview", userAuth, orderController.addReview);
+// router.post("/generateRazorpayOrder", userAuth, orderController.generateRazorpayOrder);
 
 
 module.exports = router;

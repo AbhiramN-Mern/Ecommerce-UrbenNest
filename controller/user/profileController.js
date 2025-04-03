@@ -1,5 +1,6 @@
 const User = require("../../models/userSchema");
-const Address=require('../../models/addressSchema')
+const Address = require("../../models/addressSchema");
+const Order = require("../../models/orderSchema");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 const env = require('dotenv').config();
@@ -290,21 +291,30 @@ const getVerifyForgotOTPPage = async (req, res) => {
       res.redirect("/pageNotFound");
   }
 };
-const userProfile = async (req, res) => {
-    try {
-        const userId = req.session.user;
-        const userData = await User.findById(userId);
-        const addressData=await Address.findOne({userId:userId})
-        if (!userData) {
-            console.error("No user found for ID:", userId);
-            return res.redirect('/login');
-        }
-        // Override currentPage here for the header
-        res.render('profile', { user: userData,userAddress:addressData, currentPage: 'profile' });
-    } catch (error) {
-        console.error("Error in ProfileData", error);
-        res.redirect('/pageNotFound');
+const userProfile = async (req, res, next) => {
+  try {
+    const userId = req.session.user;
+    const userData = await User.findById(userId).lean();
+    const addressData = await Address.findOne({ userId: userId }).lean();
+
+    // Fetch orders for the user
+    const orders = await Order.find({ userId: userId }).sort({ createdOn: -1 }).lean();
+
+    if (!userData) {
+      console.error("No user found for ID:", userId);
+      return res.redirect("/login");
     }
+    
+    res.render("profile", {
+      user: userData,
+      userAddress: addressData,
+      orders, // orders passed to the view
+      currentPage: "profile"
+    });
+  } catch (error) {
+    console.error("Error in ProfileData", error);
+    res.redirect("/pageNotFound");
+  }
 };
 
 const changeEmail=async(req,res)=>{
