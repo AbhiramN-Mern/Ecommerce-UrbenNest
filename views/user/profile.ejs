@@ -285,7 +285,7 @@
                                <tr>
                                  <td><%= order.orderId || order._id %></td>
                                  <td><%= order.status %></td>
-                                 <td>₹<%= order.finalAmount.toLocaleString() %></td>
+                                 <td>₹<%= (order.totalPrice + order.deliveryCharge).toLocaleString() %></td>
                                  <td>
                                    <a href="/orderDetails?id=<%= order._id %>" class="btn-small d-block">View</a>
                                  </td>

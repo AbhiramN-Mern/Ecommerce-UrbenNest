@@ -142,16 +142,17 @@ const orderPlaced = async (req, res, next) => {
       user: userId
     }));
 
-    const deliveryCharge = totalPrice < 4000 ? 200 : 0;
-    const finalAmount = totalPrice + deliveryCharge;
+    const totalPriceNumber = parseFloat(totalPrice); // ensure it's a number
+    const deliveryCharge = totalPriceNumber < 4000 ? 200 : 0;
+    const finalAmount = totalPriceNumber + deliveryCharge;
 
     const newOrder = new Order({
       product: orderedProducts,
-      originalTotalPrice: totalPrice,
-      totalPrice: totalPrice,
+      originalTotalPrice: totalPriceNumber,
+      totalPrice: totalPriceNumber,
       deliveryCharge: deliveryCharge,
       finalAmount: finalAmount,
-      address: [desiredAddress],  // <-- wrap in array
+      address: [desiredAddress],
       payment: payment,
       userId: userId,
       status: "Confirmed",
