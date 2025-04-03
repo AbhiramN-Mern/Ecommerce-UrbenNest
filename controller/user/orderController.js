@@ -8,7 +8,7 @@ const env = require("dotenv").config();
 const moment = require("moment");
 const fs = require("fs");
 const path = require("path");
-// const easyinvoice = require("easyinvoice");
+const easyinvoice = require("easyinvoice");
 const Cart = require("../../models/cartSchema");
 const { v4: uuidv4 } = require('uuid');
 
@@ -442,14 +442,11 @@ const downloadInvoice = async (req, res, next) => {
       "marginBottom": 25,
       apiKey: process.env.EASYINVOICE_API,
       mode: "production",
-      images: {
-        logo: "https://res.cloudinary.com/dn20pprrf/image/upload/v1740568840/jtbzbwaonl0vsppodtr0.png",
-      },
       "sender": {
-        "company": "Furni",
-        "address": "Malappuram",
-        "zip": "673638",
-        "city": "Kondotty",
+        "company": "UrbenNest",
+        "address": "Kasargod",
+        "zip": "671320",
+        "city": "Periya",
         "country": "India"
       },
       "client": {
@@ -465,7 +462,7 @@ const downloadInvoice = async (req, res, next) => {
         "date": moment(order.createdOn).format("YYYY-MM-DD HH:mm:ss"),
       },
       "products": products,
-      "bottomNotice": "Thank you for your business",
+      "bottomNotice": "Thank you for your business With UrbenNest",
     };
 
     const result = await easyinvoice.createInvoice(data);

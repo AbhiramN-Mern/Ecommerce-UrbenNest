@@ -23,7 +23,7 @@ const orderSchema = new Schema({
     required: true
   },
   payment: { type: String, required: true },
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   status: { 
     type: String, 
     required: true,
@@ -33,4 +33,4 @@ const orderSchema = new Schema({
   CoupenApplied: { type: Boolean, default: false }
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model("Order", orderSchema);
