@@ -199,28 +199,128 @@ const approveReturn = async (req, res, next) => {
   
   const rejectReturn = async (req, res, next) => {
     try {
+      // Destructure IDs from the request body
       const { orderId, productId } = req.body;
   
-      const order = await Order.findOne({ _id: orderId });
+      // Validate the IDs
+      if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid order or product ID" });
+      }
+  
+      // Fetch the order by ID
+      const order = await Order.findById(orderId);
       if (!order) {
-        return res.status(404).json({ success: false, message: "Order not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Order not found" });
       }
   
-      const productIndex = order.product.findIndex(p => p._id.toString() === productId);
-      if (productIndex === -1 || order.product[productIndex].productStatus !== "Return Requested") {
-        return res.status(400).json({ success: false, message: "Invalid return request" });
+      // Find the specific product within the order.
+      // Use the stored productId field if applicable.
+      const productIndex = order.product.findIndex(prod =>
+        prod.productId
+          ? prod.productId.toString() === productId
+          : prod._id.toString() === productId
+      );
+  
+      if (
+        productIndex === -1 ||
+        order.product[productIndex].productStatus !== "Return Requested"
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid return request" });
       }
   
-      
-      order.product[productIndex].productStatus = "Delivered"; 
+      // Update product status: mark return as rejected.
+      order.product[productIndex].productStatus = "Delivered";
       order.product[productIndex].returnStatus = "Rejected";
+  
       await order.save();
   
-      res.status(200).json({ success: true, message: "Return request rejected" });
+      return res.status(200).json({
+        success: true,
+        message: "Return request rejected"
+      });
     } catch (error) {
+      console.error("Reject Return Error:", error);
       next(error);
     }
   };
+
+const shipProduct = async (req, res, next) => {
+  try {
+    const { orderId, productId } = req.body;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, message: "Invalid order or product ID" });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    // Find the product inside the order
+    const productIndex = order.product.findIndex(prod =>
+      prod.productId ? prod.productId.toString() === productId : prod._id.toString() === productId
+    );
+
+    if (productIndex === -1) {
+      return res.status(404).json({ success: false, message: "Product not found in order" });
+    }
+
+    // Update product status to "Shipped"
+    order.product[productIndex].productStatus = "Shipped";
+
+    // Optionally update overall order status if needed
+    await order.save();
+
+    return res.json({ success: true, message: "Product marked as shipped" });
+  } catch (error) {
+    console.error("Ship Product Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const deliverProduct = async (req, res, next) => {
+  try {
+    const { orderId, productId } = req.body;
+    
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, message: "Invalid order or product ID" });
+    }
+    
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+    
+    // Find the product inside the order.
+    const productIndex = order.product.findIndex(prod =>
+      prod.productId ? prod.productId.toString() === productId : prod._id.toString() === productId
+    );
+    
+    if (productIndex === -1) {
+      return res.status(404).json({ success: false, message: "Product not found in order" });
+    }
+    
+    // Update status to Delivered
+    order.product[productIndex].productStatus = "Delivered";
+    
+    // Optionally update overall order status if needed.
+    await order.save();
+    
+    return res.json({ success: true, message: "Product marked as delivered" });
+  } catch (error) {
+    console.error("Deliver Product Error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
 
 module.exports = {
     getOrderListPageAdmin,
@@ -229,4 +329,6 @@ module.exports = {
     orderDetailsAdmin,
     approveReturn,
     rejectReturn,
+    shipProduct, // add shipProduct to your exports
+    deliverProduct,
 };
