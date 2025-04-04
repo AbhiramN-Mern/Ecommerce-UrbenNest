@@ -87,7 +87,7 @@ router.get("/deleteItem", orderController.deleteProduct);
 // router.post("/applyCoupon", userAuth, orderController.applyCoupon);
 router.post("/orderPlaced", orderController.orderPlaced);
 router.get("/orderDetails", orderController.getOrderDetailsPage);
-router.put("/cancelOrder", orderController.cancelOrder); 
+router.post("/cancelOrder", orderController.cancelOrder); 
 router.put("/returnrequestOrder", orderController.returnorder); 
 // router/.post("/verifyPayment", userAuth, orderController.verify);
 router.put("/singleProductId", orderController.changeSingleProductStatus); 

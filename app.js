@@ -50,7 +50,7 @@ app.use('/',userRouter)
 app.use('/admin',adminRouter)
 
 // app.use((req, res, next) => {
-//     // console.log(`404 - Route not found: ${req.originalUrl}`);
+    // console.log(`404 - Route not found: ${req.originalUrl}`);
 //     res.status(404).render('page-404');
 // });
 

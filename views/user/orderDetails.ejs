@@ -17,7 +17,7 @@
         
         <% if (orders.status === "Pending" && orders.payment === "razorpay") { %>
           <div class="mb-3">
-            <button class="btn btn-primary" onclick="retryPayment('<%= orders._id %>', <%= finalAmount %>)">
+            <button class="btn btn-primary" onclick="retryPayment('<%= orders._id %>', <%= orders.finalAmount %>)">
               <i class="material-icons md-payment"></i> Retry Payment
             </button>
           </div>
@@ -70,7 +70,7 @@
             </div>
             <div class="d-flex justify-content-between mb-2">
               <span>Subtotal:</span>
-              <strong>₹<%= (totalGrant || 0).toLocaleString() %></strong>
+              <strong>₹<%= (orders.totalPrice || 0).toLocaleString() %></strong>
             </div>
             <div class="d-flex justify-content-between mb-2">
               <span>Delivery:</span>
@@ -79,7 +79,7 @@
             <hr>
             <div class="d-flex justify-content-between">
               <span>Total:</span>
-              <strong>₹<%= (totalGrant + (orders.deliveryCharge || 0)).toLocaleString() %></strong>
+              <strong>₹<%= (orders.finalAmount || 0).toLocaleString() %></strong>
             </div>
           </div>
         </div>
@@ -96,16 +96,32 @@
           <div class="card-body">
             <% if (orders.address && Array.isArray(orders.address) && orders.address.length > 0) { %>
               <p class="mb-1">
-                <p>
-                  <%= orders.address[0].name || '' %><br>
-                  <%= orders.address[0].city || '' %><br>
-                  <%= orders.address[0].landMark || '' %><br>
-                  <%= orders.address[0].state || '' %><br>
-                  <%= orders.address[0].pinCode || '' %><br>
-                  <%= orders.address[0].phone || '' %><br>
-                  <%= orders.address[0].altPhone || '' %>
-                </p>
+                <%= orders.address[0].name || '' %><br>
+                <%= orders.address[0].city || '' %><br>
+                <%= orders.address[0].landMark || '' %><br>
+                <%= orders.address[0].state || '' %><br>
+                <%= orders.address[0].pinCode || '' %><br>
+                <%= orders.address[0].phone || '' %><br>
+                <%= orders.address[0].altPhone || '' %>
+              </p>
               <p class="mb-3"><%= orders.address[0].addressType || '' %></p>
+              
+              <% if (orders.status === "Delivered") { %>
+                <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm btn-outline-primary">
+                  <i class="material-icons md-file_download"></i> Download Invoice
+                </a>
+              <% } %>
+            <% } else if (orders.address && typeof orders.address === 'object' && !Array.isArray(orders.address)) { %>
+              <p class="mb-1">
+                <%= orders.address.name || '' %><br>
+                <%= orders.address.city || '' %><br>
+                <%= orders.address.landMark || '' %><br>
+                <%= orders.address.state || '' %><br>
+                <%= orders.address.pinCode || '' %><br>
+                <%= orders.address.phone || '' %><br>
+                <%= orders.address.altPhone || '' %>
+              </p>
+              <p class="mb-3"><%= orders.address.addressType || '' %></p>
               
               <% if (orders.status === "Delivered") { %>
                 <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm btn-outline-primary">
@@ -143,60 +159,73 @@
                 <% orders.product.forEach((product) => { %>
                   <tr>
                     <td class="text-center align-middle">
-                      <img src="/uploads/re-image/<%= product.image || 'default.jpg' %>" class="img-fluid" style="max-height: 60px; max-width: 60px;" alt="<%= product.name || 'Product' %>">
+                      <img src="/uploads/re-image/<%= product.image || 'default.jpg' %>" 
+                           class="img-fluid" 
+                           style="max-height: 60px; max-width: 60px;" 
+                           alt="<%= product.name || 'Product' %>">
                     </td>
                     <td class="align-middle"><%= product.name || product.title || 'N/A' %></td>
                     <td class="text-center align-middle">₹<%= (product.price || 0).toLocaleString() %></td>
                     <td class="text-center align-middle"><%= product.quantity || 0 %></td>
-                    <td class="text-center align-middle">₹<%= ((parseInt(product.price) || 0) * (parseInt(product.quantity) || 0)).toLocaleString() %></td>
+                    <td class="text-center align-middle">
+                      ₹<%= ((parseInt(product.price) || 0) * (parseInt(product.quantity) || 0)).toLocaleString() %>
+                    </td>
                     <td class="text-center align-middle">
                       <% if (product.productStatus !== "Cancelled" && product.productStatus !== "Returned") { %>
-                        <% if (orders.status === "Confirmed" || orders.status === "Pending" || orders.status === "Shipped") { %>
-                          <button class="btn btn-sm btn-outline-danger mb-1" onclick="toggleCancelForm('<%= product._id %>')">
-                            Cancel
-                          </button>
-                          <div id="cancelForm_<%= product._id %>" class="mt-2 p-2 border rounded" style="display: none;">
-                            <form onsubmit="submitCancelOrder(event, '<%= orders._id %>', '<%= product._id %>')" method="POST">
-                              <input type="hidden" name="_method" value="PUT">
-                              <div class="mb-2">
-                                <label for="cancelReason_<%= product._id %>" class="form-label small">Reason:</label>
-                                <select class="form-select form-select-sm" id="cancelReason_<%= product._id %>" required>
-                                  <option value="" disabled selected>Select reason</option>
-                                  <option value="Changed my mind">Changed my mind</option>
-                                  <option value="Found a better price elsewhere">Better price elsewhere</option>
-                                  <option value="Item no longer needed">No longer needed</option>
-                                  <option value="Shipping delay">Shipping delay</option>
-                                  <option value="Other">Other</option>
-                                </select>
-                              </div>
-                              <button type="submit" class="btn btn-sm btn-danger w-100">Submit</button>
-                            </form>
-                          </div>
+                        <% if (["Confirmed", "Pending", "Shipped"].includes(orders.status)) { %>
+                          <button class="btn btn-sm btn-outline-danger mb-1" 
+                          onclick="toggleCancelForm('<%= product._id %>')">
+                    Cancel
+                  </button>
+                  <div id="cancelForm_<%= product._id %>" 
+                       class="mt-2 p-2 border rounded" 
+                       style="display: none;">
+                    <form onsubmit="submitCancelOrder(event, '<%= typeof order !== 'undefined' ? order._id : orders._id %>', '<%= product.productId ? product.productId.toString() : product._id.toString() %>')">
+                      <div class="mb-2">
+                        <label for="cancelReason_<%= product._id %>" 
+                               class="form-label small">Reason:</label>
+                        <select class="form-select form-select-sm" 
+                                id="cancelReason_<%= product._id %>" 
+                                name="reason" 
+                                required>
+                          <option value="" disabled selected>Select reason</option>
+                          <option value="Changed my mind">Changed my mind</option>
+                          <option value="Found a better price elsewhere">Better price elsewhere</option>
+                          <option value="Item no longer needed">No longer needed</option>
+                          <option value="Shipping delay">Shipping delay</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <button type="submit" class="btn btn-sm btn-danger w-100">Submit</button>
+                    </form>
+                  </div>
                         <% } else if (orders.status === "Delivered") { %>
-                          <button class="btn btn-sm btn-outline-warning mb-1" onclick="toggleReturnForm('<%= product._id %>')">
-                            Return
-                          </button>
-                          <div id="returnForm_<%= product._id %>" class="mt-2 p-2 border rounded" style="display: none;">
-                            <form id="returnFormSubmit_<%= product._id %>" 
-                                  onsubmit="event.preventDefault(); submitReturnOrder('<%= orders._id %>', '<%= product.productId._id || product._id %>', '<%= product._id %>')">
-                              <input type="hidden" name="_method" value="PUT">
-                              <div class="mb-2">
-                                <label for="returnReason_<%= product._id %>" class="form-label small">Reason:</label>
-                                <select class="form-select form-select-sm" 
-                                        id="returnReason_<%= product._id %>" 
-                                        name="reason" 
-                                        required>
-                                  <option value="" disabled selected>Select reason</option>
-                                  <option value="Defective product">Defective product</option>
-                                  <option value="Wrong item received">Wrong item</option>
-                                  <option value="Not as described">Not as described</option>
-                                  <option value="Changed my mind">Changed my mind</option>
-                                  <option value="Other">Other</option>
-                                </select>
-                              </div>
-                              <button type="submit" class="btn btn-sm btn-warning w-100">Submit</button>
-                            </form>
-                          </div>
+                          <button class="btn btn-sm btn-outline-danger mb-1" 
+                          onclick="toggleCancelForm('<%= product._id %>')">
+                    Cancel
+                  </button>
+                  <div id="cancelForm_<%= product._id %>" 
+                       class="mt-2 p-2 border rounded" 
+                       style="display: none;">
+                    <form onsubmit="submitCancelOrder(event, '<%= order._id %>', '<%= product.productId ? product.productId.toString() : product._id.toString() %>')">
+                      <div class="mb-2">
+                        <label for="cancelReason_<%= product._id %>" 
+                               class="form-label small">Reason:</label>
+                        <select class="form-select form-select-sm" 
+                                id="cancelReason_<%= product._id %>" 
+                                name="reason" 
+                                required>
+                          <option value="" disabled selected>Select reason</option>
+                          <option value="Changed my mind">Changed my mind</option>
+                          <option value="Found a better price elsewhere">Better price elsewhere</option>
+                          <option value="Item no longer needed">No longer needed</option>
+                          <option value="Shipping delay">Shipping delay</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <button type="submit" class="btn btn-sm btn-danger w-100">Submit</button>
+                    </form>
+                  </div>
                         <% } %>
                       <% } else { %>
                         <span class="badge bg-<%= product.productStatus === 'Cancelled' ? 'danger' : 'warning' %>">
@@ -211,7 +240,6 @@
                   <td colspan="6" class="text-center py-3">No products found</td>
                 </tr>
               <% } %>
-              <input type="hidden" id="orderId" value="<%= orders._id %>">
             </tbody>
           </table>
         </div>
@@ -227,32 +255,38 @@
         <div class="card-body">
           <% if (orders.product && Array.isArray(orders.product) && orders.product.length > 0) { %>
             <div class="row">
-              <% orders.product.forEach((product, index) => { %>
+              <% orders.product.forEach((product) => { %>
                 <% if (product.productStatus !== "Cancelled" && product.productStatus !== "Returned") { %>
                   <div class="col-md-6 mb-4">
                     <div class="card h-100 border">
                       <div class="card-header bg-light d-flex align-items-center">
-                        <img src="/uploads/re-image/<%= product.image || 'default.jpg' %>" class="me-2" style="height: 40px; width: 40px; object-fit: cover;" alt="<%= product.name %>">
+                        <img src="/uploads/re-image/<%= product.image || 'default.jpg' %>" 
+                             class="me-2" 
+                             style="height: 40px; width: 40px; object-fit: cover;" 
+                             alt="<%= product.name %>">
                         <h6 class="mb-0"><%= product.name || 'N/A' %></h6>
                       </div>
                       <div class="card-body">
-                        <form class="reviewForm" data-product-id="<%= product.productId._id %>">
-                          <input type="hidden" name="productId" value="<%= product.productId._id %>">
+                        <form class="reviewForm" data-product-id="<%= product.productId || product._id %>">
+                          <input type="hidden" name="productId" value="<%= product.productId || product._id %>">
                           <div class="mb-3">
                             <label for="rating_<%= product._id %>" class="form-label">Your Rating</label>
-                            <div class="d-flex align-items-center">
-                              <select class="form-select" id="rating_<%= product._id %>" name="rating" required>
-                                <option value="1">★</option>
-                                <option value="2">★★</option>
-                                <option value="3">★★★</option>
-                                <option value="4">★★★★</option>
-                                <option value="5" selected>★★★★★</option>
-                              </select>
-                            </div>
+                            <select class="form-select" id="rating_<%= product._id %>" name="rating" required>
+                              <option value="1">★</option>
+                              <option value="2">★★</option>
+                              <option value="3">★★★</option>
+                              <option value="4">★★★★</option>
+                              <option value="5" selected>★★★★★</option>
+                            </select>
                           </div>
                           <div class="mb-3">
                             <label for="reviewText_<%= product._id %>" class="form-label">Your Review</label>
-                            <textarea class="form-control" id="reviewText_<%= product._id %>" name="reviewText" rows="3" placeholder="Share your experience with this product..." required></textarea>
+                            <textarea class="form-control" 
+                                      id="reviewText_<%= product._id %>" 
+                                      name="reviewText" 
+                                      rows="3" 
+                                      placeholder="Share your experience with this product..." 
+                                      required></textarea>
                           </div>
                           <button type="submit" class="btn btn-primary w-100">Submit Review</button>
                         </form>
@@ -260,7 +294,7 @@
                     </div>
                   </div>
                 <% } %>
-              <% }); %>
+              <% }) %>
             </div>
           <% } else { %>
             <div class="alert alert-info">No products available to review.</div>
@@ -278,115 +312,115 @@
 
 <script>
   // Toggle cancel form visibility
-  function toggleCancelForm(productRowId) {
-    const form = document.getElementById(`cancelForm_${productRowId}`);
-    if (form) {
-      form.style.display = form.style.display === 'none' ? 'block' : 'none';
-    }
+  function toggleCancelForm(productId) {
+  const form = document.getElementById(`cancelForm_${productId}`);
+  if (form) {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
   }
+}
 
-  // Toggle return form visibility
-  function toggleReturnForm(productRowId) {
-    const form = document.getElementById(`returnForm_${productRowId}`);
-    if (form) {
-      form.style.display = form.style.display === 'none' ? 'block' : 'none';
-    }
-  }
-
-  // Handle cancel submission
-  function submitCancelOrder(event, orderId, productId) {
-    event.preventDefault();
-    const reason = document.getElementById(`cancelReason_${productId}`).value;
-
-    $.ajax({
-      url: '/cancelOrder',
-      method: 'PUT',
-      contentType: 'application/json',
-      data: JSON.stringify({ 
-        orderId: orderId, 
-        productId: productId, 
-        reason: reason 
-      }),
-      success: (response) => {
-        if (response.success) {
-          Swal.fire({
-            icon: 'success',
-            title: 'Order Cancelled',
-            text: 'The order has been cancelled successfully!',
-            confirmButtonText: 'OK'
-          }).then(() => {
-            window.location.reload();
-          });
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Cancellation Failed',
-            text: response.message || "Failed to cancel the order. Please try again.",
-            confirmButtonText: 'OK'
-          });
-        }
-      },
-      error: (error) => {
-        console.error('Cancel order error:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: "An error occurred while cancelling the order. Please try again.",
-          confirmButtonText: 'OK'
-        });
-      }
-    });
-  }
-
-  // Handle return submission
-  function submitReturnOrder(orderId, productId, productRowId) {
-    const reasonSelect = document.getElementById(`returnReason_${productRowId}`);
+function submitCancelOrder(event, orderId, productId) {
+  event.preventDefault();
+  
+  // Debug logging
+  console.log("Submitting cancel order with:", {orderId, productId});
+  
+  if (!orderId || orderId === 'undefined') {
+    // Try to get order ID from URL as a fallback
+    const urlParams = new URLSearchParams(window.location.search);
+    orderId = urlParams.get('id');
     
-    if (!reasonSelect) {
-      console.error('Could not find reason select element for product:', productRowId);
+    console.log("Extracted order ID from URL:", orderId);
+    
+    if (!orderId) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: "Could not process your return request. Please refresh the page and try again.",
-        confirmButtonText: 'OK'
+        text: 'Order ID is missing. Please refresh the page and try again.',
       });
       return;
     }
+  }
+  
+  const reasonSelect = document.getElementById(`cancelReason_${productId}`);
+  const reason = reasonSelect.value;
 
+  if (!reason) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Reason Required',
+      text: 'Please select a reason for cancellation',
+    });
+    return;
+  }
+
+  $.ajax({
+    url: '/cancelOrder',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ 
+      orderId: orderId,
+      productId: productId,
+      reason: reason 
+    }),
+    success: (response) => {
+      if (response.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Order Cancelled',
+          text: 'The product has been cancelled successfully!',
+        }).then(() => {
+          window.location.reload();
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Cancellation Failed',
+          text: response.message || 'Failed to cancel the order',
+        });
+      }
+    },
+    error: (xhr, status, error) => {
+      console.error('AJAX error:', error);
+      console.error('Response:', xhr.responseText);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'An error occurred while cancelling the order',
+      });
+    }
+  });
+}
+
+  // Handle return submission
+  function submitReturnOrder(event, orderId, productId, productRowId) {
+    event.preventDefault();
+    const reasonSelect = document.getElementById(`returnReason_${productRowId}`);
     const reason = reasonSelect.value;
+
     if (!reason) {
       Swal.fire({
         icon: 'error',
         title: 'Reason Required',
         text: 'Please select a reason for return',
-        confirmButtonText: 'OK'
       });
       return;
     }
 
-    console.log('Submitting return request:', {
-      orderId: orderId,
-      productId: productId,
-      reason: reason
-    });
+    console.log('Return request:', { orderId, productId, reason });
 
     $.ajax({
       url: '/returnrequestOrder',
       method: 'PUT',
       contentType: 'application/json',
-      data: JSON.stringify({ 
-        orderId: orderId, 
-        productId: productId, 
-        reason: reason 
-      }),
+      data: JSON.stringify({ orderId, productId, reason }),
       success: (response) => {
-        console.log('Return request response:', response);
+        console.log('Server response:', response);
         if (response.success) {
           Swal.fire({
             icon: 'success',
             title: 'Return Initiated',
             text: 'The return request has been initiated successfully!',
-            confirmButtonText: 'OK'
           }).then(() => {
             window.location.reload();
           });
@@ -394,18 +428,16 @@
           Swal.fire({
             icon: 'error',
             title: 'Return Failed',
-            text: response.message || "Failed to process your return request. Please try again.",
-            confirmButtonText: 'OK'
+            text: response.message || 'Failed to process your return request',
           });
         }
       },
-      error: (error) => {
-        console.error('Return request error:', error);
+      error: (xhr, status, error) => {
+        console.error('AJAX error:', error);
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: "An error occurred while processing your return request. Please try again.",
-          confirmButtonText: 'OK'
+          text: 'An error occurred while processing your return request',
         });
       }
     });
@@ -424,18 +456,13 @@
         url: '/addReview',
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ 
-          productId: productId, 
-          rating: rating, 
-          reviewText: reviewText 
-        }),
+        data: JSON.stringify({ productId, rating, reviewText }),
         success: function(response) {
           if (response.success) {
             Swal.fire({
               icon: 'success',
               title: 'Review Added',
-              text: 'Your review and rating have been added successfully!',
-              confirmButtonText: 'OK'
+              text: 'Your review has been added successfully!',
             }).then(() => {
               window.location.reload();
             });
@@ -443,32 +470,28 @@
             Swal.fire({
               icon: 'error',
               title: 'Failed to Add Review',
-              text: response.message || "Failed to add the review. Please try again.",
-              confirmButtonText: 'OK'
+              text: response.message || 'Failed to add the review',
             });
           }
         },
-        error: (error) => {
+        error: function(xhr, status, error) {
+          console.error('Review submission error:', error);
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: "An error occurred while adding the review. Please try again.",
-            confirmButtonText: 'OK'
+            text: 'An error occurred while adding the review',
           });
         }
       });
     });
   });
 
-  // Payment retry function
+  // Payment retry function (placeholder - requires backend implementation)
   function retryPayment(orderId, amount) {
     $.ajax({
       url: '/generateRazorpayOrder',
       method: 'POST',
-      data: {
-        orderId: orderId,
-        amount: amount
-      },
+      data: { orderId, amount },
       success: function(response) {
         if (response.success) {
           var options = {
@@ -479,14 +502,14 @@
             "description": "Retry Payment",
             "image": "https://firebasestorage.googleapis.com/v0/b/ecommerce-397a7.appspot.com/o/logo.jpg?alt=media&token=07b6be19-1ce8-4797-a3a0-f0eaeaafedad",
             "order_id": response.razorPayOrder.id,
-            "handler": function (status) {
+            "handler": function(status) {
               verifyPayment(response.razorPayOrder, status, orderId);
             },
             "modal": {
               "ondismiss": function() {
                 Swal.fire({
                   title: "Payment Failed",
-                  text: "You closed the payment window before completing the payment. Would you like to retry?",
+                  text: "You closed the payment window. Retry?",
                   icon: "error",
                   showCancelButton: true,
                   confirmButtonText: "Retry Payment",
@@ -519,7 +542,8 @@
           });
         }
       },
-      error: (error) => {
+      error: function(xhr, status, error) {
+        console.error('Payment retry error:', error);
         Swal.fire({
           title: "Error",
           text: "An error occurred while processing your request",
@@ -529,30 +553,24 @@
     });
   }
 
-  // Payment verification
+  // Payment verification (placeholder - requires backend implementation)
   function verifyPayment(order, payment, orderId) {
     $.ajax({
       url: '/verifyPayment',
-      method: 'post',
-      data: {
-        order,
-        payment
-      },
+      method: 'POST',
+      data: { order, payment },
       success: (response) => {
         if (response.status) {
           $.ajax({
             url: '/paymentConfirm',
-            method: 'post',
-            data: {
-              orderId: orderId
-            },
+            method: 'POST',
+            data: { orderId },
             success: (response) => {
               if (response.status) {
                 Swal.fire({
                   title: "Payment Successful",
                   text: "Payment completed successfully",
-                  icon: "success",
-                  confirmButtonText: "OK"
+                  icon: "success"
                 }).then(() => {
                   window.location.reload();
                 });
