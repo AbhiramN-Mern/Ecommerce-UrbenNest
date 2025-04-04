@@ -84,17 +84,15 @@ router.get("/getCartCount", CartController.getCartCount);
 //Order Management
 router.get("/checkout", orderController.getCheckoutPage);
 router.get("/deleteItem", orderController.deleteProduct); 
-// router.post("/applyCoupon", userAuth, orderController.applyCoupon);
 router.post("/orderPlaced", orderController.orderPlaced);
 router.get("/orderDetails", orderController.getOrderDetailsPage);
 router.put("/cancelOrder", orderController.cancelOrder); 
 router.put("/returnrequestOrder", orderController.returnorder); 
-// router/.post("/verifyPayment", userAuth, orderController.verify);
+router.post("/verifyPayment", orderController.verify);
 router.put("/singleProductId", orderController.changeSingleProductStatus); 
-// router.post('/paymentConfirm', userAuth, orderController.paymentConfirm);
+router.post('/paymentConfirm', orderController.paymentConfirm);
 router.get("/downloadInvoice/:orderId", orderController.downloadInvoice);
-router.post("/addReview", userAuth, orderController.addReview);
-// router.post("/generateRazorpayOrder", userAuth, orderController.generateRazorpayOrder);
+router.post("/addReview", orderController.addReview);
 
 
 module.exports = router;

@@ -155,7 +155,7 @@
                                             <div class="status-action">
                                                 <div class="status-chip return-requested">Return Requested</div>
                                                 <div class="action-dropdown">
-                                                    <select class="action-select" data-product-id="<%= product.productId ? product.productId.toString() : product._id %>" onchange="handleDropdownChange(this)">
+                                                    <select class="action-select" data-order-id="<%= orders._id %>" data-product-id="<%= product._id %>" onchange="handleDropdownChange(this)">
                                                         <option value="" disabled selected>Update Return</option>
                                                         <option value="approveReturn">Approve Return</option>
                                                         <option value="rejectReturn">Reject Return</option>
@@ -168,7 +168,7 @@
                                             <div class="status-action">
                                                 <div class="status-chip <%= product.productStatus?.toLowerCase() %>"><%= product.productStatus %></div>
                                                 <div class="action-dropdown">
-                                                    <select class="action-select" data-product-id="<%= product.productId ? product.productId.toString() : product._id %>" onchange="handleDropdownChange(this)">
+                                                    <select class="action-select" data-product-id="<%= product._id %>" onchange="handleDropdownChange(this)">
                                                         <option value="" disabled selected>Update Status</option>
                                                         <% if (product.productStatus === "Confirmed") { %>
                                                             <option value="ship">Ship</option>
@@ -213,38 +213,55 @@ function handleDropdownChange(selectElement) {
     const selectedValue = selectElement.value;
     if (!selectedValue) return;
     
-    const orderId = '<%= orders._id %>';
+    const orderId = selectElement.getAttribute('data-order-id');
     const productId = selectElement.getAttribute('data-product-id');
-    const actionRow = selectElement.closest('.status-action');
-    const statusChip = actionRow.querySelector('.status-chip');
     
-    
-    const currentStatus = statusChip.textContent;
-    
-    
-    selectElement.disabled = true;
-    
-    
-    statusChip.classList.add('processing');
-    statusChip.textContent = 'Processing...';
-
+    if (!orderId || !productId) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Order ID or Product ID is missing.',
+        });
+        return;
+    }
     
     const actions = {
-        "ship": () => processAction('shipProduct', orderId, productId),
-        "cancel": () => confirmCancelProduct(orderId, productId),
-        "deliver": () => processAction('deliverProduct', orderId, productId),
-        "return": () => processAction('returnProduct', orderId, productId),
         "approveReturn": () => processAction('approveReturn', orderId, productId),
-        "rejectReturn": () => processAction('rejectReturn', orderId, productId)
+        "rejectReturn": () => processAction('rejectReturn', orderId, productId),
     };
-
     
     if (actions[selectedValue]) {
         actions[selectedValue]();
-    } else {
-        
-        resetActionUI(statusChip, currentStatus, selectElement);
     }
+}
+
+function processAction(actionType, orderId, productId) {
+  console.log('Processing action:', { actionType, orderId, productId });
+
+  $.ajax({
+    url: `/admin/${actionType}`,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ orderId, productId }),
+    success: function (response) {
+      console.log('Action success:', response);
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: response.message || 'Action completed successfully!',
+      }).then(() => {
+        window.location.reload();
+      });
+    },
+    error: function (xhr) {
+      console.error('Action error:', xhr.responseJSON);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: xhr.responseJSON?.message || 'An error occurred while processing the request.',
+      });
+    },
+  });
 }
 
 function confirmCancelProduct(orderId, productId) {
@@ -700,7 +717,7 @@ body {
 
 .product-name {
     font-weight: 500;
-    color: var(--gray-900);
+    color: var (--gray-900);
     margin-bottom: 0.25rem;
 }
 

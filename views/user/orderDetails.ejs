@@ -1,299 +1,224 @@
 <%- include("../../views/partials/user/header", { currentPage: 'orderDetails' }) %>
 
-<main class="container my-5">
+<main class="container">
   <section class="content-main">
-    <!-- Order Header -->
-    <div class="card mb-4">
-      <div class="card-header bg-light">
-        <h2 class="content-title mb-0">Order Details</h2>
-      </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <span class="text-muted">Order ID:</span> <strong><%= orders._id %></strong>
-        </div>
-        <div class="mb-3">
-          <span class="text-muted">Order Date:</span> <strong><%= orderDate %></strong>
-        </div>
-        
-        <% if (orders.status === "Pending" && orders.payment === "razorpay") { %>
-          <div class="mb-3">
-            <button class="btn btn-primary" onclick="retryPayment('<%= orders._id %>', <%= finalAmount %>)">
-              <i class="material-icons md-payment"></i> Retry Payment
-            </button>
-          </div>
-        <% } %>
+    <div class="content-header">
+      <div class="mt-10">
+        <h2 class="content-title card-title">Order Details</h2>
+        <p>Details for Order ID: <%= orders._id %></p>
+        <p>Order Placed: <%= orderDate %></p> 
       </div>
     </div>
-
-    <!-- Order Information Cards -->
-    <div class="row mb-4">
-      <!-- Customer Information -->
-      <div class="col-md-4 mb-3">
-        <div class="card h-100">
-          <div class="card-header bg-light">
-            <h5 class="card-title mb-0">
-              <i class="material-icons text-primary">person</i> Customer
-            </h5>
-          </div>
-          <div class="card-body">
-            <% if (orders.address && typeof orders.address === 'object' && !Array.isArray(orders.address) && orders.address.name) { %>
-              <p class="mb-1"><strong><%= orders.address.name %></strong></p>
-              <p class="mb-0"><%= orders.address.phone || 'No phone provided' %></p>
-            <% } else if (orders.address && Array.isArray(orders.address) && orders.address.length > 0) { %>
-              <p class="mb-1"><strong><%= orders.address[0].name || 'N/A' %></strong></p>
-              <p class="mb-0"><%= orders.address[0].phone || 'No phone provided' %></p>
-            <% } else { %>
-              <p class="text-muted">Customer details not available</p>
-            <% } %>
-          </div>
-        </div>
-      </div>
-
-      <!-- Order Summary -->
-      <div class="col-md-4 mb-3">
-        <div class="card h-100">
-          <div class="card-header bg-light">
-            <h5 class="card-title mb-0">
-              <i class="material-icons text-primary">receipt</i> Order Summary
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="d-flex justify-content-between mb-2">
-              <span>Payment Method:</span>
-              <strong><%= orders.payment || 'N/A' %></strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span>Status:</span>
-              <strong class="text-<%= orders.status === 'Delivered' ? 'success' : (orders.status === 'Pending' ? 'warning' : 'primary') %>">
-                <%= orders.status || 'N/A' %>
-              </strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span>Subtotal:</span>
-              <strong>₹<%= (totalGrant || 0).toLocaleString() %></strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span>Delivery:</span>
-              <strong>₹<%= (orders.deliveryCharge || 0).toLocaleString() %></strong>
-            </div>
-            <hr>
-            <div class="d-flex justify-content-between">
-              <span>Total:</span>
-              <strong>₹<%= (totalGrant + (orders.deliveryCharge || 0)).toLocaleString() %></strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Delivery Address -->
-      <div class="col-md-4 mb-3">
-        <div class="card h-100">
-          <div class="card-header bg-light">
-            <h5 class="card-title mb-0">
-              <i class="material-icons text-primary">place</i> Delivery Address
-            </h5>
-          </div>
-          <div class="card-body">
-            <% if (orders.address && Array.isArray(orders.address) && orders.address.length > 0) { %>
-              <p class="mb-1">
-                <p>
-                  <%= orders.address[0].name || '' %><br>
-                  <%= orders.address[0].city || '' %><br>
-                  <%= orders.address[0].landMark || '' %><br>
-                  <%= orders.address[0].state || '' %><br>
-                  <%= orders.address[0].pinCode || '' %><br>
-                  <%= orders.address[0].phone || '' %><br>
-                  <%= orders.address[0].altPhone || '' %>
+    <div class="card-body">
+      <div class="row mb-10 mt-10 order-info-wrap background-info">
+        <div class="col-md-4">
+          <article class="icontext align-items-start ml-130">
+            <span class="icon icon-sm rounded-circle bg-primary-light">
+              <i class="material-icons text-primary person"></i>
+            </span>
+            <div class="text">
+              <h6 class="mb-1">Customer</h6>
+              <% if (orders && orders.address && orders.address.length > 0 && orders.address[0].name && orders.address[0].phone) { %>
+                <p class="mb-1">
+                  <%= orders.address[0].name %> <br> <%= orders.address[0].phone %>
                 </p>
-              <p class="mb-3"><%= orders.address[0].addressType || '' %></p>
-              
-              <% if (orders.status === "Delivered") { %>
-                <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm btn-outline-primary">
-                  <i class="material-icons md-file_download"></i> Download Invoice
-                </a>
+              <% } else { %>
+                <p class="mb-1">Customer details not available</p>
               <% } %>
-            <% } else { %>
-              <p class="text-muted">Delivery address not available</p>
-            <% } %>
+            </div>
+          </article>
+        </div>
+        <div class="col-md-4">
+          <article class="icontext align-items-start ml-130">
+            <span class="icon icon-sm rounded-circle bg-primary-light">
+              <i class="text-primary material-icons md-local_shipping"></i>
+            </span>
+            <div class="text">
+              <h6 class="mb-1">Order Info</h6>
+              <p class="mb-1">
+                Payment Method: <%= orders.payment || 'N/A' %> <br>
+                Status: <%= orders.status || 'N/A' %> <br>
+                Grand Total: ₹<%= (totalGrant || 0).toLocaleString() %> <br>
+                Delivery Charge: ₹<%= (orders.deliveryCharge || 0).toLocaleString() %> <br>
+                Current Total: ₹<%= (totalPrice || 0).toLocaleString() %> <br>
+                Final Amount: ₹<%= (finalAmount || 0).toLocaleString() %>
+              </p>
+            </div>
+          </article>
+        </div>
+        <div class="col-md-4">
+          <article class="icontext align-items-start ml-130">
+            <span class="icon icon-sm rounded-circle bg-primary-light">
+              <i class="text-primary material-icons md-place"></i>
+            </span>
+            <div class="text">
+              <h6 class="mb-1">Deliver To</h6>
+              <% if (orders && orders.address && orders.address.length > 0) { %>
+                <p class="mb-1">
+                  Address: <%= orders.address[0].landMark || 'N/A' %>, <%= orders.address[0].city || 'N/A' %> <br>
+                  <%= orders.address[0].state || 'N/A' %>, <%= orders.address[0].addressType || 'N/A' %> <br>
+                  <%= orders.address[0].pincode || 'N/A' %>
+                </p>
+                <% if (orders.status === "Delivered") { %>
+                  <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm">Download Invoice</a>
+                <% } %>
+              <% } else { %>
+                <p class="mb-1">Delivery address not available</p>
+              <% } %>
+            </div>
+          </article>
+        </div>
+      </div>
+      <% if (orders.status === "Pending" && orders.payment === "razorpay") { %>
+        <div class="row mb-4">
+          <div class="col-md-12 text-center">
+            <button class="btn btn-primary btn-sm" onclick="retryPayment('<%= orders._id %>', <%= finalAmount %>)">Retry Payment</button>
+          </div>
+        </div>
+      <% } %>
+      <div class="row">
+        <div class="col-lg">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr class="text-center">
+                  <th width="30%">Product</th>
+                  <th width="20%">Name</th>
+                  <th width="10%">Unit Price</th>
+                  <th width="10%">Quantity</th>
+                  <th class="text-center" width="10%">Total</th>
+                  <th width="20%">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (orders && orders.product && Array.isArray(orders.product) && orders.product.length > 0) { %>
+                  <% orders.product.forEach((product) => { %>
+                    <tr>
+                      <td class="text-center">
+                        <img src="/uploads/re-image/<%= product.image || 'default.jpg' %>" style="height: 7rem; width: 7rem;" class="img-xs" alt="Item">
+                      </td>
+                      <td class="text-center"><%= product.name || product.title || 'N/A' %></td>
+                      <td class="text-center">₹<%= (product.price || 0).toLocaleString() %></td>
+                      <td class="text-center"><%= product.quantity || 0 %></td>
+                      <td class="text-center">₹<%= ((parseInt(product.price) || 0) * (parseInt(product.quantity) || 0)).toLocaleString() %></td>
+                      <td class="text-center">
+                        <% if (product.productStatus !== "Cancelled" && product.productStatus !== "Returned") { %>
+                          <% if (orders.status === "Confirmed" || orders.status === "Pending" || orders.status === "Shipped") { %>
+                            <button class="btn btn-danger btn-sm" onclick="toggleCancelForm('<%= product._id %>')">Cancel Order</button>
+                            <div id="cancelForm_<%= product._id %>" class="cancel-form mt-2" style="display: none;">
+                              <form onsubmit="submitCancelOrder(event, '<%= orders._id %>', '<%= product._id %>')" method="POST">
+                                <input type="hidden" name="_method" value="PUT">
+                                <div class="mb-3">
+                                  <label for="cancelReason_<%= product._id %>" class="form-label">Reason for Cancellation</label>
+                                  <select class="form-control" id="cancelReason_<%= product._id %>" required>
+                                    <option value="" disabled selected>Select a reason</option>
+                                    <option value="Changed my mind">Changed my mind</option>
+                                    <option value="Found a better price elsewhere">Found a better price elsewhere</option>
+                                    <option value="Item no longer needed">Item no longer needed</option>
+                                    <option value="Shipping delay">Shipping delay</option>
+                                    <option value="Other">Other</option>
+                                  </select>
+                                </div>
+                                <button type="submit" class="btn btn-danger btn-sm">Submit Cancellation</button>
+                              </form>
+                            </div>
+                          <% } else if (orders.status === "Delivered") { %>
+                            <button class="btn btn-warning btn-sm" onclick="toggleReturnForm('<%= product._id %>')">Return Order</button>
+                            <div id="returnForm_<%= product._id %>" class="return-form mt-2" style="display: none;">
+                              <form onsubmit="submitReturnOrder(event, '<%= orders._id %>', '<%= product._id %>')" method="POST">
+                                <input type="hidden" name="_method" value="PUT">
+                                <div class="mb-3">
+                                  <label for="returnReason_<%= product._id %>" class="form-label">Reason for Return</label>
+                                  <select class="form-control" id="returnReason_<%= product._id %>" required>
+                                    <option value="" disabled selected>Select a reason</option>
+                                    <option value="Defective product">Defective product</option>
+                                    <option value="Wrong item received">Wrong item received</option>
+                                    <option value="Not as described">Not as described</option>
+                                    <option value="Changed my mind">Changed my mind</option>
+                                    <option value="Other">Other</option>
+                                  </select>
+                                </div>
+                                <button type="submit" class="btn btn-warning btn-sm">Submit Return</button>
+                              </form>
+                            </div>
+                          <% } %>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="6">No products found</td>
+                  </tr>
+                <% } %>
+                <input type="hidden" name="" id="orderId" value="<%= orders._id %>">
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Order Items Table -->
-    <div class="card mb-4">
-      <div class="card-header bg-light">
-        <h5 class="card-title mb-0">Ordered Items</h5>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover table-bordered mb-0">
-            <thead class="bg-light">
-              <tr>
-                <th class="text-center" style="width: 80px;">Image</th>
-                <th>Product</th>
-                <th class="text-center">Price</th>
-                <th class="text-center">Qty</th>
-                <th class="text-center">Total</th>
-                <th class="text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (orders.product && Array.isArray(orders.product) && orders.product.length > 0) { %>
-                <% orders.product.forEach((product) => { %>
-                  <tr>
-                    <td class="text-center align-middle">
-                      <img src="/uploads/re-image/<%= product.image || 'default.jpg' %>" class="img-fluid" style="max-height: 60px; max-width: 60px;" alt="<%= product.name || 'Product' %>">
-                    </td>
-                    <td class="align-middle"><%= product.name || product.title || 'N/A' %></td>
-                    <td class="text-center align-middle">₹<%= (product.price || 0).toLocaleString() %></td>
-                    <td class="text-center align-middle"><%= product.quantity || 0 %></td>
-                    <td class="text-center align-middle">₹<%= ((parseInt(product.price) || 0) * (parseInt(product.quantity) || 0)).toLocaleString() %></td>
-                    <td class="text-center align-middle">
-                      <% if (product.productStatus !== "Cancelled" && product.productStatus !== "Returned") { %>
-                        <% if (orders.status === "Confirmed" || orders.status === "Pending" || orders.status === "Shipped") { %>
-                          <button class="btn btn-sm btn-outline-danger mb-1" onclick="toggleCancelForm('<%= product._id %>')">
-                            Cancel
-                          </button>
-                          <div id="cancelForm_<%= product._id %>" class="mt-2 p-2 border rounded" style="display: none;">
-                            <form onsubmit="submitCancelOrder(event, '<%= orders._id %>', '<%= product._id %>')" method="POST">
-                              <input type="hidden" name="_method" value="PUT">
-                              <div class="mb-2">
-                                <label for="cancelReason_<%= product._id %>" class="form-label small">Reason:</label>
-                                <select class="form-select form-select-sm" id="cancelReason_<%= product._id %>" required>
-                                  <option value="" disabled selected>Select reason</option>
-                                  <option value="Changed my mind">Changed my mind</option>
-                                  <option value="Found a better price elsewhere">Better price elsewhere</option>
-                                  <option value="Item no longer needed">No longer needed</option>
-                                  <option value="Shipping delay">Shipping delay</option>
-                                  <option value="Other">Other</option>
-                                </select>
-                              </div>
-                              <button type="submit" class="btn btn-sm btn-danger w-100">Submit</button>
-                            </form>
-                          </div>
-                        <% } else if (orders.status === "Delivered") { %>
-                          <button class="btn btn-sm btn-outline-warning mb-1" onclick="toggleReturnForm('<%= product._id %>')">
-                            Return
-                          </button>
-                          <div id="returnForm_<%= product._id %>" class="mt-2 p-2 border rounded" style="display: none;">
-                            <form id="returnFormSubmit_<%= product._id %>" 
-                                  onsubmit="event.preventDefault(); submitReturnOrder('<%= orders._id %>', '<%= product.productId._id || product._id %>', '<%= product._id %>')">
-                              <input type="hidden" name="_method" value="PUT">
-                              <div class="mb-2">
-                                <label for="returnReason_<%= product._id %>" class="form-label small">Reason:</label>
-                                <select class="form-select form-select-sm" 
-                                        id="returnReason_<%= product._id %>" 
-                                        name="reason" 
-                                        required>
-                                  <option value="" disabled selected>Select reason</option>
-                                  <option value="Defective product">Defective product</option>
-                                  <option value="Wrong item received">Wrong item</option>
-                                  <option value="Not as described">Not as described</option>
-                                  <option value="Changed my mind">Changed my mind</option>
-                                  <option value="Other">Other</option>
-                                </select>
-                              </div>
-                              <button type="submit" class="btn btn-sm btn-warning w-100">Submit</button>
-                            </form>
-                          </div>
-                        <% } %>
-                      <% } else { %>
-                        <span class="badge bg-<%= product.productStatus === 'Cancelled' ? 'danger' : 'warning' %>">
-                          <%= product.productStatus %>
-                        </span>
-                      <% } %>
-                    </td>
-                  </tr>
-                <% }) %>
-              <% } else { %>
-                <tr>
-                  <td colspan="6" class="text-center py-3">No products found</td>
-                </tr>
-              <% } %>
-              <input type="hidden" id="orderId" value="<%= orders._id %>">
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Reviews Section (Only for Delivered Orders) -->
-    <% if (orders.status === "Delivered") { %>
-      <div class="card">
-        <div class="card-header bg-light">
-          <h5 class="card-title mb-0">Product Reviews</h5>
-        </div>
-        <div class="card-body">
-          <% if (orders.product && Array.isArray(orders.product) && orders.product.length > 0) { %>
-            <div class="row">
+      <% if (orders.status === "Delivered") { %>
+        <div class="row mt-4">
+          <div class="col-lg">
+            <h5>Add Reviews</h5>
+            <% if (orders && orders.product && Array.isArray(orders.product) && orders.product.length > 0) { %>
               <% orders.product.forEach((product, index) => { %>
                 <% if (product.productStatus !== "Cancelled" && product.productStatus !== "Returned") { %>
-                  <div class="col-md-6 mb-4">
-                    <div class="card h-100 border">
-                      <div class="card-header bg-light d-flex align-items-center">
-                        <img src="/uploads/re-image/<%= product.image || 'default.jpg' %>" class="me-2" style="height: 40px; width: 40px; object-fit: cover;" alt="<%= product.name %>">
-                        <h6 class="mb-0"><%= product.name || 'N/A' %></h6>
+                  <div class="review-section mb-4" id="reviewSection_<%= product._id %>">
+                    <h6>Review for: <%= product.name || 'N/A' %></h6>
+                    <form class="reviewForm" data-product-id="<%= product.productId._id %>">
+                      <input type="hidden" name="productId" value="<%= product.productId._id %>">
+                      <div class="mb-3">
+                        <label for="rating_<%= product._id %>" class="form-label">Rating</label>
+                        <select class="form-control" id="rating_<%= product._id %>" name="rating" required>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                        </select>
                       </div>
-                      <div class="card-body">
-                        <form class="reviewForm" data-product-id="<%= product.productId._id %>">
-                          <input type="hidden" name="productId" value="<%= product.productId._id %>">
-                          <div class="mb-3">
-                            <label for="rating_<%= product._id %>" class="form-label">Your Rating</label>
-                            <div class="d-flex align-items-center">
-                              <select class="form-select" id="rating_<%= product._id %>" name="rating" required>
-                                <option value="1">★</option>
-                                <option value="2">★★</option>
-                                <option value="3">★★★</option>
-                                <option value="4">★★★★</option>
-                                <option value="5" selected>★★★★★</option>
-                              </select>
-                            </div>
-                          </div>
-                          <div class="mb-3">
-                            <label for="reviewText_<%= product._id %>" class="form-label">Your Review</label>
-                            <textarea class="form-control" id="reviewText_<%= product._id %>" name="reviewText" rows="3" placeholder="Share your experience with this product..." required></textarea>
-                          </div>
-                          <button type="submit" class="btn btn-primary w-100">Submit Review</button>
-                        </form>
+                      <div class="mb-3">
+                        <label for="reviewText_<%= product._id %>" class="form-label">Review</label>
+                        <textarea class="form-control" id="reviewText_<%= product._id %>" name="reviewText" rows="3" required></textarea>
                       </div>
-                    </div>
+                      <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </form>
                   </div>
                 <% } %>
               <% }); %>
-            </div>
-          <% } else { %>
-            <div class="alert alert-info">No products available to review.</div>
-          <% } %>
+            <% } else { %>
+              <p>No products available to review.</p>
+            <% } %>
+          </div>
         </div>
-      </div>
-    <% } %>
+      <% } %>
   </section>
 </main>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/vendors/jquery-3.6.0.min.js"></script>
+<script src="assets/js/vendors/bootstrap.bundle.min.js"></script>
+<script src="assets/js/vendors/select2.min.js"></script>
+<script src="assets/js/vendors/perfect-scrollbar.js"></script>
+<script src="assets/js/vendors/jquery.fullscreen.min.js"></script>
+<script src="assets/js/main.js" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/easyinvoice/dist/easyinvoice.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevatezoom.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-  // Toggle cancel form visibility
-  function toggleCancelForm(productRowId) {
-    const form = document.getElementById(`cancelForm_${productRowId}`);
-    if (form) {
-      form.style.display = form.style.display === 'none' ? 'block' : 'none';
-    }
+  function toggleCancelForm(productId) {
+    const form = document.getElementById(`cancelForm_${productId}`);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
   }
 
-  // Toggle return form visibility
-  function toggleReturnForm(productRowId) {
-    const form = document.getElementById(`returnForm_${productRowId}`);
-    if (form) {
-      form.style.display = form.style.display === 'none' ? 'block' : 'none';
-    }
+  function toggleReturnForm(productId) {
+    const form = document.getElementById(`returnForm_${productId}`);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
   }
 
-  // Handle cancel submission
   function submitCancelOrder(event, orderId, productId) {
     event.preventDefault();
     const reason = document.getElementById(`cancelReason_${productId}`).value;
@@ -302,11 +227,7 @@
       url: '/cancelOrder',
       method: 'PUT',
       contentType: 'application/json',
-      data: JSON.stringify({ 
-        orderId: orderId, 
-        productId: productId, 
-        reason: reason 
-      }),
+      data: JSON.stringify({ orderId: orderId, productId: productId, reason: reason }),
       success: (response) => {
         if (response.success) {
           Swal.fire({
@@ -327,7 +248,6 @@
         }
       },
       error: (error) => {
-        console.error('Cancel order error:', error);
         Swal.fire({
           icon: 'error',
           title: 'Error',
@@ -338,49 +258,16 @@
     });
   }
 
-  // Handle return submission
-  function submitReturnOrder(orderId, productId, productRowId) {
-    const reasonSelect = document.getElementById(`returnReason_${productRowId}`);
-    
-    if (!reasonSelect) {
-      console.error('Could not find reason select element for product:', productRowId);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: "Could not process your return request. Please refresh the page and try again.",
-        confirmButtonText: 'OK'
-      });
-      return;
-    }
-
-    const reason = reasonSelect.value;
-    if (!reason) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Reason Required',
-        text: 'Please select a reason for return',
-        confirmButtonText: 'OK'
-      });
-      return;
-    }
-
-    console.log('Submitting return request:', {
-      orderId: orderId,
-      productId: productId,
-      reason: reason
-    });
+  function submitReturnOrder(event, orderId, productId) {
+    event.preventDefault();
+    const reason = document.getElementById(`returnReason_${productId}`).value;
 
     $.ajax({
       url: '/returnrequestOrder',
       method: 'PUT',
       contentType: 'application/json',
-      data: JSON.stringify({ 
-        orderId: orderId, 
-        productId: productId, 
-        reason: reason 
-      }),
+      data: JSON.stringify({ orderId: orderId, productId: productId, reason: reason }),
       success: (response) => {
-        console.log('Return request response:', response);
         if (response.success) {
           Swal.fire({
             icon: 'success',
@@ -394,73 +281,68 @@
           Swal.fire({
             icon: 'error',
             title: 'Return Failed',
-            text: response.message || "Failed to process your return request. Please try again.",
+            text: response.message || "Failed to return the order. Please try again.",
             confirmButtonText: 'OK'
           });
         }
       },
       error: (error) => {
-        console.error('Return request error:', error);
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: "An error occurred while processing your return request. Please try again.",
+          text: "An error occurred while returning the order. Please try again.",
           confirmButtonText: 'OK'
         });
       }
     });
   }
 
-  // Review submission handler
   $(document).ready(function() {
-    $('.reviewForm').on('submit', function(event) {
-      event.preventDefault();
-      const form = $(this);
-      const productId = form.data('product-id');
-      const rating = form.find('select[name="rating"]').val();
-      const reviewText = form.find('textarea[name="reviewText"]').val();
+  $('.reviewForm').on('submit', function(event) {
+    event.preventDefault();
+    const form = $(this);
+    const productId = form.data('product-id');
+    const rating = form.find('select[name="rating"]').val();
+    const reviewText = form.find('textarea[name="reviewText"]').val();
 
-      $.ajax({
-        url: '/addReview',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({ 
-          productId: productId, 
-          rating: rating, 
-          reviewText: reviewText 
-        }),
-        success: function(response) {
-          if (response.success) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Review Added',
-              text: 'Your review and rating have been added successfully!',
-              confirmButtonText: 'OK'
-            }).then(() => {
-              window.location.reload();
-            });
-          } else {
-            Swal.fire({
-              icon: 'error',
-              title: 'Failed to Add Review',
-              text: response.message || "Failed to add the review. Please try again.",
-              confirmButtonText: 'OK'
-            });
-          }
-        },
-        error: (error) => {
+    console.log("Submitting review for productId:", productId); // Debug log
+
+    $.ajax({
+      url: '/addReview',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ productId: productId, rating: rating, reviewText: reviewText }),
+      success: function(response) {
+        if (response.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Review Added',
+            text: 'Your review and rating have been added successfully!',
+            confirmButtonText: 'OK'
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
           Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: "An error occurred while adding the review. Please try again.",
+            title: 'Failed to Add Review',
+            text: response.message || "Failed to add the review. Please try again.",
             confirmButtonText: 'OK'
           });
         }
-      });
+      },
+      error: (error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: "An error occurred while adding the review. Please try again.",
+          confirmButtonText: 'OK'
+        });
+      }
     });
   });
+});
 
-  // Payment retry function
   function retryPayment(orderId, amount) {
     $.ajax({
       url: '/generateRazorpayOrder',
@@ -529,7 +411,6 @@
     });
   }
 
-  // Payment verification
   function verifyPayment(order, payment, orderId) {
     $.ajax({
       url: '/verifyPayment',
@@ -571,4 +452,118 @@
   }
 </script>
 
-<%- include("../../views/partials/user/footer") %>
+<footer class="footer-section">
+  <div class="container relative">
+    <div class="sofa-img"></div>
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="subscription-form">
+          <h3 class="d-flex align-items-center"><span class="me-1"><img src="/furni-1.0.0/images/envelope-outline.svg" alt="Image" class="img-fluid"></span><span>Subscribe to Newsletter</span></h3>
+          <form action="#" class="row g-3">
+            <div class="col-auto">
+              <input type="text" class="form-control" placeholder="Enter your name">
+            </div>
+            <div class="col-auto">
+              <input type="email" class="form-control" placeholder="Enter your email">
+            </div>
+            <div class="col-auto">
+              <button class="btn btn-primary">
+                <span class="fa fa-paper-plane"></span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="row g-5 mb-5">
+      <div class="col-lg-4">
+        <div class="mb-4 footer-logo-wrap"><a href="#" class="footer-logo">Furni<span>.</span></a></div>
+        <p class="mb-4">Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique. Pellentesque habitant</p>
+        <ul class="list-unstyled custom-social">
+          <li><a href="#"><span class="fa fa-brands fa-facebook-f"></span></a></li>
+          <li><a href="#"><span class="fa fa-brands fa-twitter"></span></a></li>
+          <li><a href="#"><span class="fa fa-brands fa-instagram"></span></a></li>
+          <li><a href="#"><span class="fa fa-brands fa-linkedin"></span></a></li>
+        </ul>
+      </div>
+      <div class="col-lg-8">
+        <div class="row links-wrap">
+          <div class="col-6 col-sm-6 col-md-3">
+            <ul class="list-unstyled">
+              <li><a href="#">About us</a></li>
+              <li><a href="#">Services</a></li>
+              <li><a href="#">Blog</a></li>
+              <li><a href="#">Contact us</a></li>
+            </ul>
+          </div>
+          <div class="col-6 col-sm-6 col-md-3">
+            <ul class="list-unstyled">
+              <li><a href="#">Support</a></li>
+              <li><a href="#">Knowledge base</a></li>
+              <li><a href="#">Live chat</a></li>
+            </ul>
+          </div>
+          <div class="col-6 col-sm-6 col-md-3">
+            <ul class="list-unstyled">
+              <li><a href="#">Jobs</a></li>
+              <li><a href="#">Our team</a></li>
+              <li><a href="#">Leadership</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+            </ul>
+          </div>
+          <div class="col-6 col-sm-6 col-md-3">
+            <ul class="list-unstyled">
+              <li><a href="#">Nordic Chair</a></li>
+              <li><a href="#">Kruzo Aero</a></li>
+              <li><a href="#">Ergonomic Chair</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="border-top copyright">
+      <div class="row pt-4"></div>
+    </div>
+  </div>
+</footer>
+
+<script src="/furni-1.0.0/js/bootstrap.bundle.min.js"></script>
+<script src="/furni-1.0.0/js/tiny-slider.js"></script>
+<script src="/furni-1.0.0/js/custom.js"></script>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/jquery.nice-select.min.js"></script>
+<script src="js/jquery.nicescroll.min.js"></script>
+<script src="js/jquery.magnific-popup.min.js"></script>
+<script src="js/jquery.countdown.min.js"></script>
+<script src="js/jquery.slicknav.js"></script>
+<script src="js/mixitup.min.js"></script>
+<script src="js/owl.carousel.min.js"></script>
+<script src="js/main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.16.6/dist/sweetalert2.all.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<script src="./user-assets/js/vendor/modernizr-3.6.0.min.js"></script>
+<script src="./user-assets/js/vendor/jquery-3.6.0.min.js"></script>
+<script src="./user-assets/js/vendor/jquery-migrate-3.3.0.min.js"></script>
+<script src="./user-assets/js/vendor/bootstrap.bundle.min.js"></script>
+<script src="./user-assets/js/plugins/slick.js"></script>
+<script src="./user-assets/js/plugins/jquery.syotimer.min.js"></script>
+<script src="./user-assets/js/plugins/wow.js"></script>
+<script src="./user-assets/js/plugins/jquery-ui.js"></script>
+<script src="./user-assets/js/plugins/perfect-scrollbar.js"></script>
+<script src="./user-assets/js/plugins/magnific-popup.js"></script>
+<script src="./user-assets/js/plugins/select2.min.js"></script>
+<script src="./user-assets/js/plugins/waypoints.js"></script>
+<script src="./user-assets/js/plugins/counterup.js"></script>
+<script src="./user-assets/js/plugins/jquery.countdown.min.js"></script>
+<script src="./user-assets/js/plugins/images-loaded.js"></script>
+<script src="./user-assets/js/plugins/isotope.js"></script>
+<script src="./user-assets/js/plugins/scrollup.js"></script>
+<script src="./user-assets/js/plugins/jquery.vticker-min.js"></script>
+<script src="./user-assets/js/plugins/jquery.theia.sticky.js"></script>
+<script src="./user-assets/js/plugins/jquery.elevatezoom.js"></script>
+<script src="./user-assets/js/maind134.js?v=3.4"></script>
+<script src="./user-assets/js/shopd134.js?v=3.4"></script>
+
+</body>
+</html>

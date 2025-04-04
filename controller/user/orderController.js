@@ -4,13 +4,17 @@ const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const mongodb = require("mongodb");
 const mongoose = require("mongoose");
+// const razorpay = require("razorpay");
 const env = require("dotenv").config();
+// const crypto = require("crypto");
 const moment = require("moment");
 const fs = require("fs");
 const path = require("path");
 const easyinvoice = require("easyinvoice");
+// const Coupon = require("../../models/couponSchema");
 const Cart = require("../../models/cartSchema");
-const { v4: uuidv4 } = require('uuid');
+
+
 
 const getCheckoutPage = async (req, res, next) => {
   try {
@@ -42,6 +46,9 @@ const getCheckoutPage = async (req, res, next) => {
 
       const deliveryCharge = grandTotal < 4000 ? 200 : 0;
       const totalWithDelivery = grandTotal + deliveryCharge;
+
+      const today = new Date().toISOString();
+      
 
       res.render("checkoutcart", {
         product: data,
@@ -89,9 +96,11 @@ const deleteProduct = async (req, res, next) => {
   }
 };
 
+
+
 const orderPlaced = async (req, res, next) => {
   try {
-    const { totalPrice, addressId, payment } = req.body;
+    const { totalPrice, addressId, payment, discount } = req.body;
     const userId = req.session.user;
 
     if (!userId) {
@@ -111,14 +120,6 @@ const orderPlaced = async (req, res, next) => {
     const desiredAddress = findAddress.address.find((item) => item._id.toString() === addressId.toString());
     if (!desiredAddress) {
       return res.status(404).json({ error: "Specific address not found" });
-    }
-
-    // After you've obtained `desiredAddress` and verified it exists
-    if (!desiredAddress.name) {
-      desiredAddress.name = findUser.name || "Not Available";
-    }
-    if (!desiredAddress.phone) {
-      desiredAddress.phone = findUser.phone || "Not Available";
     }
 
     const cart = await Cart.findOne({ userId: userId }).populate("items.productId");
@@ -142,24 +143,23 @@ const orderPlaced = async (req, res, next) => {
       user: userId
     }));
 
-    const totalPriceNumber = parseFloat(totalPrice); // ensure it's a number
-    const deliveryCharge = totalPriceNumber < 4000 ? 200 : 0;
-    const finalAmount = totalPriceNumber + deliveryCharge;
+    const deliveryCharge = totalPrice < 4000 ? 200 : 0;
+    const finalAmount = totalPrice - (discount || 0) + deliveryCharge;
 
     const newOrder = new Order({
       product: orderedProducts,
-      originalTotalPrice: totalPriceNumber,
-      totalPrice: totalPriceNumber,
+      originalTotalPrice: totalPrice,
+      totalPrice: totalPrice,
+      discount: discount || 0,
       deliveryCharge: deliveryCharge,
       finalAmount: finalAmount,
-      address: [desiredAddress],
+      address: desiredAddress,
       payment: payment,
       userId: userId,
-      status: "Confirmed",
+      status: payment === "razorpay" ? "Pending" : "Confirmed",
       createdOn: Date.now(),
     });
 
-    newOrder.orderId = uuidv4();
     const orderDone = await newOrder.save();
     await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
 
@@ -198,6 +198,14 @@ const orderPlaced = async (req, res, next) => {
           success: false,
         });
       }
+    } else if (payment === "razorpay") {
+      const razorPayGeneratedOrder = await generateOrderRazorpay(orderDone._id, finalAmount);
+      res.json({
+        payment: false,
+        method: "razorpay",
+        razorPayOrder: razorPayGeneratedOrder,
+        order: orderDone,
+      });
     }
   } catch (error) {
     next(error);
@@ -244,6 +252,19 @@ const getOrderDetailsPage = async (req, res, next) => {
       totalPrice: totalPrice,
       finalAmount: finalAmount,
       orderDate: orderDate,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const paymentConfirm = async (req, res, next) => {
+  try {
+    await Order.updateOne(
+      { _id: req.body.orderId },
+      { $set: { status: "Confirmed" } }
+    ).then((data) => {
+      res.json({ status: true });
     });
   } catch (error) {
     next(error);
@@ -313,27 +334,33 @@ const cancelOrder = async (req, res, next) => {
 
     const refundAmount = productData.price * productData.quantity;
 
-    if (findOrder.payment === "wallet") {
-      findUser.wallet += refundAmount;
-      await User.updateOne(
-        { _id: userId },
-        {
-          $push: {
-            history: {
-              amount: refundAmount,
-              status: "credit",
-              date: Date.now(),
-              description: `Order ${orderId} product ${productId} cancelled`,
+    if (findOrder.payment === "razorpay" && findOrder.status === "Pending") {
+      findOrder.product[productIndex].productStatus = "Cancelled";
+      findOrder.totalPrice -= refundAmount;
+      findOrder.finalAmount -= refundAmount;
+    } else {
+      if (findOrder.payment === "razorpay" || findOrder.payment === "wallet") {
+        findUser.wallet += refundAmount;
+        await User.updateOne(
+          { _id: userId },
+          {
+            $push: {
+              history: {
+                amount: refundAmount,
+                status: "credit",
+                date: Date.now(),
+                description: `Order ${orderId} product ${productId} cancelled`,
+              },
             },
-          },
-        }
-      );
-      await findUser.save();
-    }
+          }
+        );
+        await findUser.save();
+      }
 
-    findOrder.product[productIndex].productStatus = "Cancelled";
-    findOrder.totalPrice -= refundAmount;
-    findOrder.finalAmount -= refundAmount;
+      findOrder.product[productIndex].productStatus = "Cancelled";
+      findOrder.totalPrice -= refundAmount;
+      findOrder.finalAmount -= refundAmount;
+    }
 
     await findOrder.save();
 
@@ -354,96 +381,76 @@ const cancelOrder = async (req, res, next) => {
     next(error);
   }
 };
+
 const returnorder = async (req, res, next) => {
   try {
-    // Check session and user
     const userId = req.session.user;
-    if (!userId) {
-      return res.status(401).json({ message: "User not authenticated" });
-    }
-
     const findUser = await User.findOne({ _id: userId });
     if (!findUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Validate request body
     const { orderId, productId, reason } = req.body;
-    if (!orderId || !productId || !reason) {
-      return res.status(400).json({ 
-        message: "Missing required fields",
-        required: ["orderId", "productId", "reason"]
-      });
+
+    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid order ID or product ID format" });
     }
 
-    // Validate ID formats
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ 
-        message: "Invalid order ID format",
-        received: orderId
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ 
-        message: "Invalid product ID format",
-        received: productId
-      });
-    }
-
-    // Find the order
     const findOrder = await Order.findOne({ _id: orderId });
     if (!findOrder) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Find the product in the order
-    const productIndex = findOrder.product.findIndex(
-      (product) => product.productId.toString() === productId
-    );
-    
+    const productIndex = findOrder.product.findIndex((product) => product._id.toString() === productId);
     if (productIndex === -1) {
-      return res.status(404).json({ 
-        message: "Product not found in order",
-        orderProducts: findOrder.product.map(p => p.productId.toString())
-      });
+      return res.status(404).json({ message: "Product not found in order" });
     }
 
     const productData = findOrder.product[productIndex];
+    if (productData.productStatus === "Returned" || productData.productStatus === "Return Requested") {
+      return res.status(400).json({ message: "Product is already returned or return requested" });
+    }
+
     
-    // Check product status
-    if (productData.productStatus === "Returned") {
-      return res.status(400).json({ 
-        message: "Product is already returned",
-        currentStatus: productData.productStatus
-      });
-    }
-
-    if (productData.productStatus === "Return Requested") {
-      return res.status(400).json({ 
-        message: "Return already requested for this product",
-        currentStatus: productData.productStatus
-      });
-    }
-
-    // Update product status
     findOrder.product[productIndex].productStatus = "Return Requested";
     findOrder.product[productIndex].returnStatus = "Pending";
-    findOrder.product[productIndex].returnReason = reason;
-    findOrder.product[productIndex].returnRequestDate = new Date();
-    
     await findOrder.save();
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Return request submitted successfully",
-      updatedStatus: findOrder.product[productIndex].productStatus
-    });
+    res.status(200).json({ success: true, message: "Return request submitted successfully" });
   } catch (error) {
-    console.error("Return order error:", error);
     next(error);
   }
 };
+
+
+
+const verify = async (req, res, next) => {
+  try {
+    let hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+    hmac.update(
+      `${req.body.payment.razorpay_order_id}|${req.body.payment.razorpay_payment_id}`
+    );
+    hmac = hmac.digest("hex");
+
+    if (hmac === req.body.payment.razorpay_signature) {
+      res.json({ status: true });
+    } else {
+      const orderId = req.body.order.receipt;
+      await Order.updateOne(
+        { _id: orderId },
+        { $set: { status: "Pending" } }
+      );
+      res.json({
+        status: false,
+        message: "Payment was declined by the bank in test mode",
+        orderId: orderId
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 const downloadInvoice = async (req, res, next) => {
   try {
     const orderId = req.params.orderId;
@@ -453,10 +460,12 @@ const downloadInvoice = async (req, res, next) => {
       return res.status(404).send('Order not found');
     }
 
+    
     let activeProducts = order.product.filter(prod => 
       prod.productStatus !== "Returned" && prod.productStatus !== "Cancelled"
     );
 
+    
     let products = activeProducts.map(prod => ({
       "quantity": prod.quantity,
       "description": prod.name || prod.title,
@@ -464,6 +473,7 @@ const downloadInvoice = async (req, res, next) => {
       "price": prod.price,
     }));
 
+    
     if (order.deliveryCharge && order.deliveryCharge > 0 && activeProducts.length > 0) {
       products.push({
         "quantity": 1,
@@ -473,6 +483,7 @@ const downloadInvoice = async (req, res, next) => {
       });
     }
 
+    
     if (products.length === 0) {
       products.push({
         "quantity": 1,
@@ -492,16 +503,19 @@ const downloadInvoice = async (req, res, next) => {
       "marginBottom": 25,
       apiKey: process.env.EASYINVOICE_API,
       mode: "production",
+      images: {
+        logo: "https://res.cloudinary.com/dn20pprrf/image/upload/v1740568840/jtbzbwaonl0vsppodtr0.png",
+      },
       "sender": {
-        "company": "UrbenNest",
-        "address": "Kasargod",
-        "zip": "671320",
-        "city": "Periya",
+        "company": "Furni",
+        "address": "Malappuram",
+        "zip": "673638",
+        "city": "Kondotty",
         "country": "India"
       },
       "client": {
         "company": order.address[0].name,
-        "address": order.address[0].landMark + "- " + order.address[0].city,
+        "address": order.address[0].landMark + ", " + order.address[0].city,
         "zip": order.address[0].pincode,
         "city": order.address[0].state,
         "country": "India",
@@ -512,7 +526,7 @@ const downloadInvoice = async (req, res, next) => {
         "date": moment(order.createdOn).format("YYYY-MM-DD HH:mm:ss"),
       },
       "products": products,
-      "bottomNotice": "Thank you for your business With UrbenNest",
+      "bottomNotice": "Thank you for your business",
     };
 
     const result = await easyinvoice.createInvoice(data);
@@ -576,6 +590,30 @@ const addReview = async (req, res, next) => {
     next(error);
   }
 }
+const generateRazorpayOrder = async (req, res, next) => {
+  try {
+    const { orderId, amount } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    if (order.status !== "Pending" || order.payment !== "razorpay") {
+      return res.status(400).json({ success: false, message: "Cannot retry payment for this order" });
+    }
+
+    const razorPayOrder = await generateOrderRazorpay(orderId, amount);
+
+    res.json({
+      success: true,
+      razorPayOrder: razorPayOrder,
+      orderId: orderId
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   getCheckoutPage,
@@ -583,8 +621,10 @@ module.exports = {
   cancelOrder,
   orderPlaced,
   getOrderDetailsPage,
+  verify,
   changeSingleProductStatus,
+  paymentConfirm,
   returnorder,
   downloadInvoice,
-  addReview
+  addReview,
 };

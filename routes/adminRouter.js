@@ -60,7 +60,5 @@ router.get("/orderDetailsAdmin", adminAuth, orderController.getOrderDetailsPageA
 router.get("/changeStatus", adminAuth, orderController.changeOrderStatus);
 router.post("/approveReturn", adminAuth, orderController.approveReturn);
 router.post("/rejectReturn", adminAuth, orderController.rejectReturn);
-router.post("/shipProduct", adminAuth, orderController.shipProduct); // New endpoint registration
-router.post("/deliverProduct", adminAuth, orderController.deliverProduct);
 
 module.exports = router
