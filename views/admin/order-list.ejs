@@ -1,0 +1,402 @@
+<%- include("../../views/partials/admin/header") %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - Admin Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9fafb;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            padding: 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 640px) {
+            .container {
+                padding: 2rem;
+            }
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            max-width: 150px;
+        }
+
+        @media (max-width: 640px) {
+            .status-badge {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-processing { background-color: #dbeafe; color: #1e40af; }
+        .status-shipped { background-color: #f3e8ff; color: #6b21a8; }
+        .status-delivered { background-color: #dcfce7; color: #166534; }
+        .status-returned { background-color: #ffedd5; color: #9a3412; }
+        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+
+        .search-container {
+            position: relative;
+            max-width: 32rem;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        .table-container {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        
+        @media (max-width: 1024px) {
+            .table-container table {
+                display: block;
+            }
+
+            .table-container thead {
+                display: none;
+            }
+
+            .table-container tr {
+                display: block;
+                margin-bottom: 1rem;
+                border-bottom: 1px solid #e5e7eb;
+                padding: 1rem;
+            }
+
+            .table-container td {
+                display: block;
+                padding: 0.5rem 0;
+                border: none;
+            }
+
+            .table-container td::before {
+                content: attr(data-label);
+                font-weight: 500;
+                color: #6b7280;
+                display: block;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                margin-bottom: 0.25rem;
+            }
+
+            .product-card {
+                margin-top: 0.5rem;
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f9fafb;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            vertical-align: top;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .product-card {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            background-color: #f9fafb;
+        }
+
+        .product-image {
+            width: 3rem;
+            height: 3rem;
+            min-width: 3rem;
+            border-radius: 0.375rem;
+            background-color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .product-name {
+            font-weight: 500;
+            color: #1f2937;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .page-link {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            text-decoration: none;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .page-link.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .action-button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .action-button:hover {
+            background-color: #2563eb;
+        }
+
+        /* Responsive text sizes */
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 1.25rem !important;
+            }
+
+            .product-name {
+                font-size: 0.875rem;
+            }
+
+            .text-sm {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Order info styles */
+        .order-info {
+            margin-bottom: 0.25rem;
+        }
+
+        .order-id {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .order-date {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        
+        .customer-info > div {
+            margin-bottom: 0.25rem;
+        }
+
+        
+        .address-info {
+            margin-bottom: 0.5rem;
+        }
+
+        .user-address {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin-bottom: 2rem;">Orders</h1>
+
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" placeholder="Search orders by ID, customer, or product..." class="search-input">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Products</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% orders.forEach(order => { %>
+                        <% console.log(JSON.stringify(order, null, 2)); %>
+                        <tr>
+                            <td data-label="Order ID">
+                                <div class="order-info">
+                                    <div class="order-id">#<%= order.orderId %></div>
+                                    <div class="order-date"><%= new Date(order.createdOn).toLocaleDateString() %></div>
+                                </div>
+                            </td>
+                            <td data-label="Customer">
+                                <div class="customer-info">
+                                    <div style="font-weight: 500; color: #1f2937;"><%= order.address[0]?.name || 'No Name' %></div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;"><%= order.address[0]?.phone || 'No Phone' %></div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;"><%= order.userId?.email || 'No Email' %></div>
+                                </div>
+                            </td>
+                            <td data-label="Products">
+                                <div style="max-height: 12rem; overflow-y: auto;">
+                                    <% order.product.forEach(product => { %>
+                                    <div class="product-card">
+                                        <div class="product-image">
+                                            <% if (product.image) { %>
+                                                <img src="/uploads/re-image/<%= product.image %>" alt="<%= product.name %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <% } else { %>
+                                                <i class="fas fa-image" style="color: #9ca3af;"></i>
+                                            <% } %>
+                                        </div>
+                                        <div class="product-details">
+                                            <div class="product-name"><%= product.name %></div>
+                                            <div style="font-size: 0.875rem; color: #6b7280;">Qty: <%= product.quantity %></div>
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                                </div>
+                            </td>
+                            <td data-label="Total Amount">
+                                <div style="font-weight: 500; color: #1f2937;">₹<%= order.totalPrice %></div>
+                            </td>
+                            <td data-label="Status">
+                                <select
+                                    class="status-badge status-<%= order.status.toLowerCase() %>"
+                                    data-order-id="<%= order._id %>"
+                                    data-user-id="<%= order.userId %>"
+                                    onchange="updateStatus(this)"
+                                >
+                                    <option value="Confirmed" <%= order.status === 'Confirmed' ? 'selected' : '' %>>Confirmed</option>
+                                    <option value="Pending" <%= order.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+                                    <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                                    <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                    <option value="Returned" <%= order.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+                                    <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                </select>
+                            </td>
+                            <td data-label="Actions">
+                                <a href="/admin/orderDetailsAdmin?id=<%= order._id %>" class="action-button">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %>" class="page-link">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+            <% } %>
+
+            <span class="page-link active"><%= currentPage %></span>
+
+            <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %>" class="page-link">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+            <% } %>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(select) {
+            const orderId = select.dataset.orderId;
+            const userId = select.dataset.userId;
+            const status = select.value;
+
+            if (status === 'Cancelled' || status === 'Returned') {
+                if (!confirm(`Are you sure you want to mark this order as ${status}?`)) {
+                    select.value = select.querySelector('[selected]').value;
+                    return;
+                }
+            }
+
+            window.location.href = `/admin/changeStatus?orderId=${orderId}&userId=${userId}&status=${status}`;
+        }
+
+        
+        document.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', function() {
+                const status = this.value.toLowerCase();
+                this.className = `status-badge status-${status}`;
+            });
+        });
+    </script>
+</body>
+</html>
+
+<%- include("../../views/partials/admin/footer") %>

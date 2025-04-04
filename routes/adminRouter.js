@@ -6,6 +6,7 @@ const brandController=require('../controller/admin/brandController')
 const categoryController=require('../controller/admin/categoryController')
 const { customerInfo, customerBlocked, customerUnblocked } = require('../controller/admin/customerController')
 const prouctControllr=require('../controller/admin/productController')
+const orderController=require('../controller/admin/orderController')
 const multer=require('multer')
 const storege=require("../helpers/multer")
 const getBrandPage = require('../controller/admin/brandController')
@@ -51,4 +52,14 @@ router.get('/unblockProduct',adminAuth,prouctControllr.unblockProdeucts)
 router.get("/editProduct", adminAuth, prouctControllr.getEditProduct);
 router.post("/editProduct/:id", adminAuth, upload.array("images", 4), prouctControllr.editProduct);
 router.post("/deleteImage", adminAuth, prouctControllr.deleteSingleImage);
+
+
+// Order Management
+router.get("/order-list", adminAuth, orderController.getOrderListPageAdmin);
+router.get("/orderDetailsAdmin", adminAuth, orderController.getOrderDetailsPageAdmin);
+router.get("/changeStatus", adminAuth, orderController.changeOrderStatus);
+router.post("/approveReturn", adminAuth, orderController.approveReturn);
+router.post("/rejectReturn", adminAuth, orderController.rejectReturn);
+
+
 module.exports = router

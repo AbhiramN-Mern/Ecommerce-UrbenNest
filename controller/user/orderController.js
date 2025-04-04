@@ -354,46 +354,96 @@ const cancelOrder = async (req, res, next) => {
     next(error);
   }
 };
-
 const returnorder = async (req, res, next) => {
   try {
+    // Check session and user
     const userId = req.session.user;
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
     const findUser = await User.findOne({ _id: userId });
     if (!findUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Validate request body
     const { orderId, productId, reason } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ message: "Invalid order ID or product ID format" });
+    if (!orderId || !productId || !reason) {
+      return res.status(400).json({ 
+        message: "Missing required fields",
+        required: ["orderId", "productId", "reason"]
+      });
     }
 
+    // Validate ID formats
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ 
+        message: "Invalid order ID format",
+        received: orderId
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ 
+        message: "Invalid product ID format",
+        received: productId
+      });
+    }
+
+    // Find the order
     const findOrder = await Order.findOne({ _id: orderId });
     if (!findOrder) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    const productIndex = findOrder.product.findIndex((product) => product._id.toString() === productId);
+    // Find the product in the order
+    const productIndex = findOrder.product.findIndex(
+      (product) => product.productId.toString() === productId
+    );
+    
     if (productIndex === -1) {
-      return res.status(404).json({ message: "Product not found in order" });
+      return res.status(404).json({ 
+        message: "Product not found in order",
+        orderProducts: findOrder.product.map(p => p.productId.toString())
+      });
     }
 
     const productData = findOrder.product[productIndex];
-    if (productData.productStatus === "Returned" || productData.productStatus === "Return Requested") {
-      return res.status(400).json({ message: "Product is already returned or return requested" });
+    
+    // Check product status
+    if (productData.productStatus === "Returned") {
+      return res.status(400).json({ 
+        message: "Product is already returned",
+        currentStatus: productData.productStatus
+      });
     }
 
+    if (productData.productStatus === "Return Requested") {
+      return res.status(400).json({ 
+        message: "Return already requested for this product",
+        currentStatus: productData.productStatus
+      });
+    }
+
+    // Update product status
     findOrder.product[productIndex].productStatus = "Return Requested";
     findOrder.product[productIndex].returnStatus = "Pending";
+    findOrder.product[productIndex].returnReason = reason;
+    findOrder.product[productIndex].returnRequestDate = new Date();
+    
     await findOrder.save();
 
-    res.status(200).json({ success: true, message: "Return request submitted successfully" });
+    res.status(200).json({ 
+      success: true, 
+      message: "Return request submitted successfully",
+      updatedStatus: findOrder.product[productIndex].productStatus
+    });
   } catch (error) {
+    console.error("Return order error:", error);
     next(error);
   }
 };
-
 const downloadInvoice = async (req, res, next) => {
   try {
     const orderId = req.params.orderId;
@@ -451,7 +501,7 @@ const downloadInvoice = async (req, res, next) => {
       },
       "client": {
         "company": order.address[0].name,
-        "address": order.address[0].landMark + ", " + order.address[0].city,
+        "address": order.address[0].landMark + "- " + order.address[0].city,
         "zip": order.address[0].pincode,
         "city": order.address[0].state,
         "country": "India",
