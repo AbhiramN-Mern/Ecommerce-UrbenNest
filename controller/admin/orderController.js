@@ -161,49 +161,39 @@ const approveReturn = async (req, res, next) => {
     try {
       const { orderId, productId } = req.body;
   
-      const order = await Order.findOne({ _id: orderId });
+      // Validate IDs
+      if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+        return res.status(400).json({ success: false, message: "Invalid order or product ID" });
+      }
+  
+      const order = await Order.findById(orderId);
       if (!order) {
         return res.status(404).json({ success: false, message: "Order not found" });
       }
   
-      const productIndex = order.product.findIndex(p => p._id.toString() === productId);
-      if (productIndex === -1 || order.product[productIndex].productStatus !== "Return Requested") {
-        return res.status(400).json({ success: false, message: "Invalid return request" });
+      // Find the specific product within the order.
+      // Change this if your schema stores productId instead of generating its own _id.
+      const productIndex = order.product.findIndex(prod =>
+        prod.productId ? prod.productId.toString() === productId : prod._id.toString() === productId
+      );
+  
+      if (productIndex === -1) {
+        return res.status(404).json({ success: false, message: "Product not found in order" });
       }
   
       const productData = order.product[productIndex];
-      const refundAmount = productData.price * productData.quantity;
-
-      
+      if (productData.productStatus !== "Return Requested") {
+        return res.status(400).json({ success: false, message: "Return not requested for this product" });
+      }
+  
+      // Approve the return
       order.product[productIndex].productStatus = "Returned";
-      order.product[productIndex].returnStatus = "Approved";
-      order.totalPrice -= refundAmount;
-      order.finalAmount -= refundAmount;
       await order.save();
   
-      
-      const user = await User.findById(order.userId);
-      if (user) {
-        user.wallet += refundAmount;
-        user.history.push({
-          amount: refundAmount,
-          status: "credit",
-          date: Date.now(),
-          description: `Refund for returned product ${productId} in order ${orderId}`,
-        });
-        await user.save();
-      }
-  
-      
-      const product = await Product.findById(productData.productId);
-      if (product) {
-        product.quantity += productData.quantity;
-        await product.save();
-      }
-  
-      res.status(200).json({ success: true, message: "Return approved and wallet credited" });
+      return res.json({ success: true, message: "Return approved" });
     } catch (error) {
-      next(error);
+      console.error("Approve Return Error:", error);
+      res.status(500).json({ success: false, message: "Internal server error" });
     }
   };
   

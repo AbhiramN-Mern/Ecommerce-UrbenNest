@@ -155,7 +155,7 @@
                                             <div class="status-action">
                                                 <div class="status-chip return-requested">Return Requested</div>
                                                 <div class="action-dropdown">
-                                                    <select class="action-select" data-product-id="<%= product._id %>" onchange="handleDropdownChange(this)">
+                                                    <select class="action-select" data-product-id="<%= product.productId ? product.productId.toString() : product._id %>" onchange="handleDropdownChange(this)">
                                                         <option value="" disabled selected>Update Return</option>
                                                         <option value="approveReturn">Approve Return</option>
                                                         <option value="rejectReturn">Reject Return</option>
@@ -168,7 +168,7 @@
                                             <div class="status-action">
                                                 <div class="status-chip <%= product.productStatus?.toLowerCase() %>"><%= product.productStatus %></div>
                                                 <div class="action-dropdown">
-                                                    <select class="action-select" data-product-id="<%= product._id %>" onchange="handleDropdownChange(this)">
+                                                    <select class="action-select" data-product-id="<%= product.productId ? product.productId.toString() : product._id %>" onchange="handleDropdownChange(this)">
                                                         <option value="" disabled selected>Update Status</option>
                                                         <% if (product.productStatus === "Confirmed") { %>
                                                             <option value="ship">Ship</option>
