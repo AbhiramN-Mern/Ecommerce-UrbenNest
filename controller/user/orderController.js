@@ -311,7 +311,7 @@ const cancelOrder = async (req, res, next) => {
     // Rest of your existing cancelOrder logic
     // ... (your existing code for cancelling the order)
 
-    return res.status(200).json({ success: true, message: 'Product cancelled successfully' });
+    // return res.status(200).json({ success: true, message: 'Product cancelled successfully' });
     const productData = findOrder.product[productIndex];
     if (productData.productStatus === "Cancelled") {
       return res.status(400).json({ success: false, message: "Product is already cancelled" });
