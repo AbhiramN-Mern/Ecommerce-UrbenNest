@@ -148,7 +148,6 @@ const signup = async (req, res) => {
             }
         );
 
-        // Check if verification was successful
         if (!recaptchaResponse.data.success) {
             return res.render("signup", { message: "reCAPTCHA verification failed. Try again." });
         }
@@ -169,7 +168,7 @@ const signup = async (req, res) => {
         const emailSent = await sendVerificationEmail(email, otp);
         const smsSent = await sendVerificationSMS(phone, otp);
 
-       if (!emaailSent) {
+       if (!emailSent) {
             return res.render("signup", { message: "Failed to send OTP. Try again!" });
         }
 
@@ -284,9 +283,6 @@ const login=async(req,res)=>{
         return res.render('login',{message:'User is Blocked by Admin '})
     }
     const passwordMatch=await bcrypt.compare(password,findUser.password)
-    
-    
-    
 
     if(!passwordMatch){
         console.log("incorrect Password");

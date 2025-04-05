@@ -1,36 +1,5 @@
 <%- include("../../views/partials/user/header", { currentPage: 'checkout' }) %>
 
-<style>
-  .coupon-card {
-    border: 2px solid #eaeaea;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .coupon-name {
-    font-size: 12px;
-    font-weight: bold;
-  }
-
-  .use-button {
-    background-color: #4caf50;
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  .use-button:hover {
-    background-color: #45a049;
-  }
-</style>
-
 <section>
   <div class="container">
     <div class="row">
@@ -113,13 +82,17 @@
                     <p><%= address.pincode %></p>
                     <p><%= address.phone %></p>
                     <p><%= address.altPhone %></p>
-                    <div class="d-flex justify-content-between">
-                      <a href="/editAddress?id=<%= address._id %>&redirect=/checkout&userId=<%= user._id %>">
-                        <button class="btn-small">Edit</button>
+                    <div class="d-flex justify-content-between gap-2">
+                      <a href="/editAddress?id=<%= address._id %>&redirect=/checkout&userId=<%= user._id %>" 
+                         class="btn btn-outline-primary btn-sm d-flex align-items-center">
+                        <i class="material-icons me-1" style="font-size: 16px;">edit</i>
+                        Edit
                       </a>
-                      <a href="#" onclick="confirmDeleteAddress('<%= address._id %>', '<%= user._id %>')">
-                        <button class="btn-small">Delete</button>
-                      </a>
+                      <button onclick="confirmDeleteAddress('<%= address._id %>', '<%= user._id %>')" 
+                              class="btn btn-danger btn-sm d-flex align-items-center">
+                        <i class="material-icons me-1" style="font-size: 16px;">delete</i>
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -145,39 +118,6 @@
         </div>
       </div>
 
-      <div class="col-6">
-        <div class="input-group mb-1 col-2" style="border: 1px solid #ced4da; border-radius: 5px; width: 300px; margin-left: 200px; margin-top: 10px;">
-          <input type="text" class="form-control" id="inputCoupon" placeholder="Paste Coupon Name">
-          <div class="input-group-append">
-            <button class="btn btn-primary" id="applyButton" type="button" onclick="applyCoupon('<%= grandTotal %>')">Apply</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="mb-25 ml-150 pt-10">
-        <h5>Available Coupons</h5>
-      </div>
-
-      <ul>
-        <% if (locals.Coupon) { %>
-          <% for (let i = 0; i < Coupon.length; i++) { %>
-            <li>
-              <div class="coupon-card col-4" style="margin-left: 150px;">
-                <div class="coupon-details">
-                  <span class="coupon-name">
-                    <%= Coupon[i].name %>
-                  </span><br>
-                </div>
-                <button onclick="useCoupon('<%= Coupon[i].name %>')" id="useButton_<%= Coupon[i].name %>" class="use-button">Use</button>
-                <button onclick="cancelCoupon('<%= Coupon[i].name %>')" id="cancelButton_<%= Coupon[i].name %>" class="cancel-button btn-danger" style="display: none;">Cancel</button>
-              </div>
-            </li>
-          <% } %>
-        <% } else { %>
-          <h3>No coupons available</h3>
-        <% } %>
-      </ul>
-
       <div class="payment_method">
         <div class="mb-25 ml-150">
           <h5>Payment</h5>
@@ -186,15 +126,7 @@
           <input class="form-check-input payment" type="radio" value="cod" name="payment_option" id="CashOnDelivery" checked="">
           <label class="form-check-label" for="CashOnDelivery">Cash on Delivery</label>
         </div>
-        <div class="custom-radio ml-150">
-          <input class="form-check-input payment" value="razorpay" type="radio" name="payment_option" id="Razorpay">
-          <label class="form-check-label" for="Razorpay">Razorpay</label>
-        </div>
-        <div class="custom-radio ml-150">
-          <input class="form-check-input payment" value="wallet" type="radio" name="payment_option" id="wallet">
-          <label class="form-check-label" for="wallet">Wallet</label>
-        </div>
-      </div>
+      </div>  
 
       <div class="container col-6 mt-3">
         <div class="ml-150">
@@ -212,16 +144,6 @@
                   </td>
                 </tr>
               <% } %>
-              <tr>
-                <th>Discount</th>
-                <td colspan="2" id="discount">
-                  <% if (locals.offerPrice) { %>
-                    <%= locals.offerPrice %>
-                  <% } else { %>
-                    0
-                  <% } %>
-                </td>
-              </tr>
               <tr>
                 <th>Total</th>
                 <td colspan="2" class="product-subtotal">
@@ -242,10 +164,8 @@
   </div>
 </section>
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 
 <script>
   async function placeOrder(userId) {
@@ -269,14 +189,7 @@
         icon: 'error',
         timer: 3000,
       });
-    } else if (payment === "cod" && numericValue > 1000) {
-      Swal.fire({
-        title: 'COD Not Allowed!',
-        text: 'Orders above ₹1000 are not allowed for Cash on Delivery (COD).',
-        icon: 'error',
-        timer: 3000,
-      });
-    } else {
+    } else { 
       $.ajax({
         url: '/orderPlaced',
         method: 'POST',
@@ -284,7 +197,6 @@
           totalPrice: <%= grandTotal %>,
           addressId: address,
           payment: payment,
-          discount: discount,
         },
         success: function (response) {
           if (response.error === "Some items are out of stock") {
@@ -311,154 +223,6 @@
                   location.href = '/';
                 }
               });
-            } else if (response.method === "wallet") {
-              if (response.payment === true) {
-                Swal.fire({
-                  title: "Order success",
-                  text: "Order placed successfully",
-                  icon: "success",
-                  showCancelButton: true,
-                  confirmButtonText: "View orders",
-                  cancelButtonText: "Continue shopping",
-                }).then(function (result) {
-                  if (result.value) {
-                    location.href = `/orderDetails?id=${orderId}`;
-                  } else {
-                    location.href = '/';
-                  }
-                });
-              } else {
-                Swal.fire({
-                  title: "Order failed",
-                  text: "Wallet amount is not enough",
-                  icon: "error",
-                  showConfirmButton: true,
-                }).then(function (result) {
-                  if (result.value) {
-                    location.href = '/';
-                  }
-                });
-              }
-            } else if (response.method === "razorpay") {
-              let orderAmount = Math.round(numericValue * 100);
-              let razorpayInstance;
-
-              const options = {
-                "key": "rzp_test_hb0Gpt9IOIzC17",
-                "amount": orderAmount,
-                "currency": "INR",
-                "name": "Furni",
-                "description": "Test Transaction",
-                "image": "https://res.cloudinary.com/dn20pprrf/image/upload/v1740568840/jtbzbwaonl0vsppodtr0.png",
-                "order_id": response.razorPayOrder.id,
-                "handler": function (paymentResponse) {
-                  $.ajax({
-                    url: '/verifyPayment',
-                    method: 'post',
-                    data: {
-                      order: response.razorPayOrder,
-                      payment: paymentResponse
-                    },
-                    success: (verifyResponse) => {
-                      if (verifyResponse.status) {
-                        razorpayInstance.paymentSuccess = true;
-                        $.ajax({
-                          url: '/paymentConfirm',
-                          method: 'post',
-                          data: { orderId: orderId },
-                          success: (confirmResponse) => {
-                            if (confirmResponse.status) {
-                              Swal.fire({
-                                title: "Order success",
-                                text: "Order placed successfully",
-                                icon: "success",
-                                showCancelButton: true,
-                                confirmButtonText: "View orders",
-                                cancelButtonText: "Continue shopping",
-                              }).then((result) => {
-                                if (result.value) {
-                                  location.href = `/orderDetails?id=${orderId}`;
-                                } else {
-                                  location.href = '/';
-                                }
-                              });
-                            }
-                          }
-                        });
-                      } else {
-                        razorpayInstance.close();
-                        Swal.fire({
-                          title: "Payment Failed",
-                          text: "Payment was declined by the bank. Would you like to retry?",
-                          icon: "error",
-                          showCancelButton: true,
-                          confirmButtonText: "Retry Payment",
-                          cancelButtonText: "Go to Home",
-                        }).then((result) => {
-                          if (result.isConfirmed) {
-                            openRazorpay(options);
-                          } else {
-                            location.href = '/';
-                          }
-                        });
-                      }
-                    },
-                    error: (error) => {
-                      razorpayInstance.close();
-                      Swal.fire({
-                        title: "Payment Failed",
-                        text: "An error occurred during payment verification. Would you like to retry?",
-                        icon: "error",
-                        showCancelButton: true,
-                        confirmButtonText: "Retry Payment",
-                        cancelButtonText: "Go to Home",
-                      }).then((result) => {
-                        if (result.isConfirmed) {
-                          openRazorpay(options);
-                        } else {
-                          location.href = '/';
-                        }
-                      });
-                    }
-                  });
-                },
-                "modal": {
-                  "ondismiss": function() {
-                    if (!razorpayInstance.paymentSuccess) {
-                      Swal.fire({
-                        title: "Payment Failed",
-                        text: "You closed the payment window before completing the payment. Would you like to retry?",
-                        icon: "error",
-                        showCancelButton: true,
-                        confirmButtonText: "Retry Payment",
-                        cancelButtonText: "Go to Home",
-                      }).then((result) => {
-                        if (result.isConfirmed) {
-                          openRazorpay(options);
-                        } else {
-                          location.href = '/';
-                        }
-                      });
-                    }
-                  }
-                },
-                "prefill": {
-                  "name": "Customer Name",
-                  "email": "customer@example.com",
-                  "contact": "9961618585"
-                },
-                "theme": {
-                  "color": "#3399cc"
-                }
-              };
-
-              function openRazorpay(options) {
-                razorpayInstance = new Razorpay(options);
-                razorpayInstance.paymentSuccess = false;
-                razorpayInstance.open();
-              }
-
-              openRazorpay(options);
             }
           }
         },
@@ -473,74 +237,6 @@
       });
     }
   }
-
-  let discount = 0;
-
-  const applyCoupon = async (totalAmount) => {
-    const couponName = document.getElementById("inputCoupon").value.trim();
-    if (!couponName) {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Please enter a coupon code.' });
-      return;
-    }
-
-    try {
-      const response = await fetch('/applyCoupon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coupon: couponName, total: totalAmount }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        Swal.fire({ icon: 'success', title: 'Success', text: `Coupon Discount ${data.offerPrice} Applied` });
-        const newTotal = data.gt + <%= deliveryCharge %>;
-        document.getElementById("totalValue").innerText = `₹${newTotal}`;
-        document.getElementById("discount").innerText = data.offerPrice;
-        document.getElementById("inputCoupon").value = "";
-        discount = data.offerPrice;
-      } else {
-        Swal.fire({ icon: 'error', title: 'Error', text: data.message });
-      }
-    } catch (error) {
-      console.error('Error applying coupon:', error);
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to apply coupon.' });
-    }
-  };
-
-  var usedCoupon = null;
-  const useCoupon = async (couponName) => {
-    disableOtherCoupons(couponName);
-    document.getElementById("inputCoupon").value = couponName;
-    document.getElementById('useButton_' + couponName).style.display = 'none';
-    document.getElementById('cancelButton_' + couponName).style.display = 'block';
-    usedCoupon = couponName;
-  }
-
-  const cancelCoupon = async (couponName) => {
-    enableAllCoupons();
-    document.getElementById('useButton_' + couponName).style.display = 'block';
-    document.getElementById('cancelButton_' + couponName).style.display = 'none';
-    usedCoupon = null;
-    window.location.reload();
-  }
-
-  function disableOtherCoupons(excludeCoupon) {
-    var couponButtons = document.querySelectorAll('.use-button');
-    couponButtons.forEach(function (button) {
-      var couponName = button.id.replace('useButton_', '');
-      if (couponName !== excludeCoupon) {
-        button.disabled = true;
-      }
-    });
-  }
-
-  function enableAllCoupons() {
-    var couponButtons = document.querySelectorAll('.use-button');
-    couponButtons.forEach(function (button) {
-      button.disabled = false;
-    });
-  }
-
 
   function confirmDeleteAddress(addressId, userId) {
     Swal.fire({
@@ -558,3 +254,30 @@
   }
 </script>
 <%- include("../../views/partials/user/footer") %>
+
+<style>
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #dc3545;
+  opacity: 0.9;
+}
+
+.material-icons {
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.gap-2 {
+  gap: 0.5rem !important;
+}
+</style>

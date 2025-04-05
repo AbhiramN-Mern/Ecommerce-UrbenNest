@@ -4,17 +4,12 @@ const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const mongodb = require("mongodb");
 const mongoose = require("mongoose");
-// const razorpay = require("razorpay");
 const env = require("dotenv").config();
-// const crypto = require("crypto");
 const moment = require("moment");
 const fs = require("fs");
 const path = require("path");
 const easyinvoice = require("easyinvoice");
-// const Coupon = require("../../models/couponSchema");
 const Cart = require("../../models/cartSchema");
-
-
 
 const getCheckoutPage = async (req, res, next) => {
   try {
@@ -46,9 +41,6 @@ const getCheckoutPage = async (req, res, next) => {
 
       const deliveryCharge = grandTotal < 4000 ? 200 : 0;
       const totalWithDelivery = grandTotal + deliveryCharge;
-
-      const today = new Date().toISOString();
-      
 
       res.render("checkoutcart", {
         product: data,
@@ -95,8 +87,6 @@ const deleteProduct = async (req, res, next) => {
     next(error);
   }
 };
-
-
 
 const orderPlaced = async (req, res, next) => {
   try {
@@ -156,7 +146,7 @@ const orderPlaced = async (req, res, next) => {
       address: desiredAddress,
       payment: payment,
       userId: userId,
-      status: payment === "razorpay" ? "Pending" : "Confirmed",
+      status: "Confirmed",
       createdOn: Date.now(),
     });
 
@@ -177,34 +167,6 @@ const orderPlaced = async (req, res, next) => {
         method: "cod",
         order: orderDone,
         orderId: orderDone._id,
-      });
-    } else if (payment === "wallet") {
-      if (finalAmount <= findUser.wallet) {
-        findUser.wallet -= finalAmount;
-        findUser.history.push({ amount: finalAmount, status: "debit", date: Date.now() });
-        await findUser.save();
-        res.json({
-          payment: true,
-          method: "wallet",
-          order: orderDone,
-          orderId: orderDone._id,
-          success: true,
-        });
-      } else {
-        await Order.updateOne({ _id: orderDone._id }, { $set: { status: "Failed" } });
-        res.json({
-          payment: false,
-          method: "wallet",
-          success: false,
-        });
-      }
-    } else if (payment === "razorpay") {
-      const razorPayGeneratedOrder = await generateOrderRazorpay(orderDone._id, finalAmount);
-      res.json({
-        payment: false,
-        method: "razorpay",
-        razorPayOrder: razorPayGeneratedOrder,
-        order: orderDone,
       });
     }
   } catch (error) {
@@ -252,19 +214,6 @@ const getOrderDetailsPage = async (req, res, next) => {
       totalPrice: totalPrice,
       finalAmount: finalAmount,
       orderDate: orderDate,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const paymentConfirm = async (req, res, next) => {
-  try {
-    await Order.updateOne(
-      { _id: req.body.orderId },
-      { $set: { status: "Confirmed" } }
-    ).then((data) => {
-      res.json({ status: true });
     });
   } catch (error) {
     next(error);
@@ -334,33 +283,9 @@ const cancelOrder = async (req, res, next) => {
 
     const refundAmount = productData.price * productData.quantity;
 
-    if (findOrder.payment === "razorpay" && findOrder.status === "Pending") {
-      findOrder.product[productIndex].productStatus = "Cancelled";
-      findOrder.totalPrice -= refundAmount;
-      findOrder.finalAmount -= refundAmount;
-    } else {
-      if (findOrder.payment === "razorpay" || findOrder.payment === "wallet") {
-        findUser.wallet += refundAmount;
-        await User.updateOne(
-          { _id: userId },
-          {
-            $push: {
-              history: {
-                amount: refundAmount,
-                status: "credit",
-                date: Date.now(),
-                description: `Order ${orderId} product ${productId} cancelled`,
-              },
-            },
-          }
-        );
-        await findUser.save();
-      }
-
-      findOrder.product[productIndex].productStatus = "Cancelled";
-      findOrder.totalPrice -= refundAmount;
-      findOrder.finalAmount -= refundAmount;
-    }
+    findOrder.product[productIndex].productStatus = "Cancelled";
+    findOrder.totalPrice -= refundAmount;
+    findOrder.finalAmount -= refundAmount;
 
     await findOrder.save();
 
@@ -411,41 +336,11 @@ const returnorder = async (req, res, next) => {
       return res.status(400).json({ message: "Product is already returned or return requested" });
     }
 
-    
     findOrder.product[productIndex].productStatus = "Return Requested";
     findOrder.product[productIndex].returnStatus = "Pending";
     await findOrder.save();
 
     res.status(200).json({ success: true, message: "Return request submitted successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-
-const verify = async (req, res, next) => {
-  try {
-    let hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
-    hmac.update(
-      `${req.body.payment.razorpay_order_id}|${req.body.payment.razorpay_payment_id}`
-    );
-    hmac = hmac.digest("hex");
-
-    if (hmac === req.body.payment.razorpay_signature) {
-      res.json({ status: true });
-    } else {
-      const orderId = req.body.order.receipt;
-      await Order.updateOne(
-        { _id: orderId },
-        { $set: { status: "Pending" } }
-      );
-      res.json({
-        status: false,
-        message: "Payment was declined by the bank in test mode",
-        orderId: orderId
-      });
-    }
   } catch (error) {
     next(error);
   }
@@ -460,12 +355,10 @@ const downloadInvoice = async (req, res, next) => {
       return res.status(404).send('Order not found');
     }
 
-    
     let activeProducts = order.product.filter(prod => 
       prod.productStatus !== "Returned" && prod.productStatus !== "Cancelled"
     );
 
-    
     let products = activeProducts.map(prod => ({
       "quantity": prod.quantity,
       "description": prod.name || prod.title,
@@ -473,7 +366,6 @@ const downloadInvoice = async (req, res, next) => {
       "price": prod.price,
     }));
 
-    
     if (order.deliveryCharge && order.deliveryCharge > 0 && activeProducts.length > 0) {
       products.push({
         "quantity": 1,
@@ -483,7 +375,6 @@ const downloadInvoice = async (req, res, next) => {
       });
     }
 
-    
     if (products.length === 0) {
       products.push({
         "quantity": 1,
@@ -503,14 +394,11 @@ const downloadInvoice = async (req, res, next) => {
       "marginBottom": 25,
       apiKey: process.env.EASYINVOICE_API,
       mode: "production",
-      images: {
-        logo: "https://res.cloudinary.com/dn20pprrf/image/upload/v1740568840/jtbzbwaonl0vsppodtr0.png",
-      },
       "sender": {
-        "company": "Furni",
-        "address": "Malappuram",
-        "zip": "673638",
-        "city": "Kondotty",
+        "company": "UrbenNest",
+        "address": "Kasargod",
+        "zip": "671320",
+        "city": "Periya",
         "country": "India"
       },
       "client": {
@@ -550,70 +438,7 @@ const downloadInvoice = async (req, res, next) => {
   }
 };
 
-const addReview = async (req, res, next) => {
-  try {
-    const { productId, rating, reviewText } = req.body;
-    const userId = req.session.user;
 
-    if (!productId || !rating || !reviewText) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
-    }
-
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    const existingReview = product.reviews.find(review => review.userId.toString() === userId.toString());
-    if (existingReview) {
-      return res.status(400).json({ success: false, message: "You have already reviewed this product" });
-    }
-
-    product.reviews.push({
-      userId: userId,
-      userName: user.name || "Anonymous",
-      rating: parseInt(rating),
-      reviewText: reviewText,
-      date: new Date()
-    });
-
-    await product.save();
-
-    res.status(200).json({ success: true, message: "Review added successfully" });
-  } catch (error) {
-    console.error("Error adding review:", error);
-    next(error);
-  }
-}
-const generateRazorpayOrder = async (req, res, next) => {
-  try {
-    const { orderId, amount } = req.body;
-
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
-    }
-
-    if (order.status !== "Pending" || order.payment !== "razorpay") {
-      return res.status(400).json({ success: false, message: "Cannot retry payment for this order" });
-    }
-
-    const razorPayOrder = await generateOrderRazorpay(orderId, amount);
-
-    res.json({
-      success: true,
-      razorPayOrder: razorPayOrder,
-      orderId: orderId
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
 module.exports = {
   getCheckoutPage,
@@ -621,10 +446,8 @@ module.exports = {
   cancelOrder,
   orderPlaced,
   getOrderDetailsPage,
-  verify,
   changeSingleProductStatus,
-  paymentConfirm,
   returnorder,
   downloadInvoice,
-  addReview,
+  
 };

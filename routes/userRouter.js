@@ -88,11 +88,8 @@ router.post("/orderPlaced", orderController.orderPlaced);
 router.get("/orderDetails", orderController.getOrderDetailsPage);
 router.put("/cancelOrder", orderController.cancelOrder); 
 router.put("/returnrequestOrder", orderController.returnorder); 
-router.post("/verifyPayment", orderController.verify);
 router.put("/singleProductId", orderController.changeSingleProductStatus); 
-router.post('/paymentConfirm', orderController.paymentConfirm);
 router.get("/downloadInvoice/:orderId", orderController.downloadInvoice);
-router.post("/addReview", orderController.addReview);
 
 
 module.exports = router;

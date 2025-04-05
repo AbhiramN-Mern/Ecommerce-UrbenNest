@@ -269,7 +269,6 @@ function processAction(actionType, orderId, productId) {
     
     console.log('Processing action:', { actionType, orderId, productId });
 
-    // For other actions, continue using AJAX POST
     $.ajax({
         url: endpoint,
         method: 'POST',

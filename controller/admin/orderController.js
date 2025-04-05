@@ -4,10 +4,8 @@ const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const mongodb = require("mongodb");
 const mongoose = require('mongoose');
-const razorpay = require("razorpay");
 const env = require("dotenv").config();
 const crypto = require("crypto");
-// const Coupon = require("../../models/couponSchema");
 const { v4: uuidv4 } = require('uuid');
 
 const getOrderListPageAdmin = async (req, res, next) => {
@@ -34,7 +32,6 @@ const changeOrderStatus = async (req, res, next) => {
         const { orderId, status } = req.query;
         let userId = req.query.userId;
 
-        // Extract just the ID if userId is an object string
         if (userId.includes('ObjectId')) {
             try {
                 userId = userId.match(/ObjectId\('(.+?)'\)/)[1];
@@ -58,7 +55,6 @@ const changeOrderStatus = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        // Redirect back to the order details page
         return res.redirect(`/admin/orderDetailsAdmin?id=${orderId}`);
 
     } catch (error) {
@@ -159,7 +155,6 @@ const approveReturn = async (req, res, next) => {
         console.log('Return approval request received:', req.body);
         const { orderId, productId } = req.body;
 
-        // Validate MongoDB ObjectIds
         if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
             return res.status(400).json({
                 success: false,
@@ -167,7 +162,6 @@ const approveReturn = async (req, res, next) => {
             });
         }
 
-        // Find order and update product status atomically
         const order = await Order.findOneAndUpdate(
             {
                 _id: orderId,
@@ -190,11 +184,9 @@ const approveReturn = async (req, res, next) => {
             });
         }
 
-        // Find the returned product data
         const productData = order.product.find(p => p._id.toString() === productId);
         const refundAmount = productData.price * productData.quantity;
 
-        // Update order totals
         order.totalPrice -= refundAmount;
         order.finalAmount -= refundAmount;
         await order.save();
