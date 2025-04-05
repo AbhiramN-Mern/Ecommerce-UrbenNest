@@ -155,7 +155,7 @@
                                             <div class="status-action">
                                                 <div class="status-chip return-requested">Return Requested</div>
                                                 <div class="action-dropdown">
-                                                    <select class="action-select" data-order-id="<%= orders._id %>" data-product-id="<%= product._id %>" onchange="handleDropdownChange(this)">
+                                                    <select class="action-select" data-product-id="<%= product._id %>" onchange="handleDropdownChange(this)">
                                                         <option value="" disabled selected>Update Return</option>
                                                         <option value="approveReturn">Approve Return</option>
                                                         <option value="rejectReturn">Reject Return</option>
@@ -204,8 +204,10 @@
 
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
 
 
 <script>
@@ -213,55 +215,30 @@ function handleDropdownChange(selectElement) {
     const selectedValue = selectElement.value;
     if (!selectedValue) return;
     
-    const orderId = selectElement.getAttribute('data-order-id');
+    const orderId = '<%= orders._id %>';
     const productId = selectElement.getAttribute('data-product-id');
+    const actionRow = selectElement.closest('.status-action');
+    const statusChip = actionRow.querySelector('.status-chip');
     
-    if (!orderId || !productId) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Order ID or Product ID is missing.',
-        });
-        return;
-    }
-    
+    const currentStatus = statusChip.textContent;
+    selectElement.disabled = true;
+    statusChip.classList.add('processing');
+    statusChip.textContent = 'Processing...';
+
     const actions = {
+        "ship": () => processAction('shipProduct', orderId, productId),
+        "deliver": () => processAction('deliverProduct', orderId, productId),
+        "return": () => processAction('returnProduct', orderId, productId),
+        "cancel": () => confirmCancelProduct(orderId, productId),
         "approveReturn": () => processAction('approveReturn', orderId, productId),
-        "rejectReturn": () => processAction('rejectReturn', orderId, productId),
+        "rejectReturn": () => processAction('rejectReturn', orderId, productId)
     };
-    
+
     if (actions[selectedValue]) {
         actions[selectedValue]();
+    } else {
+        resetActionUI(statusChip, currentStatus, selectElement);
     }
-}
-
-function processAction(actionType, orderId, productId) {
-  console.log('Processing action:', { actionType, orderId, productId });
-
-  $.ajax({
-    url: `/admin/${actionType}`,
-    method: 'POST',
-    contentType: 'application/json',
-    data: JSON.stringify({ orderId, productId }),
-    success: function (response) {
-      console.log('Action success:', response);
-      Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: response.message || 'Action completed successfully!',
-      }).then(() => {
-        window.location.reload();
-      });
-    },
-    error: function (xhr) {
-      console.error('Action error:', xhr.responseJSON);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: xhr.responseJSON?.message || 'An error occurred while processing the request.',
-      });
-    },
-  });
 }
 
 function confirmCancelProduct(orderId, productId) {
@@ -288,23 +265,16 @@ function confirmCancelProduct(orderId, productId) {
 }
 
 function processAction(actionType, orderId, productId) {
-    const endpoint = `/admin/${actionType}`;
+    let endpoint = `/admin/${actionType}`;
     
+    console.log('Processing action:', { actionType, orderId, productId });
+
+    // For other actions, continue using AJAX POST
     $.ajax({
         url: endpoint,
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({ orderId, productId }),
-        beforeSend: function() {
-            
-            const overlay = document.createElement('div');
-            overlay.className = 'processing-overlay';
-            overlay.innerHTML = `
-                <div class="loader"></div>
-                <p>Processing your request...</p>
-            `;
-            document.body.appendChild(overlay);
-        },
         success: function(response) {
             if (response.success) {
                 showSuccessMessage(response.message || 'Order status updated successfully');
@@ -320,14 +290,8 @@ function processAction(actionType, orderId, productId) {
                 const response = JSON.parse(xhr.responseText);
                 errorMsg = response.message || errorMsg;
             } catch(e) {}
-            
             showErrorMessage(errorMsg);
             resetAllActionUI();
-        },
-        complete: function() {
-            
-            const overlay = document.querySelector('.processing-overlay');
-            if (overlay) overlay.remove();
         }
     });
 }
@@ -717,7 +681,7 @@ body {
 
 .product-name {
     font-weight: 500;
-    color: var (--gray-900);
+    color: var(--gray-900);
     margin-bottom: 0.25rem;
 }
 
