@@ -4,10 +4,8 @@ const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const mongodb = require("mongodb");
 const mongoose = require('mongoose');
-const razorpay = require("razorpay");
 const env = require("dotenv").config();
 const crypto = require("crypto");
-// const Coupon = require("../../models/couponSchema");
 const { v4: uuidv4 } = require('uuid');
 
 const getOrderListPageAdmin = async (req, res, next) => {
@@ -31,41 +29,36 @@ const getOrderListPageAdmin = async (req, res, next) => {
 
 const changeOrderStatus = async (req, res, next) => {
     try {
-        const orderId = req.query.orderId;
-        const userId = req.query.userId;
-        const status = req.query.status;
+        const { orderId, status } = req.query;
+        let userId = req.query.userId;
 
-        await Order.updateOne({ _id: orderId }, { status });
-
-        const findOrder = await Order.findOne({ _id: orderId });
-
-        if (findOrder.status.trim() === "Returned" &&
-            ["razorpay", "wallet", "cod"].includes(findOrder.payment)) {
-            const findUser = await User.findOne({ _id: userId });
-            if (findUser && findUser.wallet !== undefined) {
-                findUser.wallet += findOrder.totalPrice;
-                await findUser.save();
-            } else {
-                console.log("User not found or wallet is undefined");
-            }
-
-            await Order.updateOne({ _id: orderId }, { status: "Returned" });
-            for (const productData of findOrder.product) {
-                const productId = productData._id;
-                const quantity = productData.quantity;
-                const product = await Product.findById(productId);
-                if (product) {
-                    product.quantity += quantity;
-                    await product.save();
-                } else {
-                    console.log("Product not found");
-                }
+        if (userId.includes('ObjectId')) {
+            try {
+                userId = userId.match(/ObjectId\('(.+?)'\)/)[1];
+            } catch (error) {
+                console.error('Error extracting userId:', error);
+                return res.status(400).json({ success: false, message: "Invalid user ID format" });
             }
         }
 
-        return res.redirect("/admin/order-list");
+        if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ success: false, message: "Invalid order ID or user ID" });
+        }
+
+        const order = await Order.findOneAndUpdate(
+            { _id: orderId },
+            { $set: { status: status } },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        return res.redirect(`/admin/orderDetailsAdmin?id=${orderId}`);
+
     } catch (error) {
-        console.error(error);
+        console.error('Error in changeOrderStatus:', error);
         next(error);
     }
 };
@@ -159,167 +152,381 @@ const orderDetailsAdmin = async (req, res, next) => {
 
 const approveReturn = async (req, res, next) => {
     try {
-      const { orderId, productId } = req.body;
-  
-      // Validate IDs
-      if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
-        return res.status(400).json({ success: false, message: "Invalid order or product ID" });
-      }
-  
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return res.status(404).json({ success: false, message: "Order not found" });
-      }
-  
-      // Find the specific product within the order.
-      // Change this if your schema stores productId instead of generating its own _id.
-      const productIndex = order.product.findIndex(prod =>
-        prod.productId ? prod.productId.toString() === productId : prod._id.toString() === productId
-      );
-  
-      if (productIndex === -1) {
-        return res.status(404).json({ success: false, message: "Product not found in order" });
-      }
-  
-      const productData = order.product[productIndex];
-      if (productData.productStatus !== "Return Requested") {
-        return res.status(400).json({ success: false, message: "Return not requested for this product" });
-      }
-  
-      // Approve the return
-      order.product[productIndex].productStatus = "Returned";
-      await order.save();
-  
-      return res.json({ success: true, message: "Return approved" });
+        console.log('Return approval request received:', req.body);
+        const { orderId, productId } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order ID or product ID"
+            });
+        }
+
+        const order = await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                'product._id': productId,
+                'product.productStatus': 'Return Requested'
+            },
+            {
+                $set: {
+                    'product.$.productStatus': 'Returned',
+                    'product.$.returnStatus': 'Approved'
+                }
+            },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found or product not in return requested status"
+            });
+        }
+
+        const productData = order.product.find(p => p._id.toString() === productId);
+        const refundAmount = productData.price * productData.quantity;
+
+        order.totalPrice -= refundAmount;
+        order.finalAmount -= refundAmount;
+        await order.save();
+
+        // Update user wallet and add transaction history
+        await User.findByIdAndUpdate(
+            order.userId,
+            {
+                $inc: { wallet: refundAmount },
+                $push: {
+                    history: {
+                        amount: refundAmount,
+                        status: "credit",
+                        date: new Date(),
+                        description: `Refund for returned product in order ${order.orderId}`
+                    }
+                }
+            }
+        );
+
+        // Update product stock
+        if (productData.productId) {
+            await Product.findByIdAndUpdate(
+                productData.productId,
+                { $inc: { quantity: productData.quantity } }
+            );
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Return approved successfully"
+        });
+
     } catch (error) {
-      console.error("Approve Return Error:", error);
-      res.status(500).json({ success: false, message: "Internal server error" });
+        console.error('Error in approveReturn:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
-  };
+};
   
-  const rejectReturn = async (req, res, next) => {
+const rejectReturn = async (req, res, next) => {
     try {
-      // Destructure IDs from the request body
-      const { orderId, productId } = req.body;
-  
-      // Validate the IDs
-      if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid order or product ID" });
-      }
-  
-      // Fetch the order by ID
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Order not found" });
-      }
-  
-      // Find the specific product within the order.
-      // Use the stored productId field if applicable.
-      const productIndex = order.product.findIndex(prod =>
-        prod.productId
-          ? prod.productId.toString() === productId
-          : prod._id.toString() === productId
-      );
-  
-      if (
-        productIndex === -1 ||
-        order.product[productIndex].productStatus !== "Return Requested"
-      ) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid return request" });
-      }
-  
-      // Update product status: mark return as rejected.
-      order.product[productIndex].productStatus = "Delivered";
-      order.product[productIndex].returnStatus = "Rejected";
-  
-      await order.save();
-  
-      return res.status(200).json({
-        success: true,
-        message: "Return request rejected"
-      });
+        console.log('Return rejection request received:', req.body);
+        const { orderId, productId } = req.body;
+
+        // Validate MongoDB ObjectIds
+        if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order ID or product ID"
+            });
+        }
+
+        // Find order and update product status atomically
+        const order = await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                'product._id': productId,
+                'product.productStatus': 'Return Requested'
+            },
+            {
+                $set: {
+                    'product.$.productStatus': 'Delivered',
+                    'product.$.returnStatus': 'Rejected'
+                }
+            },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found or product not in return requested status"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Return request rejected successfully"
+        });
+
     } catch (error) {
-      console.error("Reject Return Error:", error);
-      next(error);
+        console.error('Error in rejectReturn:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
-  };
+};
 
 const shipProduct = async (req, res, next) => {
-  try {
-    const { orderId, productId } = req.body;
+    try {
+        console.log('Ship product request received:', req.body);
+        const { orderId, productId } = req.body;
 
-    // Validate IDs
-    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ success: false, message: "Invalid order or product ID" });
+        if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order ID or product ID"
+            });
+        }
+
+        const order = await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                'product._id': productId,
+                'product.productStatus': 'Confirmed'
+            },
+            {
+                $set: {
+                    'product.$.productStatus': 'Shipped',
+                    'product.$.shippedDate': new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found or product not in confirmed status"
+            });
+        }
+
+        // Check if all products are shipped
+        const allShipped = order.product.every(p => p.productStatus === 'Shipped');
+        if (allShipped) {
+            order.status = 'Shipped';
+            await order.save();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Product shipped successfully"
+        });
+
+    } catch (error) {
+        console.error('Error in shipProduct:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
+};
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+const cancelProduct = async (req, res, next) => {
+    try {
+        console.log('Cancel product request received:', req.body);
+        const { orderId, productId } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order ID or product ID"
+            });
+        }
+
+        const order = await Order.findOne({ _id: orderId });
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+
+        const productIndex = order.product.findIndex(p => p._id.toString() === productId);
+        if (productIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found in order"
+            });
+        }
+
+        const productData = order.product[productIndex];
+        if (productData.productStatus === 'Cancelled') {
+            return res.status(400).json({
+                success: false,
+                message: "Product is already cancelled"
+            });
+        }
+
+        // Calculate refund amount
+        const refundAmount = productData.price * productData.quantity;
+
+        // Update product status
+        productData.productStatus = 'Cancelled';
+        order.totalPrice -= refundAmount;
+        order.finalAmount -= refundAmount;
+
+        // If payment was made, refund to wallet
+        if (order.payment !== 'cod') {
+            await User.findByIdAndUpdate(
+                order.userId,
+                {
+                    $inc: { wallet: refundAmount },
+                    $push: {
+                        history: {
+                            amount: refundAmount,
+                            status: "credit",
+                            date: new Date(),
+                            description: `Refund for cancelled product in order ${order.orderId}`
+                        }
+                    }
+                }
+            );
+        }
+
+        // Restore product stock
+        if (productData.productId) {
+            await Product.findByIdAndUpdate(
+                productData.productId,
+                { $inc: { quantity: productData.quantity } }
+            );
+        }
+
+        // Check if all products are cancelled
+        const allCancelled = order.product.every(p => p.productStatus === 'Cancelled');
+        if (allCancelled) {
+            order.status = 'Cancelled';
+        }
+
+        await order.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Product cancelled successfully"
+        });
+
+    } catch (error) {
+        console.error('Error in cancelProduct:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
-
-    // Find the product inside the order
-    const productIndex = order.product.findIndex(prod =>
-      prod.productId ? prod.productId.toString() === productId : prod._id.toString() === productId
-    );
-
-    if (productIndex === -1) {
-      return res.status(404).json({ success: false, message: "Product not found in order" });
-    }
-
-    // Update product status to "Shipped"
-    order.product[productIndex].productStatus = "Shipped";
-
-    // Optionally update overall order status if needed
-    await order.save();
-
-    return res.json({ success: true, message: "Product marked as shipped" });
-  } catch (error) {
-    console.error("Ship Product Error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
 };
 
 const deliverProduct = async (req, res, next) => {
-  try {
-    const { orderId, productId } = req.body;
-    
-    // Validate IDs
-    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ success: false, message: "Invalid order or product ID" });
+    try {
+        console.log('Deliver product request received:', req.body);
+        const { orderId, productId } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order ID or product ID"
+            });
+        }
+
+        const order = await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                'product._id': productId,
+                'product.productStatus': 'Shipped'
+            },
+            {
+                $set: {
+                    'product.$.productStatus': 'Delivered',
+                    'product.$.deliveredDate': new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found or product not in shipped status"
+            });
+        }
+
+        // Check if all products are delivered
+        const allDelivered = order.product.every(p => p.productStatus === 'Delivered');
+        if (allDelivered) {
+            order.status = 'Delivered';
+            await order.save();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Product delivered successfully"
+        });
+
+    } catch (error) {
+        console.error('Error in deliverProduct:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
-    
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+};
+
+const returnProduct = async (req, res, next) => {
+    try {
+        console.log('Return product request received:', req.body);
+        const { orderId, productId } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order ID or product ID"
+            });
+        }
+
+        const order = await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                'product._id': productId,
+                'product.productStatus': 'Delivered'
+            },
+            {
+                $set: {
+                    'product.$.productStatus': 'Return Requested',
+                    'product.$.returnRequestedDate': new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found or product not in delivered status"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Return request submitted successfully"
+        });
+
+    } catch (error) {
+        console.error('Error in returnProduct:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
-    
-    // Find the product inside the order.
-    const productIndex = order.product.findIndex(prod =>
-      prod.productId ? prod.productId.toString() === productId : prod._id.toString() === productId
-    );
-    
-    if (productIndex === -1) {
-      return res.status(404).json({ success: false, message: "Product not found in order" });
-    }
-    
-    // Update status to Delivered
-    order.product[productIndex].productStatus = "Delivered";
-    
-    // Optionally update overall order status if needed.
-    await order.save();
-    
-    return res.json({ success: true, message: "Product marked as delivered" });
-  } catch (error) {
-    console.error("Deliver Product Error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
 };
 
 module.exports = {
@@ -329,6 +536,8 @@ module.exports = {
     orderDetailsAdmin,
     approveReturn,
     rejectReturn,
-    shipProduct, // add shipProduct to your exports
+    shipProduct,
+    cancelProduct,
     deliverProduct,
+    returnProduct
 };

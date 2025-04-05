@@ -10,7 +10,6 @@ const fs = require("fs");
 const path = require("path");
 const easyinvoice = require("easyinvoice");
 const Cart = require("../../models/cartSchema");
-const { v4: uuidv4 } = require('uuid');
 
 const getCheckoutPage = async (req, res, next) => {
   try {
@@ -91,7 +90,7 @@ const deleteProduct = async (req, res, next) => {
 
 const orderPlaced = async (req, res, next) => {
   try {
-    const { totalPrice, addressId, payment } = req.body;
+    const { totalPrice, addressId, payment, discount } = req.body;
     const userId = req.session.user;
 
     if (!userId) {
@@ -111,14 +110,6 @@ const orderPlaced = async (req, res, next) => {
     const desiredAddress = findAddress.address.find((item) => item._id.toString() === addressId.toString());
     if (!desiredAddress) {
       return res.status(404).json({ error: "Specific address not found" });
-    }
-
-    // After you've obtained `desiredAddress` and verified it exists
-    if (!desiredAddress.name) {
-      desiredAddress.name = findUser.name || "Not Available";
-    }
-    if (!desiredAddress.phone) {
-      desiredAddress.phone = findUser.phone || "Not Available";
     }
 
     const cart = await Cart.findOne({ userId: userId }).populate("items.productId");
@@ -142,24 +133,23 @@ const orderPlaced = async (req, res, next) => {
       user: userId
     }));
 
-    const totalPriceNumber = parseFloat(totalPrice); // ensure it's a number
-    const deliveryCharge = totalPriceNumber < 4000 ? 200 : 0;
-    const finalAmount = totalPriceNumber + deliveryCharge;
+    const deliveryCharge = totalPrice < 4000 ? 200 : 0;
+    const finalAmount = totalPrice - (discount || 0) + deliveryCharge;
 
     const newOrder = new Order({
       product: orderedProducts,
-      originalTotalPrice: totalPriceNumber,
-      totalPrice: totalPriceNumber,
+      originalTotalPrice: totalPrice,
+      totalPrice: totalPrice,
+      discount: discount || 0,
       deliveryCharge: deliveryCharge,
       finalAmount: finalAmount,
-      address: [desiredAddress],
+      address: desiredAddress,
       payment: payment,
       userId: userId,
       status: "Confirmed",
       createdOn: Date.now(),
     });
 
-    newOrder.orderId = uuidv4();
     const orderDone = await newOrder.save();
     await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
 
@@ -178,26 +168,6 @@ const orderPlaced = async (req, res, next) => {
         order: orderDone,
         orderId: orderDone._id,
       });
-    } else if (payment === "wallet") {
-      if (finalAmount <= findUser.wallet) {
-        findUser.wallet -= finalAmount;
-        findUser.history.push({ amount: finalAmount, status: "debit", date: Date.now() });
-        await findUser.save();
-        res.json({
-          payment: true,
-          method: "wallet",
-          order: orderDone,
-          orderId: orderDone._id,
-          success: true,
-        });
-      } else {
-        await Order.updateOne({ _id: orderDone._id }, { $set: { status: "Failed" } });
-        res.json({
-          payment: false,
-          method: "wallet",
-          success: false,
-        });
-      }
     }
   } catch (error) {
     next(error);
@@ -342,101 +312,77 @@ const cancelOrder = async (req, res, next) => {
     // ... (your existing code for cancelling the order)
 
     return res.status(200).json({ success: true, message: 'Product cancelled successfully' });
+    const productData = findOrder.product[productIndex];
+    if (productData.productStatus === "Cancelled") {
+      return res.status(400).json({ success: false, message: "Product is already cancelled" });
+    }
+
+    const refundAmount = productData.price * productData.quantity;
+
+    findOrder.product[productIndex].productStatus = "Cancelled";
+    findOrder.totalPrice -= refundAmount;
+    findOrder.finalAmount -= refundAmount;
+
+    await findOrder.save();
+
+    const product = await Product.findById(productData.productId);
+    if (product) {
+      product.quantity += productData.quantity;
+      await product.save();
+    }
+
+    const allProductsCancelled = findOrder.product.every((product) => product.productStatus === "Cancelled");
+    if (allProductsCancelled) {
+      findOrder.status = "Cancelled";
+      await findOrder.save();
+    }
+
+    res.status(200).json({ success: true, message: "Product cancelled successfully" });
   } catch (error) {
     console.error('Cancel order error:', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
 const returnorder = async (req, res, next) => {
   try {
-    // Check session and user
     const userId = req.session.user;
-    if (!userId) {
-      return res.status(401).json({ message: "User not authenticated" });
-    }
-
     const findUser = await User.findOne({ _id: userId });
     if (!findUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Validate request body
     const { orderId, productId, reason } = req.body;
-    if (!orderId || !productId || !reason) {
-      return res.status(400).json({ 
-        message: "Missing required fields",
-        required: ["orderId", "productId", "reason"]
-      });
+
+    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid order ID or product ID format" });
     }
 
-    // Validate ID formats
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ 
-        message: "Invalid order ID format",
-        received: orderId
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ 
-        message: "Invalid product ID format",
-        received: productId
-      });
-    }
-
-    // Find the order
     const findOrder = await Order.findOne({ _id: orderId });
     if (!findOrder) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Find the product in the order
-    const productIndex = findOrder.product.findIndex(
-      (product) => product.productId.toString() === productId
-    );
-    
+    const productIndex = findOrder.product.findIndex((product) => product._id.toString() === productId);
     if (productIndex === -1) {
-      return res.status(404).json({ 
-        message: "Product not found in order",
-        orderProducts: findOrder.product.map(p => p.productId.toString())
-      });
+      return res.status(404).json({ message: "Product not found in order" });
     }
 
     const productData = findOrder.product[productIndex];
-    
-    // Check product status
-    if (productData.productStatus === "Returned") {
-      return res.status(400).json({ 
-        message: "Product is already returned",
-        currentStatus: productData.productStatus
-      });
+    if (productData.productStatus === "Returned" || productData.productStatus === "Return Requested") {
+      return res.status(400).json({ message: "Product is already returned or return requested" });
     }
 
-    if (productData.productStatus === "Return Requested") {
-      return res.status(400).json({ 
-        message: "Return already requested for this product",
-        currentStatus: productData.productStatus
-      });
-    }
-
-    // Update product status
     findOrder.product[productIndex].productStatus = "Return Requested";
     findOrder.product[productIndex].returnStatus = "Pending";
-    findOrder.product[productIndex].returnReason = reason;
-    findOrder.product[productIndex].returnRequestDate = new Date();
-    
     await findOrder.save();
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Return request submitted successfully",
-      updatedStatus: findOrder.product[productIndex].productStatus
-    });
+    res.status(200).json({ success: true, message: "Return request submitted successfully" });
   } catch (error) {
-    console.error("Return order error:", error);
     next(error);
   }
 };
+
 const downloadInvoice = async (req, res, next) => {
   try {
     const orderId = req.params.orderId;
@@ -494,7 +440,7 @@ const downloadInvoice = async (req, res, next) => {
       },
       "client": {
         "company": order.address[0].name,
-        "address": order.address[0].landMark + "- " + order.address[0].city,
+        "address": order.address[0].landMark + ", " + order.address[0].city,
         "zip": order.address[0].pincode,
         "city": order.address[0].state,
         "country": "India",
@@ -505,7 +451,7 @@ const downloadInvoice = async (req, res, next) => {
         "date": moment(order.createdOn).format("YYYY-MM-DD HH:mm:ss"),
       },
       "products": products,
-      "bottomNotice": "Thank you for your business With UrbenNest",
+      "bottomNotice": "Thank you for your business",
     };
 
     const result = await easyinvoice.createInvoice(data);
@@ -529,46 +475,7 @@ const downloadInvoice = async (req, res, next) => {
   }
 };
 
-const addReview = async (req, res, next) => {
-  try {
-    const { productId, rating, reviewText } = req.body;
-    const userId = req.session.user;
 
-    if (!productId || !rating || !reviewText) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
-    }
-
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    const existingReview = product.reviews.find(review => review.userId.toString() === userId.toString());
-    if (existingReview) {
-      return res.status(400).json({ success: false, message: "You have already reviewed this product" });
-    }
-
-    product.reviews.push({
-      userId: userId,
-      userName: user.name || "Anonymous",
-      rating: parseInt(rating),
-      reviewText: reviewText,
-      date: new Date()
-    });
-
-    await product.save();
-
-    res.status(200).json({ success: true, message: "Review added successfully" });
-  } catch (error) {
-    console.error("Error adding review:", error);
-    next(error);
-  }
-}
 
 module.exports = {
   getCheckoutPage,
@@ -579,5 +486,5 @@ module.exports = {
   changeSingleProductStatus,
   returnorder,
   downloadInvoice,
-  addReview
+  
 };
