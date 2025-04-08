@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "easyinvoice": "^3.0.47",
     "ejs": "^3.1.10",

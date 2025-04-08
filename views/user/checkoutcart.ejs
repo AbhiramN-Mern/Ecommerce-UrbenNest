@@ -126,6 +126,11 @@
           <input class="form-check-input payment" type="radio" value="cod" name="payment_option" id="CashOnDelivery" checked="">
           <label class="form-check-label" for="CashOnDelivery">Cash on Delivery</label>
         </div>
+
+        <div class="custom-radio ml-150">
+          <input class="form-check-input payment" type="radio" value="Razorpay" name="payment_option" id="Razorpay" checked="">
+          <label class="form-check-label" for="Razorpay">Razorpay</label>
+        </div>
       </div>  
 
       <div class="container col-6 mt-3">
@@ -189,7 +194,8 @@
         icon: 'error',
         timer: 3000,
       });
-    } else { 
+    } else if (payment === 'cod') {
+      // COD Logic
       $.ajax({
         url: '/orderPlaced',
         method: 'POST',
@@ -208,25 +214,23 @@
             });
           } else {
             let orderId = response.order._id;
-            if (response.method === "cod") {
-              Swal.fire({
-                title: "Order success",
-                text: "Order placed successfully",
-                icon: "success",
-                showCancelButton: true,
-                confirmButtonText: "View orders",
-                cancelButtonText: "Continue shopping",
-              }).then(function (result) {
-                if (result.value) {
-                  location.href = `/orderDetails?id=${orderId}`;
-                } else {
-                  location.href = '/';
-                }
-              });
-            }
+            Swal.fire({
+              title: "Order success",
+              text: "Order placed successfully",
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonText: "View orders",
+              cancelButtonText: "Continue shopping",
+            }).then(function (result) {
+              if (result.value) {
+                location.href = `/orderDetails?id=${orderId}`;
+              } else {
+                location.href = '/';
+              }
+            });
           }
         },
-        error: function (error) {
+        error: function () {
           Swal.fire({
             title: 'Error',
             text: 'There was an error placing the order',
@@ -235,9 +239,78 @@
           });
         }
       });
+    } else if (payment === 'Razorpay') {
+      // Razorpay Logic
+      $.ajax({
+        url: '/create-razorpay-order',
+        method: 'POST',
+        data: { amount: numericValue },
+        success: function (res) {
+          const options = {
+            key: "<%= process.env.RAZORPAY_KEY_ID %>",
+            amount: res.order.amount,
+            currency: "INR",
+            name: "UrbenNest",
+            description: "Payment for order",
+            order_id: res.order.id,
+            handler: function (response) {
+            $.ajax({
+              url: '/orderPlaced',
+              method: 'POST',
+              data: {
+                totalPrice: numericValue,
+                addressId: address,
+                payment: 'Razorpay',
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+              },
+              success: function (orderRes) {
+                let orderId = orderRes.order._id;
+                Swal.fire({
+                  title: "Payment Success",
+                  text: "Order placed successfully",
+                  icon: "success",
+                  showCancelButton: true,
+                  confirmButtonText: "View orders",
+                  cancelButtonText: "Continue shopping"
+                }).then(function (result) {
+                  console.log("Swal result:", result); // Debug log
+                  if (result.isConfirmed) {
+                    location.href = `/orderDetails?id=${orderId}`;
+                  } else {
+                    location.href = '/';
+                  }
+                });
+              },
+              error: function () {
+                Swal.fire({
+                  title: 'Error',
+                  text: 'Payment done but failed to place order',
+                  icon: 'error',
+                  timer: 3000
+                });
+              }
+            });
+          },
+            theme: {
+              color: "#0a58ca"
+            }
+          };
+          const rzp = new Razorpay(options);
+          rzp.open();
+        },
+        error: function () {
+          Swal.fire({
+            title: 'Error',
+            text: 'Failed to initiate Razorpay payment',
+            icon: 'error',
+            timer: 3000
+          });
+        }
+      });
     }
   }
-
   function confirmDeleteAddress(addressId, userId) {
     Swal.fire({
       title: 'Are you sure?',
@@ -281,3 +354,4 @@
   gap: 0.5rem !important;
 }
 </style>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>

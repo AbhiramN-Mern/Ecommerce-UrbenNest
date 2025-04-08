@@ -37,27 +37,10 @@
               <h6 class="mb-1">Order Info</h6>
               <p class="mb-1">
                 Payment Method: <%= orders.payment || 'N/A' %> <br>
-                Status: 
-                <% if (orders.product && orders.product.length > 0) { %>
-                  <% 
-                    const allCancelled = orders.product.every(p => p.productStatus === 'Cancelled');
-                    const allReturned = orders.product.every(p => p.productStatus === 'Returned');
-                  %>
-                  <span class="status-badge <%= allCancelled ? 'cancelled' : allReturned ? 'returned' : orders.status.toLowerCase() %>">
-                    <% if (allCancelled) { %>
-                      Order Cancelled
-                    <% } else if (allReturned) { %>
-                      Order Returned
-                    <% } else { %>
-                      <%= orders.status || 'N/A' %>
-                    <% } %>
-                  </span>
-                <% } else { %>
-                  N/A
-                <% } %>
-                <br>
-                Total: ₹<%= (totalGrant || 0).toLocaleString() %> <br>
+                Status: <%= orders.status || 'N/A' %> <br>
+                Grand Total: ₹<%= (totalGrant || 0).toLocaleString() %> <br>
                 Delivery Charge: ₹<%= (orders.deliveryCharge || 0).toLocaleString() %> <br>
+                Current Total: ₹<%= (totalPrice || 0).toLocaleString() %> <br>
                 Final Amount: ₹<%= (finalAmount || 0).toLocaleString() %>
               </p>
             </div>
@@ -71,29 +54,28 @@
             <div class="text">
               <h6 class="mb-1">Deliver To</h6>
               <% if (orders && orders.address && orders.address.length > 0) { %>
-                <div class="delivery-address">
-                  <p class="mb-1">
-                    <strong><%= orders.address[0].name %></strong><br>
-                    <%= orders.address[0].landMark %>,<br>
-                    <%= orders.address[0].city %>,<br>
-                    <%= orders.address[0].state %> - <%= orders.address[0].pincode %><br>
-                    <span class="address-type badge bg-secondary"><%= orders.address[0].addressType %></span><br>
-                    <strong>Phone:</strong> <%= orders.address[0].phone %>
-                  </p>
-                  <% if (orders.status === "Delivered") { %>
-                    <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm btn-outline-primary mt-2">
-                      <i class="material-icons md-download"></i> Download Invoice
-                    </a>
-                  <% } %>
-                </div>
+                <p class="mb-1">
+                  Address: <%= orders.address[0].landMark || 'N/A' %>, <%= orders.address[0].city || 'N/A' %> <br>
+                  <%= orders.address[0].state || 'N/A' %>, <%= orders.address[0].addressType || 'N/A' %> <br>
+                  <%= orders.address[0].pincode || 'N/A' %>
+                </p>
+                <% if (orders.status === "Delivered") { %>
+                  <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm">Download Invoice</a>
+                <% } %>
               <% } else { %>
-                <p class="mb-1 text-muted">Delivery address not available</p>
+                <p class="mb-1">Delivery address not available</p>
               <% } %>
             </div>
           </article>
         </div>
       </div>
-     
+      <% if (orders.status === "Pending" && orders.payment === "razorpay") { %>
+        <div class="row mb-4">
+          <div class="col-md-12 text-center">
+            <button class="btn btn-primary btn-sm" onclick="retryPayment('<%= orders._id %>', <%= finalAmount %>)">Retry Payment</button>
+          </div>
+        </div>
+      <% } %>
       <div class="row">
         <div class="col-lg">
           <div class="table-responsive">
@@ -224,6 +206,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevatezoom.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
   function toggleCancelForm(productId) {
@@ -290,6 +273,7 @@
             icon: 'success',
             title: 'Return Initiated',
             text: 'The return request has been initiated successfully!',
+            confirmButtonText: 'OK'
           }).then(() => {
             window.location.reload();
           });
@@ -359,98 +343,114 @@
   });
 });
 
- 
+  function retryPayment(orderId, amount) {
+    $.ajax({
+      url: '/generateRazorpayOrder',
+      method: 'POST',
+      data: {
+        orderId: orderId,
+        amount: amount
+      },
+      success: function(response) {
+        if (response.success) {
+          var options = {
+            "key": "rzp_test_hb0Gpt9IOIzC17",
+            "amount": Math.round(amount * 100),
+            "currency": "INR",
+            "name": "Trend Setter",
+            "description": "Retry Payment",
+            "image": "https://firebasestorage.googleapis.com/v0/b/ecommerce-397a7.appspot.com/o/logo.jpg?alt=media&token=07b6be19-1ce8-4797-a3a0-f0eaeaafedad",
+            "order_id": response.razorPayOrder.id,
+            "handler": function (status) {
+              verifyPayment(response.razorPayOrder, status, orderId);
+            },
+            "modal": {
+              "ondismiss": function() {
+                Swal.fire({
+                  title: "Payment Failed",
+                  text: "You closed the payment window before completing the payment. Would you like to retry?",
+                  icon: "error",
+                  showCancelButton: true,
+                  confirmButtonText: "Retry Payment",
+                  cancelButtonText: "Go to Home",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    retryPayment(orderId, amount);
+                  } else {
+                    window.location.href = '/';
+                  }
+                });
+              }
+            },
+            "prefill": {
+              "name": "Customer Name",
+              "email": "customer@example.com",
+              "contact": "9961618585"
+            },
+            "theme": {
+              "color": "#3399cc"
+            }
+          };
+          var rzp1 = new Razorpay(options);
+          rzp1.open();
+        } else {
+          Swal.fire({
+            title: "Error",
+            text: "Failed to generate payment order",
+            icon: "error"
+          });
+        }
+      },
+      error: (error) => {
+        Swal.fire({
+          title: "Error",
+          text: "An error occurred while processing your request",
+          icon: "error"
+        });
+      }
+    });
+  }
+
+  function verifyPayment(order, payment, orderId) {
+    $.ajax({
+      url: '/verifyPayment',
+      method: 'post',
+      data: {
+        order,
+        payment
+      },
+      success: (response) => {
+        if (response.status) {
+          $.ajax({
+            url: '/paymentConfirm',
+            method: 'post',
+            data: {
+              orderId: orderId
+            },
+            success: (response) => {
+              if (response.status) {
+                Swal.fire({
+                  title: "Payment Successful",
+                  text: "Payment completed successfully",
+                  icon: "success",
+                  confirmButtonText: "OK"
+                }).then(() => {
+                  window.location.reload();
+                });
+              }
+            }
+          });
+        } else {
+          Swal.fire({
+            title: "Payment Failed",
+            text: "Payment verification failed",
+            icon: "error"
+          });
+        }
+      }
+    });
+  }
 </script>
-
-<style>
-.status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.status-badge.cancelled {
-  background-color: #dc3545;
-  color: white;
-}
-
-.status-badge.returned {
-  background-color: #ffc107;
-  color: #000;
-}
-
-.status-badge.delivered {
-  background-color: #28a745;
-  color: white;
-}
-
-.status-badge.shipped {
-  background-color: #17a2b8;
-  color: white;
-}
-
-.status-badge.confirmed {
-  background-color: #007bff;
-  color: white;
-}
-
-.status-badge.pending {
-  background-color: #6c757d;
-  color: white;
-}
-
-.delivery-address {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 0.5rem;
-}
-
-.delivery-address p {
-  margin-bottom: 0.5rem;
-  line-height: 1.5;
-}
-
-.address-type {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  margin: 0.5rem 0;
-}
-
-.btn-outline-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-outline-primary .material-icons {
-  font-size: 1.2rem;
-}
-
-.icontext {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.icon-sm {
-  width: 2.5rem;
-  height: 2.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.material-icons.md-place {
-  font-size: 1.2rem;
-}
-</style>
 
 <footer class="footer-section">
   <div class="container relative">

@@ -10,6 +10,9 @@ const fs = require("fs");
 const path = require("path");
 const easyinvoice = require("easyinvoice");
 const Cart = require("../../models/cartSchema");
+const razorpay = require("../../config/razorpay");
+
+
 
 const getCheckoutPage = async (req, res, next) => {
   try {
@@ -173,6 +176,28 @@ const orderPlaced = async (req, res, next) => {
     next(error);
   }
 };
+
+
+const createRazorpayOrder = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    console.log(req.body);
+    
+    const options = {
+      amount: amount * 100, // amount in paise
+      currency: "INR",
+      receipt: `receipt_order_${Math.floor(Math.random() * 10000)}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+    res.status(200).json({ success: true, order });
+  } catch (err) {
+    console.error("Razorpay order error:", err);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+
 const getOrderDetailsPage = async (req, res, next) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.session.user);
@@ -486,5 +511,7 @@ module.exports = {
   changeSingleProductStatus,
   returnorder,
   downloadInvoice,
+  createRazorpayOrder,
+  
   
 };
