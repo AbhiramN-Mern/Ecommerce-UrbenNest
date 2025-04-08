@@ -173,143 +173,198 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-  async function placeOrder(userId) {
-    let address = $("input[name='selectedAddress']:checked").val();
-    let payment = $("input[name='payment_option']:checked").val();
+ async function placeOrder(userId) {
+    try {
+      let address = $("input[name='selectedAddress']:checked").val();
+      let payment = $("input[name='payment_option']:checked").val();
 
-    const sum = document.getElementById("totalValue").textContent;
-    const numericValue = parseInt(sum.replace(/[^\d.]/g, ''));
+      const sum = document.getElementById("totalValue").textContent;
+      const numericValue = parseInt(sum.replace(/[^\d.]/g, ''));
 
-    if (!payment) {
+      // Validation checks
+      if (!payment) {
+        return Swal.fire({
+          title: 'NO PAYMENT FOUND!',
+          text: 'Please select your Payment.',
+          icon: 'error',
+          timer: 3000,
+        });
+      }
+
+      if (!address) {
+        return Swal.fire({
+          title: 'NO ADDRESS FOUND!',
+          text: 'Please select your address.',
+          icon: 'error',
+          timer: 3000,
+        });
+      }
+
+      // COD Payment Flow
+      if (payment === 'cod') {
+        const response = await handleCodPayment(userId, address, payment, numericValue);
+        handleOrderResponse(response);
+      } 
+      // Razorpay Payment Flow
+      else if (payment === 'Razorpay') {
+        await handleRazorpayPayment(userId, address, numericValue);
+      }
+    } catch (error) {
+      console.error('Order placement error:', error);
       Swal.fire({
-        title: 'NO PAYMENT FOUND!',
-        text: 'Please select your Payment.',
+        title: 'Error',
+        text: 'There was an error processing your order',
         icon: 'error',
-        timer: 3000,
+        timer: 3000
       });
-    } else if (!address) {
-      Swal.fire({
-        title: 'NO ADDRESS FOUND!',
-        text: 'Please select your address.',
-        icon: 'error',
-        timer: 3000,
-      });
-    } else if (payment === 'cod') {
-      // COD Logic
-      $.ajax({
-        url: '/orderPlaced',
-        method: 'POST',
-        data: {
-          totalPrice: <%= grandTotal %>,
-          addressId: address,
-          payment: payment,
-        },
-        success: function (response) {
-          if (response.error === "Some items are out of stock") {
-            Swal.fire({
-              title: 'Out of Stock!',
-              text: response.messages.join('\n'),
-              icon: 'error',
-              timer: 5000,
-            });
-          } else {
-            let orderId = response.order._id;
-            Swal.fire({
-              title: "Order success",
-              text: "Order placed successfully",
-              icon: "success",
-              showCancelButton: true,
-              confirmButtonText: "View orders",
-              cancelButtonText: "Continue shopping",
-            }).then(function (result) {
-              if (result.value) {
-                location.href = `/orderDetails?id=${orderId}`;
-              } else {
-                location.href = '/';
-              }
-            });
-          }
-        },
-        error: function () {
-          Swal.fire({
-            title: 'Error',
-            text: 'There was an error placing the order',
-            icon: 'error',
-            timer: 3000
-          });
-        }
-      });
-    } else if (payment === 'Razorpay') {
-      // Razorpay Logic
-      $.ajax({
+    }
+  }
+
+  // Handle COD Payment
+  async function handleCodPayment(userId, address, payment, amount) {
+    const response = await $.ajax({
+      url: '/orderPlaced',
+      method: 'POST',
+      data: {
+        totalPrice: amount,
+        addressId: address,
+        payment: payment,
+      },
+      error: function(xhr) {
+        throw new Error(xhr.responseJSON?.error || 'Failed to place COD order');
+      }
+    });
+    return response;
+  }
+
+  // Handle Razorpay Payment
+  async function handleRazorpayPayment(userId, address, amount) {
+    try {
+      // Step 1: Create Razorpay Order
+      const razorpayOrder = await $.ajax({
         url: '/create-razorpay-order',
         method: 'POST',
-        data: { amount: numericValue },
-        success: function (res) {
-          const options = {
-            key: "<%= process.env.RAZORPAY_KEY_ID %>",
-            amount: res.order.amount,
-            currency: "INR",
-            name: "UrbenNest",
-            description: "Payment for order",
-            order_id: res.order.id,
-            handler: function (response) {
-            $.ajax({
+        data: { amount: amount },
+        error: function(xhr) {
+          throw new Error(xhr.responseJSON?.message || 'Failed to create Razorpay order');
+        }
+      });
+
+      // Step 2: Open Razorpay Checkout
+      const options = {
+        key: "<%= process.env.RAZORPAY_KEY_ID %>",
+        amount: razorpayOrder.order.amount,
+        currency: "INR",
+        name: "Your Store Name",
+        description: "Payment for your order",
+        order_id: razorpayOrder.order.id,
+        handler: async function(response) {
+          try {
+            // Step 3: Verify Payment and Place Order
+            const orderResponse = await $.ajax({
               url: '/orderPlaced',
               method: 'POST',
               data: {
-                totalPrice: numericValue,
+                totalPrice: amount,
                 addressId: address,
                 payment: 'Razorpay',
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpayOrderId: response.razorpay_order_id,
                 razorpaySignature: response.razorpay_signature,
               },
-              success: function (orderRes) {
-                let orderId = orderRes.order._id;
-                Swal.fire({
-                  title: "Payment Success",
-                  text: "Order placed successfully",
-                  icon: "success",
-                  showCancelButton: true,
-                  confirmButtonText: "View orders",
-                  cancelButtonText: "Continue shopping"
-                }).then(function (result) {
-                  console.log("Swal result:", result); // Debug log
-                  if (result.isConfirmed) {
-                    location.href = `/orderDetails?id=${orderId}`;
-                  } else {
-                    location.href = '/';
-                  }
-                });
-              },
-              error: function () {
-                Swal.fire({
-                  title: 'Error',
-                  text: 'Payment done but failed to place order',
-                  icon: 'error',
-                  timer: 3000
-                });
+              error: function(xhr) {
+                throw new Error(xhr.responseJSON?.error || 'Payment verification failed');
               }
             });
-          },
-            theme: {
-              color: "#0a58ca"
-            }
-          };
-          const rzp = new Razorpay(options);
-          rzp.open();
+
+            // Step 4: Handle Successful Order
+            handleOrderResponse(orderResponse);
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            Swal.fire({
+              title: 'Payment Error',
+              text: error.message || 'Payment was successful but order placement failed',
+              icon: 'error',
+              timer: 5000
+            });
+          }
         },
-        error: function () {
-          Swal.fire({
-            title: 'Error',
-            text: 'Failed to initiate Razorpay payment',
-            icon: 'error',
-            timer: 3000
-          });
+        prefill: {
+          name: "<%= user.name %>",
+          email: "<%= user.email %>",
+          contact: "<%= user.phone || '9999999999' %>"
+        },
+        theme: {
+          color: "#3399cc"
+        },
+        modal: {
+          ondismiss: function() {
+            Swal.fire({
+              title: 'Payment Cancelled',
+              text: 'You cancelled the payment process',
+              icon: 'info',
+              timer: 3000
+            });
+          }
         }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error('Razorpay initialization error:', error);
+      Swal.fire({
+        title: 'Payment Error',
+        text: error.message || 'Failed to initialize payment gateway',
+        icon: 'error',
+        timer: 3000
       });
     }
+  }
+
+  // Handle Order Response (common for both payment methods)
+  function handleOrderResponse(response) {
+    if (response.error === "Some items are out of stock") {
+      return Swal.fire({
+        title: 'Out of Stock!',
+        text: response.messages.join('\n'),
+        icon: 'error',
+        timer: 5000,
+      });
+    }
+
+    let orderId = response.order._id;
+    Swal.fire({
+      title: "Order Successful",
+      text: "Your order has been placed successfully",
+      icon: "success",
+      showCancelButton: true,
+      confirmButtonText: "View Order Details",
+      cancelButtonText: "Continue Shopping",
+      allowOutsideClick: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = `/orderDetails?id=${orderId}`;
+      } else {
+        window.location.href = '/';
+      }
+    });
+  }
+
+  // Address deletion function
+  function confirmDeleteAddress(addressId, userId) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'You will not be able to recover this address!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'No, keep it'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = `/deleteAddress?id=${addressId}&redirect=/checkout&userId=${userId}`;
+      }
+    });
   }
   function confirmDeleteAddress(addressId, userId) {
     Swal.fire({

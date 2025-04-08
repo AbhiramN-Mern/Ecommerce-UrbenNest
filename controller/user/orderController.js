@@ -90,7 +90,6 @@ const deleteProduct = async (req, res, next) => {
     next(error);
   }
 };
-
 const orderPlaced = async (req, res, next) => {
   try {
     const { totalPrice, addressId, payment, discount } = req.body;
@@ -139,7 +138,7 @@ const orderPlaced = async (req, res, next) => {
     const deliveryCharge = totalPrice < 4000 ? 200 : 0;
     const finalAmount = totalPrice - (discount || 0) + deliveryCharge;
 
-    const newOrder = new Order({
+    const orderData = {
       product: orderedProducts,
       originalTotalPrice: totalPrice,
       totalPrice: totalPrice,
@@ -149,11 +148,21 @@ const orderPlaced = async (req, res, next) => {
       address: desiredAddress,
       payment: payment,
       userId: userId,
-      status: "Confirmed",
+      status: payment === 'Razorpay' ? 'Paid' : 'Confirmed',
       createdOn: Date.now(),
-    });
+    };
 
+    // Add Razorpay details if payment is Razorpay
+    if (payment === 'Razorpay') {
+      orderData.razorpayPaymentId = req.body.razorpayPaymentId;
+      orderData.razorpayOrderId = req.body.razorpayOrderId;
+      orderData.razorpaySignature = req.body.razorpaySignature;
+    }
+
+    const newOrder = new Order(orderData);
     const orderDone = await newOrder.save();
+
+    // Clear cart and update product quantities
     await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
 
     for (const orderedProduct of orderedProducts) {
@@ -164,36 +173,69 @@ const orderPlaced = async (req, res, next) => {
       }
     }
 
-    if (payment === "cod") {
-      res.json({
-        payment: true,
-        method: "cod",
-        order: orderDone,
-        orderId: orderDone._id,
-      });
-    }
+    // Send success response for both payment methods
+    res.json({
+      success: true,
+      payment: true,
+      method: payment,
+      order: orderDone,
+      orderId: orderDone._id,
+    });
+
   } catch (error) {
+    console.error('Error in orderPlaced:', error);
     next(error);
   }
 };
 
-
 const createRazorpayOrder = async (req, res) => {
   try {
     const { amount } = req.body;
-    console.log(req.body);
     
     const options = {
       amount: amount * 100, // amount in paise
       currency: "INR",
       receipt: `receipt_order_${Math.floor(Math.random() * 10000)}`,
+      payment_capture: 1 // Auto-capture payment
     };
 
     const order = await razorpay.orders.create(options);
-    res.status(200).json({ success: true, order });
+    res.status(200).json({ 
+      success: true, 
+      order: {
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        receipt: order.receipt
+      }
+    });
   } catch (err) {
     console.error("Razorpay order error:", err);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to create Razorpay order",
+      error: err.error ? err.error.description : err.message 
+    });
+  }
+};
+
+const verifyRazorpayPayment = async (req, res) => {
+  try {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+    
+    const generated_signature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
+      .digest('hex');
+
+    if (generated_signature === razorpay_signature) {
+      res.json({ success: true, verified: true });
+    } else {
+      res.status(400).json({ success: false, verified: false });
+    }
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -512,6 +554,7 @@ module.exports = {
   returnorder,
   downloadInvoice,
   createRazorpayOrder,
+  verifyRazorpayPayment
   
   
 };
