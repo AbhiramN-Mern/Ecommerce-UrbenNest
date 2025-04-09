@@ -331,54 +331,31 @@ const changeSingleProductStatus = async (req, res, next) => {
     next(error);
   }
 };
+
 const cancelOrder = async (req, res, next) => {
   try {
     const userId = req.session.user;
-    console.log('Cancel order - Session userId:', userId);
-    console.log('Cancel order - Request body:', req.body);
-
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ success: false, message: 'Invalid or missing user session' });
+    const findUser = await User.findOne({ _id: userId });
+    if (!findUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     const { orderId, productId, reason } = req.body;
-    
-    // Additional validation and debugging
-    if (!orderId) {
-      console.error('Missing order ID in request');
-      return res.status(400).json({ success: false, message: 'Order ID is required' });
-    }
-    
-    if (!productId) {
-      console.error('Missing product ID in request');
-      return res.status(400).json({ success: false, message: 'Product ID is required' });
+
+    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, message: "Invalid order ID or product ID format" });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      console.error('Invalid order ID format:', orderId);
-      return res.status(400).json({ success: false, message: 'Invalid order ID format' });
-    }
-    
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      console.error('Invalid product ID format:', productId);
-      return res.status(400).json({ success: false, message: 'Invalid product ID format' });
-    }
-
-    const findOrder = await Order.findOne({ 
-      _id: orderId,
-      userId: userId 
-    });
-    
-    console.log('Found order:', findOrder ? 'Yes' : 'No');
-    
+    const findOrder = await Order.findOne({ _id: orderId });
     if (!findOrder) {
-      return res.status(404).json({ success: false, message: 'Order not found or does not belong to user' });
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    // Rest of your existing cancelOrder logic
-    // ... (your existing code for cancelling the order)
+    const productIndex = findOrder.product.findIndex((product) => product._id.toString() === productId);
+    if (productIndex === -1) {
+      return res.status(404).json({ success: false, message: "Product not found in order" });
+    }
 
-    // return res.status(200).json({ success: true, message: 'Product cancelled successfully' });
     const productData = findOrder.product[productIndex];
     if (productData.productStatus === "Cancelled") {
       return res.status(400).json({ success: false, message: "Product is already cancelled" });
@@ -386,9 +363,33 @@ const cancelOrder = async (req, res, next) => {
 
     const refundAmount = productData.price * productData.quantity;
 
-    findOrder.product[productIndex].productStatus = "Cancelled";
-    findOrder.totalPrice -= refundAmount;
-    findOrder.finalAmount -= refundAmount;
+    if (findOrder.payment === "razorpay" && findOrder.status === "Pending") {
+      findOrder.product[productIndex].productStatus = "Cancelled";
+      findOrder.totalPrice -= refundAmount;
+      findOrder.finalAmount -= refundAmount;
+    } else {
+      if (findOrder.payment === "razorpay" || findOrder.payment === "wallet") {
+        findUser.wallet += refundAmount;
+        await User.updateOne(
+          { _id: userId },
+          {
+            $push: {
+              history: {
+                amount: refundAmount,
+                status: "credit",
+                date: Date.now(),
+                description: `Order ${orderId} product ${productId} cancelled`,
+              },
+            },
+          }
+        );
+        await findUser.save();
+      }
+
+      findOrder.product[productIndex].productStatus = "Cancelled";
+      findOrder.totalPrice -= refundAmount;
+      findOrder.finalAmount -= refundAmount;
+    }
 
     await findOrder.save();
 
@@ -406,8 +407,7 @@ const cancelOrder = async (req, res, next) => {
 
     res.status(200).json({ success: true, message: "Product cancelled successfully" });
   } catch (error) {
-    console.error('Cancel order error:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    next(error);
   }
 };
 

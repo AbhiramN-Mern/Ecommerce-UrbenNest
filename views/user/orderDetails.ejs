@@ -38,10 +38,9 @@
               <p class="mb-1">
                 Payment Method: <%= orders.payment || 'N/A' %> <br>
                 Status: <%= orders.status || 'N/A' %> <br>
-                Grand Total: ₹<%= (totalGrant || 0).toLocaleString() %> <br>
+                Price: ₹<%= (totalGrant || 0).toLocaleString() %> <br>
                 Delivery Charge: ₹<%= (orders.deliveryCharge || 0).toLocaleString() %> <br>
-                Current Total: ₹<%= (totalPrice || 0).toLocaleString() %> <br>
-                Final Amount: ₹<%= (finalAmount || 0).toLocaleString() %>
+                Totel Amount: ₹<%= (finalAmount || 0).toLocaleString() %>
               </p>
             </div>
           </article>

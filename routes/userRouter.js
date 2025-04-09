@@ -9,6 +9,8 @@ const profileController = require('../controller/user/profileController');
 const wishlistController=require("../controller/user/wishlistcontroller")
 const CartController=require("../controller/user/cartController")
 const orderController = require('../controller/user/orderController');
+require('dotenv').config();
+
 const razorpay = require("../config/razorpay");
 
 
@@ -87,15 +89,12 @@ router.get("/checkout", orderController.getCheckoutPage);
 router.get("/deleteItem", orderController.deleteProduct); 
 router.post("/orderPlaced", orderController.orderPlaced);
 router.get("/orderDetails", orderController.getOrderDetailsPage);
-router.post("/cancelOrder", orderController.cancelOrder); 
+router.put("/cancelOrder", orderController.cancelOrder); 
 router.put("/returnrequestOrder", orderController.returnorder); 
 router.put("/singleProductId", orderController.changeSingleProductStatus); 
 router.get("/downloadInvoice/:orderId", orderController.downloadInvoice);
 router.post("/create-razorpay-order",orderController. createRazorpayOrder);
 router.post("/verify-razorpay-payment", orderController.verifyRazorpayPayment);
-
-
-
 
 
 module.exports = router;

@@ -255,7 +255,7 @@
         key: "<%= process.env.RAZORPAY_KEY_ID %>",
         amount: razorpayOrder.order.amount,
         currency: "INR",
-        name: "Your Store Name",
+        name: "UrbenNest",
         description: "Payment for your order",
         order_id: razorpayOrder.order.id,
         handler: async function(response) {
@@ -379,6 +379,37 @@
         window.location.href = `/deleteAddress?id=${addressId}&redirect=/checkout&userId=${userId}`;
       }
     });
+  }
+
+  async function cancelOrder(orderId, productId) {
+    const reason = prompt("Enter cancellation reason:");
+
+    if (!reason) return;
+
+    try {
+      const res = await fetch('/cancelOrder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          orderId,
+          productId,
+          reason
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert('Order cancelled successfully!');
+        location.reload(); // Refresh to reflect change
+      } else {
+        alert(data.message || 'Failed to cancel the order.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong while cancelling the order.');
+    }
   }
 </script>
 <%- include("../../views/partials/user/footer") %>
