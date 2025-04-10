@@ -5,7 +5,7 @@ const { userAuth, adminAuth } = require('../middlewares/auth')
 const brandController=require('../controller/admin/brandController')
 const categoryController=require('../controller/admin/categoryController')
 const { customerInfo, customerBlocked, customerUnblocked } = require('../controller/admin/customerController')
-const prouctControllr=require('../controller/admin/productController')
+const productController=require('../controller/admin/productController')
 const orderController=require('../controller/admin/orderController')
 const multer=require('multer')
 const storege=require("../helpers/multer")
@@ -13,7 +13,7 @@ const getBrandPage = require('../controller/admin/brandController')
 const upload = require('../helpers/multer'); 
 const product = require('../models/productSchema')
 
-const uplods=multer({storage:storege})
+const uploads = multer({ storage: storege });
 
 router.get('/login', adminController.loadlogin)
 router.post('/login', adminController.login)
@@ -44,14 +44,26 @@ router.get('/unblockBrand',adminAuth,brandController.unblockBrand)
 router.get('/deleteBrand',adminAuth,brandController.deleteBrand)
 
 //prodect ManageMent
-router.get('/product-add', adminAuth,prouctControllr.getProductAddPage);
-router.post('/product-add',adminAuth, upload.array("images", 4), prouctControllr.addProducts);
-router.get('/products',adminAuth,prouctControllr.getAllProducts)
-router.get('/blockProduct',adminAuth,prouctControllr.blockProdeucts)
-router.get('/unblockProduct',adminAuth,prouctControllr.unblockProdeucts)
-router.get("/editProduct", adminAuth, prouctControllr.getEditProduct);
-router.post("/editProduct/:id", adminAuth, upload.array("images", 4), prouctControllr.editProduct);
-router.post("/deleteImage", adminAuth, prouctControllr.deleteSingleImage);
+// router.get("/product-add", adminAuth, productController.getProductAddPage);
+// router.post("/product-add", adminAuth, uploads.array("images", 4), productController.addProducts);
+// router.get("/products", adminAuth, productController.getAllProducts);
+// router.post("/addProductOffer", adminAuth, productController.addProductOffer);
+// router.post("/removeProductOffer", adminAuth, productController.removeProductOffer);
+// router.get("/blockProduct", adminAuth, productController.blockProduct);
+// router.get("/unblockProduct", adminAuth, productController.unblockProduct);
+// router.get("/editProduct", adminAuth, productController.getEditProduct);
+// router.post("/editProduct/:id", adminAuth, uploads.array("images", 4), productController.editProduct);
+// router.post("/deleteImage", adminAuth, productController.deleteSingleImage);
+router.get("/product-add", adminAuth, productController.getProductAddPage);
+router.post("/product-add", adminAuth, uploads.array("images", 4), productController.addProducts);
+router.get("/products", adminAuth, productController.getAllProducts);
+router.post("/addProductOffer", adminAuth, productController.addProductOffer);
+router.post("/removeProductOffer", adminAuth, productController.removeProductOffer);
+router.get("/blockProduct", adminAuth, productController.blockProduct);
+router.get("/unblockProduct", adminAuth, productController.unblockProduct);
+router.get("/editProduct", adminAuth, productController.getEditProduct);
+router.post("/editProduct/:id", adminAuth, uploads.array("images", 4), productController.editProduct);
+router.post("/deleteImage", adminAuth, productController.deleteSingleImage);
 
 
 // Order Management

@@ -1,10 +1,18 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
+const offerSchema = new mongoose.Schema({
+  discount: { type: Number, default: 0 },
+  offerDescription: { type: String, default: "" },
+  startDate: { type: Date },
+  endDate: { type: Date }
+});
+
 const productSchema = new Schema({
     productName: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     description: {
         type: String,
@@ -54,6 +62,7 @@ const productSchema = new Schema({
         required: true,
         default: 'Availble'
     },
+    offer: offerSchema
 }, { timestamps: true });
 
 module.exports = mongoose.model("Product", productSchema);

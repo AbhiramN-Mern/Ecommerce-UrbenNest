@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -181,20 +182,15 @@
                             class="form-control" 
                             placeholder="Search products or brands" 
                             name="search"
-                            id="searchInput"
                             aria-label="Search products"
                         >
                         <button class="btn btn-custom btn-offer" type="submit">
                             Search
                         </button>
-                        <button type="button" class="btn btn-secondary" id="clearSearch">
-                            Clear
-                        </button>
                     </div>
                 </div>
             </form>
         </div>
-        
 
         <!-- Products Table -->
         <div class="products-table">
@@ -214,28 +210,24 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% for(let i = data.length - 1; i >= 0; i--) { 
+                        <% for(let i = 0; i < data.length; i++) { 
                             const product = data[i];
                         %>
                             <tr>
                                 <td><%= product.productName %></td>
                                 <td><%= product.brand %></td>
-                                <td>
-                                    <%= (product.category && product.category.name) 
-                                            ? product.category.name 
-                                            : (typeof product.category === 'string' ? product.category : 'Uncategorized') 
-                                    %>
-                                </td>
-                                <td><%= product.salePrice ? product.salePrice : 'N/A' %></td>
-                                <td><%= product.productOffer ? product.productOffer : '0%' %></td>
+                                <td><%= product.category.name %></td>
+                                <td><%= product.salePrice %></td>
+                                <td><%= locals.data[i].productOffer ? product.productOffer : '0%' %></td>
                                 <td>
                                     <button 
                                         class="btn btn-custom <%= product.productOffer === 0 ? 'btn-offer' : 'btn-block' %>"
-                                        onclick="handleOffer.<%= product.productOffer === 0 ? 'add' : 'remove' %>('<%= product._id %>')">
+                                        onclick="handleOffer.<%= product.productOffer === 0 ? 'add' : 'remove' %>('<%= product._id %>')"
+                                    >
                                         <%= product.productOffer === 0 ? 'Add Offer' : 'Remove' %>
                                     </button>
                                 </td>
-                                <td><%= product.quantity ? product.quantity : 'N/A' %></td>
+                                <td><%= product.quantity %></td>
                                 <td>
                                     <button 
                                         class="btn btn-custom <%= product.isBlocked ? 'btn-unblock' : 'btn-block' %>"
@@ -263,7 +255,7 @@
         <!-- Pagination -->
         <nav aria-label="Product navigation">
             <ul class="pagination justify-content-center">
-                <% for (let i = 1; i <= totelPages; i++) { %>
+                <% for (let i = 1; i <= totalPages; i++) { %>
                     <li class="page-item <%= (i === currentPage) ? 'active' : '' %>">
                         <a class="page-link" href="?page=<%= i %>"><%= i %></a>
                     </li>
@@ -415,12 +407,6 @@
                 });
             }
         }
-
-        document.getElementById('clearSearch').addEventListener('click', function() {
-    document.getElementById('searchInput').value = ''; // Clear input field
-    window.location.href = window.location.pathname; // Refresh page
-});
- 
 
 
      
