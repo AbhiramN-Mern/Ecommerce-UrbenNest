@@ -26,12 +26,14 @@ router.patch('/customers/:id/block', customerBlocked);
 router.patch('/customers/:id/unblock', customerUnblocked);
 
 //catogery management
-router.get('/category',adminAuth,categoryController.categoryInfo)
-router.post('/Category',adminAuth,categoryController.addCategory)
-router.get('/listCategory',adminAuth,categoryController.getlisteCategory)
-router.get('/unlistCategory',adminAuth,categoryController.getunlisteCategory)
-router.get('/editCategory/:id',adminAuth,categoryController.getEditCategory)
-router.post('/editCategory/:id',adminAuth,categoryController.editCategory)
+router.get("/category", adminAuth, categoryController.categoryInfo);
+router.post("/category", adminAuth, categoryController.addCategory); 
+router.patch("/category/:id/offer", adminAuth, categoryController.addCategoryOffer); 
+router.delete("/category/:id/offer", adminAuth, categoryController.removeCategoryOffer); 
+router.patch("/category/:id/unlist", adminAuth, categoryController.getListCategory); 
+router.patch("/category/:id/list", adminAuth, categoryController.getUnlistCategory); 
+router.get("/category/:id/edit", adminAuth, categoryController.getEditCategory); 
+router.patch("/category/:id", adminAuth, categoryController.editCategory); 
 
 
 

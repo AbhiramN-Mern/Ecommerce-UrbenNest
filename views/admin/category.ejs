@@ -54,45 +54,25 @@
         }
 
         .search-container {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
 
-  .search-input {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    width: 678px;
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            background-color: var(--surface);
+            transition: all 0.2s;
+        }
 
-  }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
 
-  .search-button, .clear-button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-
-  .search-button {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .search-button:hover {
-    background-color: #0056b3;
-  }
-
-  .clear-button {
-    background-color: #dc3545;
-    color: white;
-  }
-
-  .clear-button:hover {
-    background-color: #a71d2a;
-  }
         .content-grid {
             display: grid;
             grid-template-columns: 300px 1fr;
@@ -266,10 +246,8 @@
         </header>
 
         <div class="search-container">
-            <form action="/admin/category" method="get" id="category-search-form">
-                <input type="text" class="search-input" placeholder="Search categories" name="search" id="category-search">
-                <button type="submit" class="search-button">Search</button>
-                <button type="button" class="clear-button" onclick="clearCategorySearch()">Clear</button>
+            <form action="/admin/category" method="get">
+                <input type="text" class="search-input" placeholder="Search categories" name="search">
             </form>
         </div>
 
@@ -302,16 +280,29 @@
                         <tr>
                             <th>Name</th>
                             <th>Description</th>
+                            <th>Offer Price</th>
+                            <th>Offer</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% cat.forEach((category, index) => { %>
+                        <% cat.reverse().forEach((category, index) => { %>
                             <tr>
                                 <td><%= category.name %></td>
                                 <td><%= category.description %></td>
-                            
+                                <td><%= category.categoryOffer ? `${category.categoryOffer}%` : '0%' %></td>
+                                <td>
+                                    <% if(category.categoryOffer === 0) { %>
+                                        <button class="btn btn-info" onclick="addOffer('<%= category._id %>')">
+                                            Add Offer
+                                        </button>
+                                    <% } else { %>
+                                        <button class="btn btn-danger" onclick="removeOffer('<%= category._id %>')">
+                                            Remove
+                                        </button>
+                                    <% } %>
+                                </td>
                                 <td>
                                     <% if(category.isListed) { %>
                                         <span class="badge badge-success">Listed</span>
@@ -322,15 +313,11 @@
                                 <td>
                                     <div style="display: flex; gap: 0.5rem;">
                                         <% if(category.isListed) { %>
-                                            <button class="btn btn-danger">
-                                                <a href="/admin/listCategory?id=<%= category._id %>"> Unlist</a>
-                                            </button>
+                                            <button onclick="unlistCategory('<%= category._id %>')" class="btn btn-danger">Unlist</button>
                                         <% } else { %>
-                                            <button class="btn btn-success">
-                                                <a href="/admin/unlistCategory?id=<%= category._id %>"> List</a>
-                                            </button>
+                                            <button onclick="listCategory('<%= category._id %>')" class="btn btn-success">List</button>
                                         <% } %>
-                                        <a href="/admin/editCategory/<%= category._id %>" class="btn btn-info">Edit</a>
+                                        <a href="/admin/category/<%= category._id %>/edit" class="btn btn-info">Edit</a>
                                     </div>
                                 </td>
                             </tr>
@@ -422,12 +409,96 @@
                 element.style.display = "none";
             });
         }
-        function clearCategorySearch() {
-    document.getElementById('category-search').value = '';
-    location.href = '/admin/category';
-  }
 
-       
+        async function addOffer(categoryId) {
+            const { value: amount } = await Swal.fire({
+                title: "Offer in percentage",
+                input: "number",
+                inputLabel: "Percentage",
+                inputPlaceholder: "%",
+            });
+
+            if (amount) {
+                try {
+                    const response = await fetch(`/admin/category/${categoryId}/offer`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ percentage: amount }),
+                    });
+
+                    const data = await response.json();
+                    if (response.ok && data.status) {
+                        Swal.fire("Offer added", "The offer has been added", "success").then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire("Failed", data.message || "Adding offer failed", "error");
+                    }
+                } catch (error) {
+                    Swal.fire("Error", "An error occurred while adding the offer", "error");
+                }
+            }
+        }
+
+        async function removeOffer(categoryId) {
+            try {
+                const response = await fetch(`/admin/category/${categoryId}/offer`, {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                const data = await response.json();
+                if (response.ok && data.status) {
+                    Swal.fire("Offer removed", "The offer has been removed", "success").then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire("Failed", data.message || "Removing offer failed", "error");
+                }
+            } catch (error) {
+                Swal.fire("Error", "An error occurred while removing the offer", "error");
+            }
+        }
+
+        async function unlistCategory(categoryId) {
+            try {
+                const response = await fetch(`/admin/category/${categoryId}/unlist`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                const data = await response.json();
+                if (response.ok && data.status) {
+                    Swal.fire("Success", "Category unlisted", "success").then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire("Error", "Failed to unlist category", "error");
+                }
+            } catch (error) {
+                Swal.fire("Error", "An error occurred while unlisting the category", "error");
+            }
+        }
+
+        async function listCategory(categoryId) {
+            try {
+                const response = await fetch(`/admin/category/${categoryId}/list`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                const data = await response.json();
+                if (response.ok && data.status) {
+                    Swal.fire("Success", "Category listed", "success").then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire("Error", "Failed to list category", "error");
+                }
+            } catch (error) {
+                Swal.fire("Error", "An error occurred while listing the category", "error");
+            }
+        }
     </script>
     <%- include("../../views/partials/admin/footer") %>
 </body>
