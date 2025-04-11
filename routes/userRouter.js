@@ -96,6 +96,6 @@ router.put("/singleProductId", orderController.changeSingleProductStatus);
 router.get("/downloadInvoice/:orderId", orderController.downloadInvoice);
 router.post("/create-razorpay-order",orderController. createRazorpayOrder);
 router.post("/verify-razorpay-payment", orderController.verifyRazorpayPayment);
-
+router.get('/availableCoupons', orderController.getAvailableCoupons);
 
 module.exports = router;

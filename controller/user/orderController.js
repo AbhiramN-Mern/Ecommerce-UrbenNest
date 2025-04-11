@@ -564,6 +564,19 @@ const downloadInvoice = async (req, res, next) => {
 };
 
 
+const getAvailableCoupons = async (req, res, next) => {
+  try {
+    // Fetch coupons that are still valid and listed
+    const coupons = await Coupon.find({ 
+      expireOn: { $gte: new Date() },  // Check for valid expiration date
+      isList: true                     // Only fetch listed coupons
+    });
+    res.json({ success: true, coupons });
+  } catch (error) {
+    console.error("Error fetching coupons:", error);
+    next(error);
+  }
+};
 
 module.exports = {
   getCheckoutPage,
@@ -576,6 +589,6 @@ module.exports = {
   downloadInvoice,
   createRazorpayOrder,
   verifyRazorpayPayment,
-  applyCoupon
-  
+  applyCoupon,
+  getAvailableCoupons  // new endpoint
 };

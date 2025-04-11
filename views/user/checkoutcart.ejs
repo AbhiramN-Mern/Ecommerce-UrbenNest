@@ -505,20 +505,17 @@
 
   async function fetchCoupons() {
     try {
-      const coupons = await $.ajax({
-        url: '/getCoupons',
+      const response = await $.ajax({
+        url: '/availableCoupons',
         method: 'GET',
-        error: function(xhr) {
-          console.error("Failed to fetch coupons");
-        }
       });
 
       let html = '';
-      if (coupons && coupons.length > 0) {
-        coupons.forEach(coupon => {
+      if (response.coupons && response.coupons.length > 0) {
+        response.coupons.forEach(coupon => {
           html += `<div class="coupon-item" style="border-bottom:1px solid #ccc; padding:5px 0;">
                       <strong>${coupon.name}</strong> - Discount: ₹${coupon.offerPrice} 
-                      ${coupon.validTill ? `, Valid Till: ${new Date(coupon.validTill).toLocaleDateString()}` : ''}
+                      ${coupon.expireOn ? `, Valid Till: ${new Date(coupon.expireOn).toLocaleDateString()}` : ''}
                     </div>`;
         });
       } else {
