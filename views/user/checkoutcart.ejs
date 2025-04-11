@@ -118,6 +118,33 @@
         </div>
       </div>
 
+
+      
+      <div class="coupon-section" style="border:1px solid #ddd; padding:15px; margin-bottom:20px;">
+        <h4>Have a Coupon?</h4>
+        <input type="text" id="couponCode" placeholder="Enter coupon code" style="width:60%; padding:5px;">
+        <button class="btn btn-primary" onclick="applyCoupon()">Apply Coupon</button>
+      </div>
+
+      <div class="available-coupons" style="border:1px solid #ddd; padding:15px; margin-bottom:20px;">
+        <h4>Available Coupons</h4>
+        <div id="coupon-list">
+          <!-- Coupon list will be injected here -->
+        </div>
+      </div>
+
+      <!-- Display applied coupon discount if any -->
+      <div id="coupon-discount" style="font-weight:bold; color:green; margin-bottom:10px; display:none;">
+        Coupon Discount: ₹<span id="discountAmount">0</span>
+      </div>
+
+      <!-- Hidden field to hold coupon discount value -->
+      <input type="hidden" id="discount" name="discount" value="0">
+
+      <div class="coupon-summary" style="margin-bottom: 15px;">
+        <p>Coupon Discount: <span id="coupon-discount-display">₹0</span></p>
+      </div>
+
       <div class="payment_method">
         <div class="mb-25 ml-150">
           <h5>Payment</h5>
@@ -149,6 +176,12 @@
                   </td>
                 </tr>
               <% } %>
+              <tr>
+                <th>Coupon Discount</th>
+                <td colspan="2">
+                  <span id="coupon-discount-display">₹0</span>
+                </td>
+              </tr>
               <tr>
                 <th>Total</th>
                 <td colspan="2" class="product-subtotal">
@@ -411,6 +444,96 @@
       alert('Something went wrong while cancelling the order.');
     }
   }
+
+  async function applyCoupon() {
+    const rawTotal = $("#totalValue").text();
+    // Remove non-numeric characters (like ₹) from the total
+    const totalNumeric = rawTotal.replace(/[^\d.]/g, '');
+    const couponCode = document.getElementById('couponCode').value.trim();
+    if (!couponCode) {
+      Swal.fire({
+        title: 'No Coupon Entered',
+        text: 'Please enter a coupon code.',
+        icon: 'error',
+        timer: 2000,
+      });
+      return;
+    }
+
+    try {
+      const response = await $.ajax({
+        url: '/applyCoupon',
+        method: 'POST',
+        data: { coupon: couponCode, total: totalNumeric },
+        error: function(xhr) {
+          throw new Error(xhr.responseJSON?.message || 'Failed to apply coupon');
+        }
+      });
+
+      if (response.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Coupon Applied!',
+          text: `Discount: ₹${response.offerPrice}`,
+          timer: 1500
+        }).then(() => {
+          // Update the coupon discount display in the UI
+          $("#coupon-discount-display").text("₹" + response.offerPrice);
+          // Also update hidden input field that is sent with the order
+          $("#discount").val(response.offerPrice);
+          // Update the total payable amount in the UI as returned by the server
+          $("#totalValue").text("₹" + response.gt);
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Coupon Error',
+          text: response.message || 'Failed to apply coupon',
+          timer: 3000
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'Failed to apply coupon',
+        timer: 3000
+      });
+    }
+  }
+
+  async function fetchCoupons() {
+    try {
+      const coupons = await $.ajax({
+        url: '/getCoupons',
+        method: 'GET',
+        error: function(xhr) {
+          console.error("Failed to fetch coupons");
+        }
+      });
+
+      let html = '';
+      if (coupons && coupons.length > 0) {
+        coupons.forEach(coupon => {
+          html += `<div class="coupon-item" style="border-bottom:1px solid #ccc; padding:5px 0;">
+                      <strong>${coupon.name}</strong> - Discount: ₹${coupon.offerPrice} 
+                      ${coupon.validTill ? `, Valid Till: ${new Date(coupon.validTill).toLocaleDateString()}` : ''}
+                    </div>`;
+        });
+      } else {
+        html = '<p>No coupons available.</p>';
+      }
+      document.getElementById('coupon-list').innerHTML = html;
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+    }
+  }
+
+  // Fetch available coupons on page load
+  $(document).ready(function() {
+    fetchCoupons();
+  });
 </script>
 <%- include("../../views/partials/user/footer") %>
 

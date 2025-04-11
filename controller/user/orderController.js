@@ -2,6 +2,7 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
+const Coupon=require('../../models/coupenSchema')
 const mongodb = require("mongodb");
 const mongoose = require("mongoose");
 const env = require("dotenv").config();
@@ -90,15 +91,47 @@ const deleteProduct = async (req, res, next) => {
     next(error);
   }
 };
+const applyCoupon = async (req, res, next) => {
+  try {
+    const userId = req.session.user;
+    const selectedCoupon = await Coupon.findOne({ name: req.body.coupon });
+    if (!selectedCoupon) {
+      return res.json({ success: false, message: 'Coupon not found' });
+    }
+    if (selectedCoupon.userId.includes(userId)) {
+      return res.json({ success: false, message: 'Coupon already used' });
+    }
+    await Coupon.updateOne(
+      { name: req.body.coupon },
+      { $addToSet: { userId: userId } }
+    );
+    // Calculate new total after applying discount
+    const gt = parseInt(req.body.total) - parseInt(selectedCoupon.offerPrice);
+    return res.json({
+      success: true,
+      gt: gt,
+      offerPrice: parseInt(selectedCoupon.offerPrice)
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// In orderController.js (inside orderPlaced)
 const orderPlaced = async (req, res, next) => {
   try {
-    const { totalPrice, addressId, payment, discount } = req.body;
+    const { totalPrice, discount, deliveryCharge, addressId, payment } = req.body;
     const userId = req.session.user;
 
-    if (!userId) {
-      return res.status(400).json({ error: "User not logged in" });
-    }
+    // Convert to numbers safely and provide defaults
+    const totalPriceValue = totalPrice ? parseInt(totalPrice) : 0;
+    const discountValue = discount ? Math.abs(parseInt(discount)) : 0;
+    const deliveryChargeValue = deliveryCharge ? parseInt(deliveryCharge) : 0;
 
+    // Calculate final amount: total price minus discount plus delivery charge
+    const finalAmount = totalPriceValue - discountValue + deliveryChargeValue;
+
+    // (Perform validations and other steps as before)
     const findUser = await User.findOne({ _id: userId });
     if (!findUser) {
       return res.status(404).json({ error: "User not found" });
@@ -108,7 +141,6 @@ const orderPlaced = async (req, res, next) => {
     if (!findAddress) {
       return res.status(404).json({ error: "Address not found" });
     }
-
     const desiredAddress = findAddress.address.find((item) => item._id.toString() === addressId.toString());
     if (!desiredAddress) {
       return res.status(404).json({ error: "Specific address not found" });
@@ -119,12 +151,7 @@ const orderPlaced = async (req, res, next) => {
       return res.status(404).json({ error: "Cart is empty" });
     }
 
-    const outOfStockItems = cart.items.filter(item => item.productId.quantity < item.quantity);
-    if (outOfStockItems.length > 0) {
-      const outOfStockMessages = outOfStockItems.map(item => `The product "${item.productId.productName}" is out of stock.`);
-      return res.status(400).json({ error: "Some items are out of stock", messages: outOfStockMessages });
-    }
-
+    // Map ordered products
     const orderedProducts = cart.items.map((item) => ({
       productId: item.productId._id,
       quantity: item.quantity,
@@ -135,15 +162,12 @@ const orderPlaced = async (req, res, next) => {
       user: userId
     }));
 
-    const deliveryCharge = totalPrice < 4000 ? 200 : 0;
-    const finalAmount = totalPrice - (discount || 0) + deliveryCharge;
-
     const orderData = {
       product: orderedProducts,
-      originalTotalPrice: totalPrice,
-      totalPrice: totalPrice,
-      discount: discount || 0,
-      deliveryCharge: deliveryCharge,
+      originalTotalPrice: totalPriceValue,
+      totalPrice: totalPriceValue,
+      discount: discountValue, // stored as a positive number
+      deliveryCharge: deliveryChargeValue,
       finalAmount: finalAmount,
       address: desiredAddress,
       payment: payment,
@@ -152,7 +176,7 @@ const orderPlaced = async (req, res, next) => {
       createdOn: Date.now(),
     };
 
-    // Add Razorpay details if payment is Razorpay
+    // Add Razorpay details if payment method is Razorpay
     if (payment === 'Razorpay') {
       orderData.razorpayPaymentId = req.body.razorpayPaymentId;
       orderData.razorpayOrderId = req.body.razorpayOrderId;
@@ -164,7 +188,6 @@ const orderPlaced = async (req, res, next) => {
 
     // Clear cart and update product quantities
     await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
-
     for (const orderedProduct of orderedProducts) {
       const product = await Product.findOne({ _id: orderedProduct.productId });
       if (product) {
@@ -172,8 +195,7 @@ const orderPlaced = async (req, res, next) => {
         await product.save();
       }
     }
-
-    // Send success response for both payment methods
+    // Send success response
     res.json({
       success: true,
       payment: true,
@@ -181,7 +203,6 @@ const orderPlaced = async (req, res, next) => {
       order: orderDone,
       orderId: orderDone._id,
     });
-
   } catch (error) {
     console.error('Error in orderPlaced:', error);
     next(error);
@@ -554,7 +575,7 @@ module.exports = {
   returnorder,
   downloadInvoice,
   createRazorpayOrder,
-  verifyRazorpayPayment
-  
+  verifyRazorpayPayment,
+  applyCoupon
   
 };

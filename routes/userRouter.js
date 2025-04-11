@@ -88,6 +88,7 @@ router.get("/getCartCount", CartController.getCartCount);
 router.get("/checkout", orderController.getCheckoutPage);
 router.get("/deleteItem", orderController.deleteProduct); 
 router.post("/orderPlaced", orderController.orderPlaced);
+router.post("/applyCoupon", orderController.applyCoupon);
 router.get("/orderDetails", orderController.getOrderDetailsPage);
 router.put("/cancelOrder", orderController.cancelOrder); 
 router.put("/returnrequestOrder", orderController.returnorder); 

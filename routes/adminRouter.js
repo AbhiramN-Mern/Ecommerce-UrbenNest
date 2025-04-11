@@ -4,6 +4,7 @@ const adminController = require('../controller/admin/adminController')
 const { userAuth, adminAuth } = require('../middlewares/auth')
 const brandController=require('../controller/admin/brandController')
 const categoryController=require('../controller/admin/categoryController')
+const couponController=require('../controller/admin/coupenController')
 const { customerInfo, customerBlocked, customerUnblocked } = require('../controller/admin/customerController')
 const productController=require('../controller/admin/productController')
 const orderController=require('../controller/admin/orderController')
@@ -78,6 +79,15 @@ router.post("/shipProduct", adminAuth, orderController.shipProduct);
 router.post("/cancelProduct", adminAuth, orderController.cancelProduct);
 router.post("/deliverProduct", adminAuth, orderController.deliverProduct);
 router.post("/returnProduct", adminAuth, orderController.returnProduct);
+
+//coupen Management
+
+router.get("/coupon", adminAuth, couponController.loadCoupon);
+router.post("/createCoupon", adminAuth, couponController.createCoupon);
+router.get("/editCoupon", adminAuth, couponController.editCoupon);
+router.post("/updateCoupon", adminAuth, couponController.updateCoupon);
+router.patch("/coupon/:id/list", adminAuth, couponController.listCoupon); 
+router.patch("/coupon/:id/unlist", adminAuth, couponController.unlistCoupon)
 
 
 module.exports = router
