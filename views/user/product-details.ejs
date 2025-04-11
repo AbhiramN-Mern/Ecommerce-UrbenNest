@@ -397,11 +397,20 @@
                         </div>
                         </div>
 
+                        <% 
+                          // Determine the discount values
+                          const productOffer = product.productOffer || 0;
+                          const categoryOffer = (product.category && product.category.categoryOffer) || 0;
+                          const totalOffer = Math.max(productOffer, categoryOffer);
+                        %>
+
                         <div class="product-price">
                             <span class="current-price">₹<%= product.salePrice %></span>
-                            <span class="original-price">₹<%= product.regularPrice %></span>
-                            <% if(totalOffer) { %>
-                                <span class="discount"><%= totalOffer %>% Offer</span>
+                            <% if (product.regularPrice) { %>
+                                 <span class="original-price">₹<%= product.regularPrice %></span>
+                            <% } %>
+                            <% if(totalOffer > 0) { %>
+                                 <span class="discount"><%= totalOffer %>% Offer</span>
                             <% } %>
                         </div>
 

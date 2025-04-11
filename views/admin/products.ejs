@@ -201,6 +201,7 @@
                             <th>Product Name</th>
                             <th>Brand</th>
                             <th>Category</th>
+                            <th>regularPrice</th>
                             <th>Sale Price</th>
                             <th>Offer Price</th>
                             <th>Offer</th>
@@ -217,6 +218,7 @@
                                 <td><%= product.productName %></td>
                                 <td><%= product.brand %></td>
                                 <td><%= product.category.name %></td>
+                                <td><%= product.regularPrice %></td>
                                 <td><%= product.salePrice %></td>
                                 <td><%= locals.data[i].productOffer ? product.productOffer : '0%' %></td>
                                 <td>

@@ -113,30 +113,40 @@ const getAllProducts = async (req, res, next) => {
 const addProductOffer = async (req, res, next) => {
     try {
         const { productId, percentage } = req.body;
+        const productOffer = parseInt(percentage);
 
-        const findProduct = await Product.findOne({ _id: productId });
-        const findCategory = await Category.findOne({ _id: findProduct.category });
-
-        if (findCategory.categoryOffer > percentage) {
-            return res.json({ status: false, message: "This product's category already has a category offer" });
+        const findProduct = await Product.findById(productId);
+        if (!findProduct) {
+            return res.status(404).json({ status: false, message: "Product not found" });
         }
 
-        // Corrected sale price calculation
-        const discountAmount = Math.floor(findProduct.regularPrice * (percentage / 100));
+        const findCategory = await Category.findById(findProduct.category);
+        // If category does not exist, then use only product offer
+        const categoryOffer = (findCategory && findCategory.categoryOffer) ? findCategory.categoryOffer : 0;
+        
+        // Choose the highest discount between the product offer and the category offer
+        const finalOffer = Math.max(productOffer, categoryOffer);
+
+        // Update the sale price based on the regular price using finalOffer
+        const discountAmount = Math.floor(findProduct.regularPrice * (finalOffer / 100));
         findProduct.salePrice = findProduct.regularPrice - discountAmount;
-        findProduct.productOffer = parseInt(percentage);
+        
+        // Save the product offer value (store product's offered discount only if needed,
+        // or you might want to store the final applied discount)
+        findProduct.productOffer = productOffer;
 
         await findProduct.save();
 
-        findCategory.categoryOffer = 0; // reset category offer
-        await findCategory.save();
+        // Optionally, you might choose to update or reset the category offer if required.
+        // For example:
+        // findCategory.categoryOffer = 0;
+        // await findCategory.save();
 
-        res.json({ status: true });
+        res.json({ status: true, message: "Offer applied successfully", appliedOffer: finalOffer });
     } catch (error) {
         next(error);
     }
 };
-
 
 const removeProductOffer = async (req, res, next) => {
     try {

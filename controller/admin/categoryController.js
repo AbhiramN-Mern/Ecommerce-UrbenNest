@@ -47,16 +47,17 @@ const addCategory = async (req, res, next) => {
         next(error);
     }
 };
-
 const addCategoryOffer = async (req, res, next) => {
     try {
         const percentage = parseInt(req.body.percentage);
-        const categoryId = req.params.id; 
+        const categoryId = req.params.id;
         const category = await Category.findById(categoryId);
         if (!category) {
             return res.status(404).json({ status: false, message: "Category not found" });
         }
+
         const products = await Product.find({ category: category._id });
+
         const hasProductOffer = products.some((product) => product.productOffer > percentage);
         if (hasProductOffer) {
             return res.json({
@@ -69,14 +70,16 @@ const addCategoryOffer = async (req, res, next) => {
 
         for (const product of products) {
             product.productOffer = 0;
-            product.salePrice = product.regularPrice;
+            product.salePrice = product.regularPrice - (product.regularPrice * percentage / 100);
             await product.save();
         }
-        res.json({ status: true });
+
+        res.json({ status: true, message: "Category offer applied successfully" });
     } catch (error) {
         next(error);
     }
 };
+
 
 const removeCategoryOffer = async (req, res, next) => {
     try {
