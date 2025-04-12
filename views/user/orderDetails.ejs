@@ -39,7 +39,7 @@
                 Payment Method: <%= orders.payment || 'N/A' %> <br>
                 Status: <%= orders.status || 'N/A' %> <br>
                 Price: ₹<%= (totalGrant || 0).toLocaleString() %> <br>
-                Coupon Discount: ₹<%= (orders.discount || 0).toLocaleString() %> <br>
+                <!-- Coupon Discount: ₹<%= (orders.discount || 0).toLocaleString() %> <br> -->
                 Delivery Charge: ₹<%= (orders.deliveryCharge || 0).toLocaleString() %> <br>
                 Total Amount: ₹<%= (finalAmount || 0).toLocaleString() %>
               </p>
