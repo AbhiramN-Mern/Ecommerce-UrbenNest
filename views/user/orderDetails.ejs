@@ -103,7 +103,7 @@
                       <td class="text-center">₹<%= ((parseInt(product.price) || 0) * (parseInt(product.quantity) || 0)).toLocaleString() %></td>
                       <td class="text-center">
                         <% if (product.productStatus !== "Cancelled" && product.productStatus !== "Returned") { %>
-                          <% if (orders.status === "Confirmed" || orders.status === "Pending" || orders.status === "Shipped") { %>
+                          <% if (orders.status === "Paid" || orders.status === "Confirmed" || orders.status === "Pending" || orders.status === "Shipped") { %>
                             <button class="btn btn-danger btn-sm" onclick="toggleCancelForm('<%= product._id %>')">Cancel Order</button>
                             <div id="cancelForm_<%= product._id %>" class="cancel-form mt-2" style="display: none;">
                               <form onsubmit="submitCancelOrder(event, '<%= orders._id %>', '<%= product._id %>')" method="POST">
