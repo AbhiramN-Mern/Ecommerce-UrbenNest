@@ -472,7 +472,7 @@
               </div>
             </div>
             
-            <!-- Merged Wallet Tab -->
+            <!-- Wallet Tab -->
             <div class="tab-pane fade" id="wallet" role="tabpanel">
               <div class="card">
                 <div class="card-header card-header-primary">
@@ -486,7 +486,7 @@
                       <i class="fas fa-wallet fa-3x text-primary"></i>
                     </div>
                     <h5 class="mt-3">Current Balance</h5>
-                    <h2 class="text-primary fw-bold" id="wallet-balance">₹0.00</h2>
+                    <h2 class="text-primary fw-bold" id="wallet-balance">₹<%= walletBalance.toFixed(2) %></h2>
                   </div>
                   
                   <!-- Transaction History Section -->
@@ -499,15 +499,27 @@
                           <th>Transaction</th>
                           <th>Status</th>
                           <th>Amount</th>
+                          <th>Description</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td colspan="4" class="text-center py-4">
-                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                            <p class="mb-0">No transactions yet</p>
-                          </td>
-                        </tr>
+                        <% if (walletHistory.length > 0) { %>
+                          <% walletHistory.forEach(txn => { %>
+                            <tr>
+                              <td><%= new Date(txn.date).toLocaleDateString() %></td>
+                              <td><%= txn.status %></td>
+                              <td>₹<%= txn.amount %></td>
+                              <td><%= txn.description %></td>
+                            </tr>
+                          <% }) %>
+                        <% } else { %>
+                          <tr>
+                            <td colspan="5" class="text-center py-4">
+                              <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                              <p class="mb-0">No transactions yet</p>
+                            </td>
+                          </tr>
+                        <% } %>
                       </tbody>
                     </table>
                   </div>
@@ -533,7 +545,8 @@
                   <div class="mb-4">
                     <label class="form-label fw-bold">Your Referral Link</label>
                     <div class="input-group">
-                      <input type="text" class="form-control" value="" readonly>
+                      <!-- Build the referral URL using the referralCode -->
+                      <input type="text" class="form-control" value="https://yourdomain.com/signup?ref=<%= referralCode %>" readonly>
                       <button class="btn btn-outline-primary" type="button" id="copyBtn">
                         <i class="fas fa-copy"></i> Copy
                       </button>
@@ -546,7 +559,8 @@
                         <div class="card-body text-center">
                           <i class="fas fa-gift fa-2x text-primary mb-3"></i>
                           <h5>Your Earnings</h5>
-                          <h3 class="text-primary mt-2">₹0.00</h3>
+                          <!-- Wallet bonus earnings -->
+                          <h3 class="text-primary mt-2">₹<%= walletBalance.toFixed(2) %></h3>
                         </div>
                       </div>
                     </div>
@@ -555,10 +569,44 @@
                         <div class="card-body text-center">
                           <i class="fas fa-users fa-2x text-primary mb-3"></i>
                           <h5>Successful Referrals</h5>
-                          <h3 class="text-primary mt-2">0</h3>
+                          <!-- Show the dynamic count of referrals -->
+                          <h3 class="text-primary mt-2"><%= successfulReferrals %></h3>
                         </div>
                       </div>
                     </div>
+                  </div>
+                  
+                  <!-- New section: Referral History -->
+                  <div class="mt-4">
+                    <h5 class="text-center">Referral History</h5>
+                    <% 
+                      // Filter referral transactions from walletHistory using description
+                      let referralHistory = walletHistory.filter(txn => txn.description && txn.description.startsWith("Referral reward")); 
+                    %>
+                    <% if (referralHistory.length > 0) { %>
+                      <div class="table-responsive">
+                        <table class="table table-striped">
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Amount</th>
+                              <th>Description</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <% referralHistory.forEach(txn => { %>
+                              <tr>
+                                <td><%= new Date(txn.date).toLocaleDateString() %></td>
+                                <td>₹<%= txn.amount %></td>
+                                <td><%= txn.description %></td>
+                              </tr>
+                            <% }) %>
+                          </tbody>
+                        </table>
+                      </div>
+                    <% } else { %>
+                      <p class="text-center text-muted">No referrals yet.</p>
+                    <% } %>
                   </div>
                   
                   <div class="text-center mt-4">

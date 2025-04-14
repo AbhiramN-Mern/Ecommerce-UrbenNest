@@ -269,32 +269,37 @@
                         <form id="signform" method="post" action="/signup">
                             <div class="form-group">
                                 <label for="fullName" class="form-label">Full Name</label>
-                                <input type="text" id="name" name="name" class="form-control" placeholder="Enter your full name" >
+                                <input type="text" id="name" name="name" class="form-control" placeholder="Enter your full name" required>
                                 <div id="error1" class="error-message"></div>
                             </div>
     
                             <div class="form-group">
                                 <label for="email" class="form-label">Email Address</label>
-                                <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" >
+                                <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
                                 <div id="error2" class="error-message"></div>
                             </div>
                             
                             <div class="form-group">
                                 <label for="phone" class="form-label">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter your phone number" >
+                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter your phone number" required>
                                 <div id="error3" class="error-message"></div>
                             </div>
                             
                             <div class="form-group">
                                 <label for="password" class="form-label">Password</label>
-                                <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" >
+                                <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" required>
                                 <div id="error4" class="error-message"></div>
                             </div>
                             
                             <div class="form-group">
                                 <label for="confirmPassword" class="form-label">Confirm Password</label>
-                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm your password" >
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm your password" required>
                                 <div id="error5" class="error-message"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="referralCode" class="form-label">Referral Code (Optional)</label>
+                                <input type="text" id="referralCode" name="referralCode" class="form-control" placeholder="Enter referral code if any">
                             </div>
                             
                             <!-- Google reCAPTCHA -->

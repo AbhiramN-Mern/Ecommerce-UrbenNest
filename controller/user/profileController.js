@@ -7,6 +7,7 @@ const env = require('dotenv').config();
 const session = require("express-session");
 const { log } = require("console");
 const address = require("../../models/addressSchema");
+const Wallet = require("../../models/walletSchema");
 
 
 
@@ -295,10 +296,14 @@ const userProfile = async (req, res, next) => {
   try {
     const userId = req.session.user;
     const userData = await User.findById(userId).lean();
-    const addressData = await Address.findOne({ userId: userId }).lean();
-
-    // Fetch orders for the user
+    const addressData = await Address.findOne({ user: userId }).lean();
     const orders = await Order.find({ userId: userId }).sort({ createdOn: -1 }).lean();
+    const wallet = await Wallet.findOne({ user: userId }).lean(); // make sure to use field "user"
+    
+    // Compute successful referrals as count of wallet history items that are referral rewards.
+    const successfulReferrals = wallet && wallet.history 
+      ? wallet.history.filter(txn => txn.description && txn.description.startsWith("Referral reward")).length
+      : 0;
 
     if (!userData) {
       console.error("No user found for ID:", userId);
@@ -308,8 +313,12 @@ const userProfile = async (req, res, next) => {
     res.render("profile", {
       user: userData,
       userAddress: addressData,
-      orders, // orders passed to the view
-      currentPage: "profile"
+      orders,
+      currentPage: "profile",
+      walletBalance: wallet ? wallet.balance : 0,
+      walletHistory: wallet ? wallet.history : [],
+      referralCode: userData.referralCode,
+      successfulReferrals: successfulReferrals
     });
   } catch (error) {
     console.error("Error in ProfileData", error);
@@ -493,6 +502,7 @@ const editAddress = async (req, res) => {
           if (!findAddress) {
             return res.status(404).send("Address Not Found");
           }
+          
       
           // Remove the specific address from the array
           const updateResult = await Address.updateOne(

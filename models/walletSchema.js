@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
 
 const walletSchema = new mongoose.Schema({
-  userId: {
+  user: {   // changed from userId to user
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+    unique: true  // if you want it to be unique 
   },
   balance: {
     type: Number,
