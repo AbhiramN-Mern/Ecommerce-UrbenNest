@@ -522,6 +522,16 @@
                       </tbody>
                     </table>
                   </div>
+
+                
+                  <!-- Add this snippet within the Wallet Tab markup -->
+                  <div class="add-wallet-money mt-4">
+                    <h5>Add Money to Wallet</h5>
+                    <form id="addMoneyForm">
+                      <input type="number" name="amount" placeholder="Enter amount" required class="form-control mb-2" />
+                      <button type="submit" class="btn btn-primary">Add Money</button>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -626,6 +636,8 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Place this in the <head> or just before your custom wallet script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   // Copy referral link functionality
   document.getElementById('copyBtn')?.addEventListener('click', function() {
@@ -637,6 +649,63 @@
     setTimeout(() => {
       this.innerHTML = '<i class="fas fa-copy"></i> Copy';
     }, 2000);
+  });
+
+  document.getElementById('addMoneyForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const amount = this.amount.value;
+    fetch('/wallet/addMoney', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: amount })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success) {
+        var options = {
+          "key": "<%= process.env.RAZORPAY_KEY_ID %>",
+          "amount": amount * 100,
+          "currency": "INR",
+          "name": "UrbanNest",
+          "description": "Add Money to Wallet",
+          "order_id": data.order.id,
+          "handler": function (response){
+              // Call our backend to update the wallet balance
+              fetch('/wallet/paymentSuccess', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpaySignature: response.razorpay_signature,
+                  amount: amount
+                })
+              })
+              .then(res => res.json())
+              .then(result => {
+                if(result.success) {
+                  alert("Wallet updated successfully!");
+                  location.reload();
+                } else {
+                  alert("Payment succeeded, but wallet update failed.");
+                }
+              });
+          },
+          "prefill": {
+              "name": "<%= user.name %>",
+              "email": "<%= user.email %>"
+          },
+          "theme": {
+              "color": "#3498db"
+          }
+        };
+        var rzp1 = new Razorpay(options);
+        rzp1.open();
+      } else {
+        alert("Error initiating payment. Please try again.");
+      }
+    })
+    .catch(err => console.error(err));
   });
 </script>
 

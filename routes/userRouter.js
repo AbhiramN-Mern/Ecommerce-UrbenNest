@@ -67,6 +67,8 @@ router.get('/editAddress',profileController.editAddress)
 router.post('/editAddress',profileController.postEditAddress)
 router.get('/deleteAddress',profileController.deleteAddress)
 
+router.post("/wallet/addMoney", profileController.addMoneyToWallet);
+router.post("/wallet/paymentSuccess", profileController.walletPaymentSuccess);
 
 //wishList Management
 router.get('/wishlist',wishlistController.loadWishList)

@@ -8,6 +8,7 @@ const session = require("express-session");
 const { log } = require("console");
 const address = require("../../models/addressSchema");
 const Wallet = require("../../models/walletSchema");
+const Razorpay = require("razorpay");
 
 
 
@@ -523,26 +524,82 @@ const editAddress = async (req, res) => {
         }
       };
 
+const addMoneyToWallet = async (req, res, next) => {
+  try {
+    console.log("Received request body:", req.body);
+    const userId = req.session.user;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User not logged in" });
+    }
+    const { amount } = req.body;
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid amount" });
+    }
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+    const options = {
+      amount: amount * 100, // amount in paise
+      currency: "INR",
+      receipt: `wallet_${userId.slice(0,6)}_${Date.now()}`,
+    };
+    const order = await razorpay.orders.create(options);
+    return res.json({ success: true, order });
+  } catch (error) {
+    console.error("Error in addMoneyToWallet:", error);
+    next(error);
+  }
+};
+
+const walletPaymentSuccess = async (req, res, next) => {
+  try {
+    const userId = req.session.user;
+    const { razorpayPaymentId, razorpayOrderId, razorpaySignature, amount } = req.body;
+
+    // You can add payment signature verification logic here if needed.
+
+    // Update the user's wallet.
+    let userWallet = await Wallet.findOne({ user: userId });
+    if (!userWallet) {
+      userWallet = new Wallet({ user: userId, balance: 0, history: [] });
+    }
+    userWallet.balance += parseInt(amount);
+    userWallet.history.push({
+      amount: parseInt(amount),
+      status: "credit",
+      date: Date.now(),
+      description: "Wallet recharge via Razorpay",
+    });
+    await userWallet.save();
+    return res.json({ success: true, message: "Wallet updated successfully" });
+  } catch (error) {
+    console.error("Error in walletPaymentSuccess:", error);
+    next(error);
+  }
+};
+
 module.exports = {
-    getForgetPassPage,
-    forgotEmailValid,
-    verifyForgotPassOtp,
-    getResetPassPage,
-    resendOtp,
-    verifyEmailOtp,
-    changePassword,
-    changePasswordValid,
-    verifyChangePassOtp,
-    postNewPassword,
-    getVerifyForgotOTPPage,
-    userProfile,
-    changeEmail,
-    changeEmailValid,
-    updateEmail,
-    addAddress,
-    postAddAddress,
-    editAddress,
-    postEditAddress,
-    deleteAddress
-    
+  getForgetPassPage,
+  forgotEmailValid,
+  verifyForgotPassOtp,
+  getResetPassPage,
+  resendOtp,
+  verifyEmailOtp,
+  changePassword,
+  changePasswordValid,
+  verifyChangePassOtp,
+  postNewPassword,
+  getVerifyForgotOTPPage,
+  userProfile,
+  changeEmail,
+  changeEmailValid,
+  updateEmail,
+  addAddress,
+  postAddAddress,
+  editAddress,
+  postEditAddress,
+  deleteAddress,
+  addMoneyToWallet,
+  walletPaymentSuccess
 }
