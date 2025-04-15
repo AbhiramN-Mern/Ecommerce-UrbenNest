@@ -44,7 +44,7 @@ const getCheckoutPage = async (req, res, next) => {
         return total + item.quantity * item.productId.salePrice;
       }, 0);
 
-      const deliveryCharge = grandTotal < 4000 ? 200 : 0;
+      const deliveryCharge = grandTotal < 1000 ? 200 : 0;
       const totalWithDelivery = grandTotal + deliveryCharge;
 
       res.render("checkoutcart", {
@@ -382,11 +382,11 @@ const cancelOrder = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Product is already cancelled" });
     }
 
+    // Calculate the refund as the full product price (coupon discount is ignored)
     const refundAmount = productData.price * productData.quantity;
 
-    // Use toLowerCase() to ensure case-insensitive comparison
+    // If order is paid via Razorpay and status is Pending, update order totals only
     if (findOrder.payment.toLowerCase() === "razorpay" && findOrder.status === "Pending") {
-      // For pending orders, update only order totals (if refund is not expected yet)
       findOrder.product[productIndex].productStatus = "Cancelled";
       findOrder.totalPrice -= refundAmount;
       findOrder.finalAmount -= refundAmount;
@@ -395,10 +395,10 @@ const cancelOrder = async (req, res, next) => {
         findOrder.payment.toLowerCase() === "razorpay" ||
         findOrder.payment.toLowerCase() === "wallet"
       ) {
-        // Update the Wallet document instead of the user document.
+        // Locate the Wallet document for this user
         let userWallet = await Wallet.findOne({ user: userId });
         if (!userWallet) {
-          // Create a new wallet document if one doesn't exist.
+          // Create new Wallet document if one doesn't exist
           userWallet = new Wallet({
             user: userId,
             balance: refundAmount,
@@ -411,6 +411,7 @@ const cancelOrder = async (req, res, next) => {
           });
           await userWallet.save();
         } else {
+          // Update existing wallet balance and history
           userWallet.balance += refundAmount;
           userWallet.history.push({
             amount: refundAmount,
@@ -421,6 +422,7 @@ const cancelOrder = async (req, res, next) => {
           await userWallet.save();
         }
       }
+      // Update product status and deduct order totals
       findOrder.product[productIndex].productStatus = "Cancelled";
       findOrder.totalPrice -= refundAmount;
       findOrder.finalAmount -= refundAmount;
@@ -434,6 +436,7 @@ const cancelOrder = async (req, res, next) => {
       await product.save();
     }
 
+    // If all products in the order are cancelled, update the overall order status
     const allProductsCancelled = findOrder.product.every(product => product.productStatus === "Cancelled");
     if (allProductsCancelled) {
       findOrder.status = "Cancelled";
