@@ -3,6 +3,7 @@ const Product = require("../../models/productSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const Coupon=require('../../models/coupenSchema')
+const Wallet = require("../../models/walletSchema");
 const mongodb = require("mongodb");
 const mongoose = require("mongoose");
 const env = require("dotenv").config();
@@ -362,7 +363,6 @@ const cancelOrder = async (req, res, next) => {
     }
 
     const { orderId, productId, reason } = req.body;
-
     if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({ success: false, message: "Invalid order ID or product ID format" });
     }
@@ -372,7 +372,7 @@ const cancelOrder = async (req, res, next) => {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    const productIndex = findOrder.product.findIndex((product) => product._id.toString() === productId);
+    const productIndex = findOrder.product.findIndex(product => product._id.toString() === productId);
     if (productIndex === -1) {
       return res.status(404).json({ success: false, message: "Product not found in order" });
     }
@@ -384,29 +384,43 @@ const cancelOrder = async (req, res, next) => {
 
     const refundAmount = productData.price * productData.quantity;
 
-    if (findOrder.payment === "razorpay" && findOrder.status === "Pending") {
+    // Use toLowerCase() to ensure case-insensitive comparison
+    if (findOrder.payment.toLowerCase() === "razorpay" && findOrder.status === "Pending") {
+      // For pending orders, update only order totals (if refund is not expected yet)
       findOrder.product[productIndex].productStatus = "Cancelled";
       findOrder.totalPrice -= refundAmount;
       findOrder.finalAmount -= refundAmount;
     } else {
-      if (findOrder.payment === "razorpay" || findOrder.payment === "wallet") {
-        findUser.wallet += refundAmount;
-        await User.updateOne(
-          { _id: userId },
-          {
-            $push: {
-              history: {
-                amount: refundAmount,
-                status: "credit",
-                date: Date.now(),
-                description: `Order ${orderId} product ${productId} cancelled`,
-              },
-            },
-          }
-        );
-        await findUser.save();
+      if (
+        findOrder.payment.toLowerCase() === "razorpay" ||
+        findOrder.payment.toLowerCase() === "wallet"
+      ) {
+        // Update the Wallet document instead of the user document.
+        let userWallet = await Wallet.findOne({ user: userId });
+        if (!userWallet) {
+          // Create a new wallet document if one doesn't exist.
+          userWallet = new Wallet({
+            user: userId,
+            balance: refundAmount,
+            history: [{
+              amount: refundAmount,
+              status: "credit",
+              date: Date.now(),
+              description: `Refund for cancelled order ${orderId} product ${productId}`
+            }]
+          });
+          await userWallet.save();
+        } else {
+          userWallet.balance += refundAmount;
+          userWallet.history.push({
+            amount: refundAmount,
+            status: "credit",
+            date: Date.now(),
+            description: `Refund for cancelled order ${orderId} product ${productId}`
+          });
+          await userWallet.save();
+        }
       }
-
       findOrder.product[productIndex].productStatus = "Cancelled";
       findOrder.totalPrice -= refundAmount;
       findOrder.finalAmount -= refundAmount;
@@ -420,7 +434,7 @@ const cancelOrder = async (req, res, next) => {
       await product.save();
     }
 
-    const allProductsCancelled = findOrder.product.every((product) => product.productStatus === "Cancelled");
+    const allProductsCancelled = findOrder.product.every(product => product.productStatus === "Cancelled");
     if (allProductsCancelled) {
       findOrder.status = "Cancelled";
       await findOrder.save();
