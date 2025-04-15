@@ -222,15 +222,16 @@ const verifyOTP = async (req, res) => {
         const referrer = await User.findOne({ referralCode: inputReferral });
         // Prevent self-referral
         if (referrer && referrer._id.toString() !== newUser._id.toString()) {
-          const couponName = `REF-${referrer.referralCode}-${Date.now()}`;
-          await Coupon.create({
-            name: couponName,
-            offerPrice: 100,
-            expireOn: new Date(new Date().setDate(new Date().getDate() + 30)),
-            minimumPrice: 200,
-            isList: true,
-            userId: [referrer._id]
-          });
+          // REMOVE or COMMENT OUT coupon creation to only use referral wallet credit
+          // const couponName = `REF-${referrer.referralCode}-${Date.now()}`;
+          // await Coupon.create({
+          //   name: couponName,
+          //   offerPrice: 100,
+          //   expireOn: new Date(new Date().setDate(new Date().getDate() + 30)),
+          //   minimumPrice: 200,
+          //   isList: true,
+          //   userId: [referrer._id]
+          // });
   
           // Reward the referrer’s wallet
           let referrerWallet = await Wallet.findOne({ user: referrer._id });
