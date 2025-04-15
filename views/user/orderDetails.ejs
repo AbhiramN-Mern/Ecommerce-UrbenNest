@@ -55,10 +55,15 @@
               <h6 class="mb-1">Deliver To</h6>
               <% if (orders && orders.address && orders.address.length > 0) { %>
                 <p class="mb-1">
-                  Address: <%= orders.address[0].landMark || 'N/A' %>, <%= orders.address[0].city || 'N/A' %> <br>
-                  <%= orders.address[0].state || 'N/A' %>, <%= orders.address[0].addressType || 'N/A' %> <br>
-                  <%= orders.address[0].pincode || 'N/A' %>
+                  <strong>Name:</strong> <%= orders.address[0].name || 'N/A' %><br>
+                  <strong>Phone:</strong> <%= orders.address[0].phone || 'N/A' %><br>
+                  <strong>Address:</strong> <%= orders.address[0].landMark || 'N/A' %>, 
+                  <%= orders.address[0].city || 'N/A' %>, 
+                  <%= orders.address[0].state || 'N/A' %><br>
+                  <!-- <strong>Type:</strong> <%= orders.address[0].addressType || 'N/A' %><br>
+                  <strong>Pincode:</strong> <%= orders.address[0].pinCode || 'N/A' %> -->
                 </p>
+                
                 <% if (orders.status === "Delivered") { %>
                   <a href="/downloadInvoice/<%= orders._id %>" class="btn btn-sm">Download Invoice</a>
                 <% } %>
