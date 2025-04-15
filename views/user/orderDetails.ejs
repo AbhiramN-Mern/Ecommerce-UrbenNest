@@ -102,27 +102,18 @@
                       <td class="text-center"><%= product.quantity || 0 %></td>
                       <td class="text-center">₹<%= ((parseInt(product.price) || 0) * (parseInt(product.quantity) || 0)).toLocaleString() %></td>
                       <td class="text-center">
-                        <% if (product.productStatus !== "Cancelled" && product.productStatus !== "Returned") { %>
-                          <% if (orders.status === "Paid" || orders.status === "Confirmed" || orders.status === "Pending" || orders.status === "Shipped") { %>
-                            <button class="btn btn-danger btn-sm" onclick="toggleCancelForm('<%= product._id %>')">Cancel Order</button>
-                            <div id="cancelForm_<%= product._id %>" class="cancel-form mt-2" style="display: none;">
-                              <form onsubmit="submitCancelOrder(event, '<%= orders._id %>', '<%= product._id %>')" method="POST">
-                                <input type="hidden" name="_method" value="PUT">
-                                <div class="mb-3">
-                                  <label for="cancelReason_<%= product._id %>" class="form-label">Reason for Cancellation</label>
-                                  <select class="form-control" id="cancelReason_<%= product._id %>" required>
-                                    <option value="" disabled selected>Select a reason</option>
-                                    <option value="Changed my mind">Changed my mind</option>
-                                    <option value="Found a better price elsewhere">Found a better price elsewhere</option>
-                                    <option value="Item no longer needed">Item no longer needed</option>
-                                    <option value="Shipping delay">Shipping delay</option>
-                                    <option value="Other">Other</option>
-                                  </select>
-                                </div>
-                                <button type="submit" class="btn btn-danger btn-sm">Submit Cancellation</button>
-                              </form>
-                            </div>
-                          <% } else if (orders.status === "Delivered") { %>
+                        <% if (product.productStatus === "Cancelled") { %>
+                          <span class="badge bg-danger">Canceled</span>
+                        <% } else if (product.productStatus === "Returned" || product.productStatus === "Return Requested") { %>
+                          <% if (product.returnStatus === "Approved") { %>
+                            <span class="badge bg-success">Return Approved</span>
+                          <% } else if (product.returnStatus === "Rejected") { %>
+                            <span class="badge bg-warning">Return Rejected</span>
+                          <% } else { %>
+                            <span class="badge bg-primary">Return Requested</span>
+                          <% } %>
+                        <% } else { %>
+                          <% if (orders.status && orders.status.toLowerCase() === "delivered") { %>
                             <button class="btn btn-warning btn-sm" onclick="toggleReturnForm('<%= product._id %>')">Return Order</button>
                             <div id="returnForm_<%= product._id %>" class="return-form mt-2" style="display: none;">
                               <form onsubmit="submitReturnOrder(event, '<%= orders._id %>', '<%= product._id %>')" method="POST">
@@ -139,6 +130,25 @@
                                   </select>
                                 </div>
                                 <button type="submit" class="btn btn-warning btn-sm">Submit Return</button>
+                              </form>
+                            </div>
+                          <% } else if (orders.status === "Paid" || orders.status === "Confirmed" || orders.status === "Pending" || orders.status === "Shipped") { %>
+                            <button class="btn btn-danger btn-sm" onclick="toggleCancelForm('<%= product._id %>')">Cancel Order</button>
+                            <div id="cancelForm_<%= product._id %>" class="cancel-form mt-2" style="display: none;">
+                              <form onsubmit="submitCancelOrder(event, '<%= orders._id %>', '<%= product._id %>')" method="POST">
+                                <input type="hidden" name="_method" value="PUT">
+                                <div class="mb-3">
+                                  <label for="cancelReason_<%= product._id %>" class="form-label">Reason for Cancellation</label>
+                                  <select class="form-control" id="cancelReason_<%= product._id %>" required>
+                                    <option value="" disabled selected>Select a reason</option>
+                                    <option value="Changed my mind">Changed my mind</option>
+                                    <option value="Found a better price elsewhere">Found a better price elsewhere</option>
+                                    <option value="Item no longer needed">Item no longer needed</option>
+                                    <option value="Shipping delay">Shipping delay</option>
+                                    <option value="Other">Other</option>
+                                  </select>
+                                </div>
+                                <button type="submit" class="btn btn-danger btn-sm">Submit Cancellation</button>
                               </form>
                             </div>
                           <% } %>
@@ -158,6 +168,8 @@
         </div>
       </div>
       <% if (orders.status === "Delivered") { %>
+
+        
         <div class="row mt-4">
           <div class="col-lg">
             <h5>Add Reviews</h5>
