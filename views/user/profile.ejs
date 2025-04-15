@@ -257,6 +257,65 @@
       width: 50%;
     }
   }
+
+  /* Custom style for Add Money Box */
+  .add-money-box {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .add-money-box:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .add-money-box h5 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
+  #addMoneyForm .form-control {
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    transition: border-color 0.3s ease;
+  }
+
+  #addMoneyForm .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+  }
+
+  #addMoneyForm button {
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+
+  #addMoneyForm button:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 576px) {
+    .add-money-box {
+      padding: 2rem 1rem;
+    }
+
+    #addMoneyForm .form-control {
+      width: 100%;
+    }
+
+    #addMoneyForm button {
+      width: 100%;
+    }
+  }
 </style>
 
 <main class="main">
@@ -479,13 +538,23 @@
                   <h5 class="mb-0">Wallet</h5>
                 </div>
                 <div class="card-body">
-                  <div class="text-center py-3 mb-4">
-                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3" 
-                         style="width: 100px; height: 100px;">
-                      <i class="fas fa-wallet fa-3x text-primary"></i>
+                  <!-- Improved Add Money Section in Wallet Tab -->
+                  <div class="row align-items-center mb-4">
+                    <div class="col-md-6">
+                      <div class="text-center py-3">
+                        <h5 class="mt-3">Current Balance</h5>
+                        <h2 class="text-primary fw-bold" id="wallet-balance">₹<%= (walletBalance || 0).toFixed(2) %></h2>
+                      </div>
                     </div>
-                    <h5 class="mt-3">Current Balance</h5>
-                    <h2 class="text-primary fw-bold" id="wallet-balance">₹<%= (walletBalance || 0).toFixed(2) %></h2>
+                    <div class="col-md-6">
+                      <div class="add-money-box p-4 border rounded shadow-sm bg-light">
+                        <h5 class="text-center mb-3">Add Money to Wallet</h5>
+                        <form id="addMoneyForm" class="d-flex flex-column align-items-center">
+                          <input type="number" name="amount" placeholder="Enter amount" required class="form-control mb-3 text-center" style="max-width: 200px;" />
+                          <button type="submit" class="btn btn-primary w-100">Add Money</button>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                   
                   <h5 class="mb-3">Transaction History</h5>
@@ -521,16 +590,6 @@
                         <% } %>
                       </tbody>
                     </table>
-                  </div>
-
-                
-                  <!-- Add this snippet within the Wallet Tab markup -->
-                  <div class="add-wallet-money mt-4">
-                    <h5>Add Money to Wallet</h5>
-                    <form id="addMoneyForm">
-                      <input type="number" name="amount" placeholder="Enter amount" required class="form-control mb-2" />
-                      <button type="submit" class="btn btn-primary">Add Money</button>
-                    </form>
                   </div>
                 </div>
               </div>
@@ -633,6 +692,18 @@
   </section>
 </main>
 
+<!-- Success Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+  <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        Money added to your wallet successfully!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -651,7 +722,7 @@
     }, 2000);
   });
 
-  document.getElementById('addMoneyForm').addEventListener('submit', function(e) {
+  document.getElementById('addMoneyForm').addEventListener('submit', function (e) {
     e.preventDefault();
     const amount = this.amount.value;
     fetch('/wallet/addMoney', {
@@ -659,17 +730,17 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount: amount })
     })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success) {
-        var options = {
-          "key": "<%= process.env.RAZORPAY_KEY_ID %>",
-          "amount": amount * 100,
-          "currency": "INR",
-          "name": "UrbanNest",
-          "description": "Add Money to Wallet",
-          "order_id": data.order.id,
-          "handler": function (response){
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          var options = {
+            key: "<%= process.env.RAZORPAY_KEY_ID %>",
+            amount: amount * 100,
+            currency: "INR",
+            name: "UrbanNest",
+            description: "Add Money to Wallet",
+            order_id: data.order.id,
+            handler: function (response) {
               // Call our backend to update the wallet balance
               fetch('/wallet/paymentSuccess', {
                 method: 'POST',
@@ -681,31 +752,34 @@
                   amount: amount
                 })
               })
-              .then(res => res.json())
-              .then(result => {
-                if(result.success) {
-                  alert("Wallet updated successfully!");
-                  location.reload();
-                } else {
-                  alert("Payment succeeded, but wallet update failed.");
-                }
-              });
-          },
-          "prefill": {
-              "name": "<%= user.name %>",
-              "email": "<%= user.email %>"
-          },
-          "theme": {
-              "color": "#3498db"
-          }
-        };
-        var rzp1 = new Razorpay(options);
-        rzp1.open();
-      } else {
-        alert("Error initiating payment. Please try again.");
-      }
-    })
-    .catch(err => console.error(err));
+                .then(res => res.json())
+                .then(result => {
+                  if (result.success) {
+                    // Show success toast
+                    const toast = new bootstrap.Toast(document.getElementById('successToast'));
+                    toast.show();
+                    // Reload the page after a short delay
+                    setTimeout(() => location.reload(), 2000);
+                  } else {
+                    alert("Payment succeeded, but wallet update failed.");
+                  }
+                });
+            },
+            prefill: {
+              name: "<%= user.name %>",
+              email: "<%= user.email %>"
+            },
+            theme: {
+              color: "#3498db"
+            }
+          };
+          var rzp1 = new Razorpay(options);
+          rzp1.open();
+        } else {
+          alert("Error initiating payment. Please try again.");
+        }
+      })
+      .catch(err => console.error(err));
   });
 </script>
 
