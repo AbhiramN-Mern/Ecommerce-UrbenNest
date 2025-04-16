@@ -127,7 +127,7 @@
                       <td class="cart_total_label fw-bold">Total</td>
                       <td class="cart_total_amount">
                         <span class="font-lg fw-900 text-brand" id="total">
-                          ₹<%= (grandTotal < 4000 ? grandTotal + 200 : grandTotal).toFixed(2) %>
+                          ₹<%= (grandTotal < 1000 ? grandTotal + 200 : grandTotal).toFixed(2) %>
                         </span>
                       </td>
                     </tr>
@@ -212,7 +212,7 @@
             $(`#subTotal${index}`).text(`₹${newSubtotal.toFixed(2)}`);
             
             const grandTotal = response.grandTotal;
-            const shipping = grandTotal < 4000 ? 200 : 0;
+            const shipping = grandTotal < 1000 ? 200 : 0;
             $('#subtotal').text(`₹${grandTotal.toFixed(2)}`);
             $('#shipping-cost').html(shipping > 0 ? '₹200.00' : '<span class="text-success"><i class="ti-gift mr-5"></i> Free</span>');
             $('#total').text(`₹${(grandTotal + shipping).toFixed(2)}`);

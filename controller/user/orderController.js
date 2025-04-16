@@ -607,5 +607,5 @@ module.exports = {
   createRazorpayOrder,
   verifyRazorpayPayment,
   applyCoupon,
-  getAvailableCoupons  // new endpoint
+  getAvailableCoupons  
 };
