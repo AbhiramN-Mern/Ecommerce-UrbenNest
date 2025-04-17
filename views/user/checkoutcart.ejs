@@ -171,7 +171,15 @@
             
             <div class="summary-item d-flex justify-content-between mb-3">
               <span>Coupon Discount:</span>
-              <span id="coupon-discount-display" class="text-success">₹0</span>
+              <div class="d-flex align-items-center">
+                <span id="coupon-discount-display" class="text-success me-2">₹0</span>
+                <button id="remove-coupon" 
+                        class="btn btn-sm btn-outline-danger" 
+                        style="display: none;"
+                        onclick="removeCoupon()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
             </div>
             
             <hr>
@@ -462,6 +470,9 @@
           $("#discount").val(response.offerPrice);
           // Update the total payable amount in the UI as returned by the server
           $("#totalValue").text("₹" + response.gt);
+          // Show the remove coupon button
+          $("#remove-coupon").show();
+          $("#couponCode").prop('disabled', true); // Disable coupon input
         });
       } else {
         Swal.fire({
@@ -527,6 +538,57 @@
   $(document).ready(function() {
     fetchCoupons();
   });
+
+  // Add this to your existing JavaScript in checkoutcart.ejs
+  async function removeCoupon() {
+    try {
+      const rawTotal = $("#totalValue").text();
+      const totalNumeric = rawTotal.replace(/[^\d.]/g, '');
+
+      const response = await $.ajax({
+        url: '/removeCoupon',
+        method: 'POST',
+        data: { total: totalNumeric },
+        error: function(xhr) {
+          throw new Error(xhr.responseJSON?.message || 'Failed to remove coupon');
+        }
+      });
+
+      if (response.success) {
+        // Update all relevant UI elements
+        $("#coupon-discount-display").text("₹0");
+        $("#discount").val(0);
+        $("#totalValue").text("₹" + response.gt);
+        $("#remove-coupon").hide();
+        $("#couponCode").val('').prop('disabled', false);
+
+        // Update delivery charge if present
+        if ($("#delivery-charge").length) {
+          $("#delivery-charge").text("₹" + (response.deliveryCharge || 0));
+        }
+
+        // Update subtotal if present
+        if ($("#subtotal").length) {
+          $("#subtotal").text("₹" + response.actualTotal);
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Coupon Removed',
+          text: 'The coupon has been removed successfully',
+          timer: 1500
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'Failed to remove coupon',
+        timer: 3000
+      });
+    }
+  }
 </script>
 
 <style>

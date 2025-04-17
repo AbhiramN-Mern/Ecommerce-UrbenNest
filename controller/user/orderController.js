@@ -595,6 +595,48 @@ const getAvailableCoupons = async (req, res, next) => {
   }
 };
 
+const removeCoupon = async (req, res) => {
+  try {
+    const { total } = req.body;
+    const userId = req.session.user;
+
+    // Find current cart total
+    const cart = await Cart.findOne({ userId }).populate("items.productId");
+    if (!cart) {
+      throw new Error("Cart not found");
+    }
+
+    // Calculate actual total without any discounts
+    const actualTotal = cart.items.reduce((sum, item) => {
+      return sum + (item.quantity * item.productId.salePrice);
+    }, 0);
+
+    // Add delivery charge if applicable
+    const deliveryCharge = actualTotal < 1000 ? 200 : 0;
+    const finalTotal = actualTotal + deliveryCharge;
+
+    // Reset the session coupon data
+    if (req.session.appliedCoupon) {
+      delete req.session.appliedCoupon;
+    }
+
+    res.json({
+      success: true,
+      message: "Coupon removed successfully",
+      gt: finalTotal, // Return calculated total
+      deliveryCharge,
+      actualTotal,
+      offerPrice: 0
+    });
+  } catch (error) {
+    console.error("Error removing coupon:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to remove coupon"
+    });
+  }
+};
+
 module.exports = {
   getCheckoutPage,
   deleteProduct,
@@ -607,5 +649,6 @@ module.exports = {
   createRazorpayOrder,
   verifyRazorpayPayment,
   applyCoupon,
-  getAvailableCoupons  
+  getAvailableCoupons,
+  removeCoupon
 };
