@@ -28,7 +28,7 @@ const addToWishlist = async (req, res) => {
         const productId = req.body.productId;
         const userId = req.session.user; 
         if (!userId) {
-            return res.status(401).json({ status: false, message: "Please login to add to wishlist" });
+            return res.status(401).json({ success: false, message: "Please login to add to wishlist" });
         }
 
         let wishlistDoc = await Wishlist.findOne({ userId: userId });
@@ -36,14 +36,18 @@ const addToWishlist = async (req, res) => {
             wishlistDoc = new Wishlist({ userId: userId, products: [] });
         }
         if (wishlistDoc.products.some(item => item.productId.toString() === productId.toString())) {
-            return res.status(200).json({ status: false, message: "Product already in wishlist" });
+            return res.status(200).json({ success: false, message: "Product already in wishlist" });
         }
         wishlistDoc.products.push({ productId: productId });
         await wishlistDoc.save();
-        return res.status(200).json({ status: true, message: "Product added to wishlist" });
+        
+        // Optionally update wishlist count
+        const wishlistCount = wishlistDoc.products.length;
+        
+        return res.status(200).json({ success: true, message: "Product added to wishlist", wishlistCount });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ status: false, message: "Server Error" });
+        return res.status(500).json({ success: false, message: "Server Error" });
     }
 };
 

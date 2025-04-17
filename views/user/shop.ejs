@@ -474,7 +474,9 @@
         <div class="product-grid" id="productContainer">
           <% products.forEach(product => { %>
             <div class="product-item">
-              
+              <button class="wishlist-btn" onclick="toggleWishlist('<%= product._id %>')">
+                <i class="fas fa-heart"></i>
+              </button>
               <div class="product-content">
                 <a href="/product-details?id=<%= product._id %>" style="text-decoration: none;">
                   <img src="/uploads/re-image/<%= product.productImage[0] %>" class="img-fluid product-thumbnail" loading="lazy">
@@ -639,6 +641,9 @@ function updateProductGrid(products) {
 
         const productHTML = `
             <div class="product-item">
+                <button class="wishlist-btn" onclick="toggleWishlist('${product._id}')">
+                    <i class="fas fa-heart"></i>
+                </button>
                 <div class="product-content">
                     <a href="/product-details?id=${product._id}" style="text-decoration: none;">
                         <img src="/uploads/re-image/${product.productImage[0]}" class="img-fluid product-thumbnail" loading="lazy">
@@ -680,6 +685,85 @@ function generateStars(rating) {
 document.addEventListener('DOMContentLoaded', () => {
     setupFilterLinks();
 });
+
+// Function to add a product to the cart via AJAX
+async function addToCart(productId) {
+  try {
+    const response = await $.ajax({
+      url: '/addToCart',   // Updated URL to match the router
+      method: 'POST',
+      data: { productId: productId },
+      error: function(xhr) {
+        throw new Error(xhr.responseJSON?.message || 'Failed to add product to cart');
+      }
+    });
+
+    if (response.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Added to Cart',
+        text: 'Product has been added to your cart!',
+        timer: 1500
+      });
+      // Optionally update cart count displayed in header
+      $("#cartCount").text(response.cartCount).show();
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: response.message || 'Failed to add product to cart',
+        timer: 1500
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'Failed to add product to cart',
+      timer: 1500
+    });
+  }
+}
+
+// Function to add or remove product from wishlist
+async function toggleWishlist(productId) {
+  try {
+    const response = await $.ajax({
+      url: '/addTOWishlist', // URL matching your route
+      method: 'POST',
+      data: { productId: productId },
+      error: function(xhr) {
+        throw new Error(xhr.responseJSON?.message || 'Failed to update wishlist');
+      }
+    });
+
+    if (response.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Wishlist updated',
+        text: response.message,
+        timer: 1500
+      });
+      $("#wishlistCount").text(response.wishlistCount).show();
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: response.message || 'Failed to update wishlist',
+        timer: 1500
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'Failed to update wishlist',
+      timer: 1500
+    });
+  }
+}
 </script>
 
 
