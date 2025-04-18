@@ -200,7 +200,30 @@
             <h4 class="mb-0">Payment Method</h4>
           </div>
           <div class="card-body">
-            <div class="payment-option mb-3">
+            <!-- In checkoutcart.ejs, update the wallet balance display -->
+            <div class="wallet-balance mb-3 p-3 bg-light rounded">
+              <h6 class="mb-2">Wallet Balance</h6>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="h4 mb-0">₹<%= user.walletBalance || 0 %></span>
+                <div id="insufficient-funds" class="text-danger" style="display: none;">
+                  Insufficient funds
+                </div>
+              </div>
+            </div>
+
+            <div class="payment-options">
+              <!-- Wallet Payment Option -->
+              <div class="form-check payment-radio d-flex align-items-center p-2 border rounded mb-2">
+                <input class="form-check-input payment" type="radio" value="wallet" name="payment_option" id="WalletPayment">
+                <label class="form-check-label ms-2" for="WalletPayment">
+                  <div class="d-flex align-items-center">
+                    <span class="material-icons me-2">account_balance_wallet</span>
+                    Pay with Wallet
+                  </div>
+                </label>
+              </div>
+
+              <!-- Existing COD Option -->
               <div class="form-check payment-radio d-flex align-items-center p-2 border rounded mb-2">
                 <input class="form-check-input payment" type="radio" value="cod" name="payment_option" id="CashOnDelivery" checked="">
                 <label class="form-check-label ms-2" for="CashOnDelivery">
@@ -211,6 +234,7 @@
                 </label>
               </div>
               
+              <!-- Existing Razorpay Option -->
               <div class="form-check payment-radio d-flex align-items-center p-2 border rounded">
                 <input class="form-check-input payment" type="radio" value="Razorpay" name="payment_option" id="Razorpay">
                 <label class="form-check-label ms-2" for="Razorpay">
@@ -222,7 +246,7 @@
               </div>
             </div>
             
-            <button type="button" class="btn btn-primary btn-lg w-100" onclick="placeOrder('<%= user._id %>')">
+            <button type="button" class="btn btn-primary btn-lg w-100 mt-3" onclick="placeOrder('<%= user._id %>')">
               Place Order
             </button>
           </div>
@@ -265,14 +289,21 @@
         });
       }
 
-      // COD Payment Flow
-      if (payment === 'cod') {
-        const response = await handleCodPayment(userId, address, payment, numericValue);
-        handleOrderResponse(response);
-      } 
-      // Razorpay Payment Flow
-      else if (payment === 'Razorpay') {
-        await handleRazorpayPayment(userId, address, numericValue);
+      // Handle different payment methods
+      switch(payment) {
+        case 'cod':
+          const codResponse = await handleCodPayment(userId, address, payment, numericValue);
+          handleOrderResponse(codResponse);
+          break;
+        
+        case 'Razorpay':
+          await handleRazorpayPayment(userId, address, numericValue);
+          break;
+        
+        case 'wallet':
+          const walletResponse = await handleWalletPayment(userId, address, numericValue);
+          handleOrderResponse(walletResponse);
+          break;
       }
     } catch (error) {
       console.error('Order placement error:', error);
@@ -587,6 +618,49 @@
         text: error.message || 'Failed to remove coupon',
         timer: 3000
       });
+    }
+  }
+
+  // Add wallet balance check on payment method change
+  $(document).ready(function() {
+    $('input[name="payment_option"]').change(function() {
+      const selectedPayment = $(this).val();
+      const totalAmount = parseInt($("#totalValue").text().replace(/[^\d.]/g, ''));
+      const walletBalance = <%= user.walletBalance || 0 %>; // Use the passed wallet balance
+
+      if (selectedPayment === 'wallet') {
+        if (totalAmount > walletBalance) {
+          $('#insufficient-funds').show();
+          $('button[onclick="placeOrder(\'<%= user._id %>\')"]').prop('disabled', true);
+        } else {
+          $('#insufficient-funds').hide();
+          $('button[onclick="placeOrder(\'<%= user._id %>\')"]').prop('disabled', false);
+        }
+      } else {
+        $('#insufficient-funds').hide();
+        $('button[onclick="placeOrder(\'<%= user._id %>\')"]').prop('disabled', false);
+      }
+    });
+  });
+
+  // Add new function to handle wallet payment
+  async function handleWalletPayment(userId, address, amount) {
+    try {
+      const response = await $.ajax({
+        url: '/orderPlaced',
+        method: 'POST',
+        data: {
+          totalPrice: amount,
+          addressId: address,
+          payment: 'wallet',
+        },
+        error: function(xhr) {
+          throw new Error(xhr.responseJSON?.message || 'Failed to process wallet payment');
+        }
+      });
+      return response;
+    } catch (error) {
+      throw error;
     }
   }
 </script>

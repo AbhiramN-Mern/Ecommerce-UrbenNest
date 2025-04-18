@@ -25,11 +25,11 @@ const getCheckoutPage = async (req, res, next) => {
     }
 
     const findUser = await User.findOne({ _id: userId });
-
     if (!findUser) {
       return res.redirect("/pageNotFound");
     }
 
+    // Get cart items
     const cart = await Cart.findOne({ userId: userId }).populate("items.productId");
 
     if (cart && cart.items.length > 0) {
@@ -47,14 +47,21 @@ const getCheckoutPage = async (req, res, next) => {
       const deliveryCharge = grandTotal < 1000 ? 200 : 0;
       const totalWithDelivery = grandTotal + deliveryCharge;
 
+      // Fetch wallet balance
+      const wallet = await Wallet.findOne({ user: userId });
+      const walletBalance = wallet ? wallet.balance : 0;
+
       res.render("checkoutcart", {
         product: data,
-        user: findUser,
+        user: {
+          ...findUser.toObject(),
+          walletBalance: walletBalance // Add wallet balance to user object
+        },
         isCart: true,
         userAddress: addressData,
         grandTotal: grandTotal,
         deliveryCharge: deliveryCharge,
-        totalWithDelivery: totalWithDelivery,
+        totalWithDelivery: totalWithDelivery
       });
     } else {
       res.redirect("/shop");
@@ -171,7 +178,7 @@ const orderPlaced = async (req, res, next) => {
       deliveryCharge: deliveryChargeValue,
       finalAmount: finalAmount,
       address: desiredAddress,
-      payment: payment,
+      payment: payment.toLowerCase() === 'wallet' ? 'Wallet' : payment, // Ensure consistent casing
       userId: userId,
       status: payment === 'Razorpay' ? 'Paid' : 'Confirmed',
       createdOn: Date.now(),
@@ -182,6 +189,60 @@ const orderPlaced = async (req, res, next) => {
       orderData.razorpayPaymentId = req.body.razorpayPaymentId;
       orderData.razorpayOrderId = req.body.razorpayOrderId;
       orderData.razorpaySignature = req.body.razorpaySignature;
+    }
+
+    // In orderPlaced function in orderController.js
+    if (payment === 'wallet') {
+      try {
+        // Check wallet balance
+        const wallet = await Wallet.findOne({ user: userId });
+        if (!wallet || wallet.balance < finalAmount) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Insufficient wallet balance" 
+          });
+        }
+    
+        // First create the order
+        const newOrder = new Order(orderData);
+        const orderDone = await newOrder.save();
+    
+        // Then deduct amount from wallet with correct order reference
+        wallet.balance -= finalAmount;
+        wallet.history.push({
+          amount: finalAmount,
+          status: "debit",
+          date: Date.now(),
+          description: `Payment for order #${orderDone.orderId}` // Use the generated orderId
+        });
+        await wallet.save();
+    
+        // Clear cart
+        await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
+    
+        // Update product quantities
+        for (const orderedProduct of orderedProducts) {
+          await Product.updateOne(
+            { _id: orderedProduct.productId },
+            { $inc: { quantity: -orderedProduct.quantity } }
+          );
+        }
+    
+        return res.json({
+          success: true,
+          payment: true,
+          method: payment,
+          order: orderDone,
+          orderId: orderDone._id
+        });
+    
+      } catch (error) {
+        console.error('Error in wallet payment:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to process wallet payment'
+        });
+      }
     }
 
     const newOrder = new Order(orderData);
