@@ -1,0 +1,314 @@
+<%- include("../../views/partials/admin/header") %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Transactions - Admin Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Use the same styles as order-list.ejs */
+        body {
+            background-color: #f9fafb;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            padding: 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ... (copy all other styles from order-list.ejs) ... */
+
+        /* Additional styles specific to wallet transactions */
+        .amount-credit {
+            color: #16a34a;
+            font-weight: 500;
+        }
+
+        .amount-debit {
+            color: #dc2626;
+            font-weight: 500;
+        }
+
+        .transaction-description {
+            color: #6b7280;
+            font-size: 0.875rem;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f9fafb;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            color: #1f2937;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        /* Search Container Styles */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Status Badge Styles */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .status-delivered {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .page-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            color: #4b5563;
+            text-decoration: none;
+        }
+
+        .page-link:hover {
+            background-color: #f9fafb;
+        }
+
+        .page-link.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            table {
+                display: block;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                display: block;
+                border-bottom: 1px solid #e5e7eb;
+                padding: 1rem;
+            }
+
+            td {
+                display: flex;
+                padding: 0.5rem 0;
+                border: none;
+            }
+
+            td::before {
+                content: attr(data-label);
+                font-weight: 500;
+                width: 120px;
+                min-width: 120px;
+            }
+        }
+
+        /* Transaction specific styles */
+        .order-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .order-id {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .customer-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .order-date {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin-bottom: 2rem;">Wallet Transactions</h1>
+
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" placeholder="Search transactions by user or transaction ID..." class="search-input">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>User</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (transactions && transactions.length > 0) { %>
+                        <% transactions.forEach(transaction => { %>
+                            <tr>
+                                <td data-label="Transaction ID">
+                                    <div class="order-info">
+                                        <div class="order-id">#<%= transaction.transactionId %></div>
+                                    </div>
+                                </td>
+                                <td data-label="User">
+                                    <div class="customer-info">
+                                        <div style="font-weight: 500; color: #1f2937;"><%= transaction.userName %></div>
+                                        <div style="font-size: 0.875rem; color: #6b7280;"><%= transaction.userEmail %></div>
+                                    </div>
+                                </td>
+                                <td data-label="Type">
+                                    <span class="status-badge <%= transaction.status.toLowerCase() === 'credit' ? 'status-delivered' : 'status-cancelled' %>">
+                                        <%= transaction.status %>
+                                    </span>
+                                </td>
+                                <td data-label="Amount">
+                                    <div class="<%= transaction.status.toLowerCase() === 'credit' ? 'amount-credit' : 'amount-debit' %>">
+                                        <%= transaction.status.toLowerCase() === 'credit' ? '+' : '-' %>₹<%= transaction.amount.toFixed(2) %>
+                                    </div>
+                                </td>
+                                <td data-label="Description">
+                                    <div class="transaction-description">
+                                        <%= transaction.description %>
+                                    </div>
+                                </td>
+                                <td data-label="Date">
+                                    <div class="order-date">
+                                        <%= new Date(transaction.date).toLocaleString() %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem;">
+                                <i class="fas fa-wallet fa-3x" style="color: #9ca3af; margin-bottom: 1rem;"></i>
+                                <p style="color: #6b7280;">No transactions found</p>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <% if (pagination.totalPages > 1) { %>
+            <div class="pagination">
+                <% if (pagination.hasPrevPage) { %>
+                    <a href="?page=<%= pagination.currentPage - 1 %>" class="page-link">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                <% } %>
+
+                <span class="page-link active"><%= pagination.currentPage %></span>
+
+                <% if (pagination.hasNextPage) { %>
+                    <a href="?page=<%= pagination.currentPage + 1 %>" class="page-link">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+
+    <script>
+        // Add search functionality
+        document.querySelector('.search-input').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>
+
+<%- include("../../views/partials/admin/footer") %>

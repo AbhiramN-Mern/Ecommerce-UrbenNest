@@ -13,6 +13,7 @@ const storege=require("../helpers/multer")
 const getBrandPage = require('../controller/admin/brandController')
 const upload = require('../helpers/multer'); 
 const product = require('../models/productSchema')
+const walletController = require('../controller/admin/walletController');
 
 const uploads = multer({ storage: storege });
 
@@ -81,6 +82,11 @@ router.post("/shipProduct", adminAuth, orderController.shipProduct);
 router.post("/cancelProduct", adminAuth, orderController.cancelProduct);
 router.post("/deliverProduct", adminAuth, orderController.deliverProduct);
 router.post("/returnProduct", adminAuth, orderController.returnProduct);
+
+// Wallet Management Routes
+router.get('/wallet-transactions', adminAuth, walletController.getAllTransactions);
+router.get('/wallet-transaction/:transactionId', adminAuth, walletController.getTransactionDetails);
+router.get('/wallet-stats', adminAuth, walletController.getWalletStats);
 
 //coupen Management
 

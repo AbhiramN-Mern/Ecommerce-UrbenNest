@@ -109,7 +109,7 @@
         <a href="/admin/products" id="products-link"><i class="fas fa-box"></i> Products</a>
         <a href="/admin/order-list" id="orders-link"><i class="fas fa-shopping-cart"></i> Orders</a>
         <a href="/admin/coupon" id="coupon-link"><i class="fas fa-ticket-alt"></i> Coupon</a>
-        <!-- <a href="#" id="banner-link"><i class="fas fa-image"></i> Banner</a>         -->
+        <a href="/admin/wallet-transactions" id="wallet-link"><i class="fas fa-wallet"></i> Wallet Management</a>
         <a href="/admin/logout" id="logout-link"><i class="fas fa-sign-out-alt"></i> LogOut</a>
     </div>
 
@@ -141,6 +141,8 @@
             document.getElementById('coupon-link').classList.add('active');
         } else if (currentPath.includes('/admin/banner')) {
             document.getElementById('banner-link').classList.add('active');
+        } else if (currentPath.includes('/admin/wallet-transactions')) {
+            document.getElementById('wallet-link').classList.add('active');
         }
     </script>
 </body>
