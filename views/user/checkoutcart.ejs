@@ -225,13 +225,20 @@
 
               <!-- Existing COD Option -->
               <div class="form-check payment-radio d-flex align-items-center p-2 border rounded mb-2">
-                <input class="form-check-input payment" type="radio" value="cod" name="payment_option" id="CashOnDelivery" checked="">
-                <label class="form-check-label ms-2" for="CashOnDelivery">
+                <div class="w-100">
                   <div class="d-flex align-items-center">
-                    <span class="material-icons me-2">payments</span>
-                    Cash on Delivery
+                    <input class="form-check-input payment" type="radio" value="cod" name="payment_option" id="CashOnDelivery" checked="">
+                    <label class="form-check-label ms-2" for="CashOnDelivery">
+                      <div class="d-flex align-items-center">
+                        <span class="material-icons me-2">payments</span>
+                        Cash on Delivery
+                      </div>
+                    </label>
                   </div>
-                </label>
+                  <div id="cod-error" class="ms-4 mt-1" style="display: none;">
+                    <small class="text-danger">Not available for orders above ₹1000</small>
+                  </div>
+                </div>
               </div>
               
               <!-- Existing Razorpay Option -->
@@ -676,12 +683,12 @@
   function checkCODAvailability() {
     const totalAmount = parseInt($("#totalValue").text().replace(/[^\d.]/g, ''));
     const codInput = $("#CashOnDelivery");
-    const codLabel = $("label[for='CashOnDelivery']");
+    const codError = $("#cod-error");
     
     if (totalAmount > 1000) {
       codInput.prop('disabled', true);
       codInput.prop('checked', false);
-      codLabel.append('<small class="text-danger d-block">Not available for orders above ₹1000</small>');
+      codError.show();
       
       // If COD was selected, switch to another payment method
       if (codInput.is(':checked')) {
@@ -689,7 +696,7 @@
       }
     } else {
       codInput.prop('disabled', false);
-      codLabel.find('small').remove();
+      codError.hide();
     }
   }
 
@@ -802,6 +809,20 @@
     .coupon-item {
       margin-bottom: 0.5rem;
     }
+  }
+
+  /* Add to your existing styles */
+  .payment-radio {
+    position: relative;
+  }
+
+  #cod-error {
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .form-check-input:disabled ~ .form-check-label {
+    opacity: 0.65;
   }
 </style>
 
