@@ -266,9 +266,7 @@
     try {
       let address = $("input[name='selectedAddress']:checked").val();
       let payment = $("input[name='payment_option']:checked").val();
-
-      const sum = document.getElementById("totalValue").textContent;
-      const numericValue = parseInt(sum.replace(/[^\d.]/g, ''));
+      const totalAmount = parseInt($("#totalValue").text().replace(/[^\d.]/g, ''));
 
       // Validation checks
       if (!payment) {
@@ -289,19 +287,29 @@
         });
       }
 
+      // COD validation
+      if (payment === 'cod' && totalAmount > 1000) {
+        return Swal.fire({
+          title: 'Invalid Payment Method',
+          text: 'Cash on Delivery is not available for orders above ₹1000',
+          icon: 'error',
+          timer: 3000,
+        });
+      }
+
       // Handle different payment methods
       switch(payment) {
         case 'cod':
-          const codResponse = await handleCodPayment(userId, address, payment, numericValue);
+          const codResponse = await handleCodPayment(userId, address, payment, totalAmount);
           handleOrderResponse(codResponse);
           break;
         
         case 'Razorpay':
-          await handleRazorpayPayment(userId, address, numericValue);
+          await handleRazorpayPayment(userId, address, totalAmount);
           break;
         
         case 'wallet':
-          const walletResponse = await handleWalletPayment(userId, address, numericValue);
+          const walletResponse = await handleWalletPayment(userId, address, totalAmount);
           handleOrderResponse(walletResponse);
           break;
       }
@@ -663,6 +671,49 @@
       throw error;
     }
   }
+
+  // Add this function to check COD availability
+  function checkCODAvailability() {
+    const totalAmount = parseInt($("#totalValue").text().replace(/[^\d.]/g, ''));
+    const codInput = $("#CashOnDelivery");
+    const codLabel = $("label[for='CashOnDelivery']");
+    
+    if (totalAmount > 1000) {
+      codInput.prop('disabled', true);
+      codInput.prop('checked', false);
+      codLabel.append('<small class="text-danger d-block">Not available for orders above ₹1000</small>');
+      
+      // If COD was selected, switch to another payment method
+      if (codInput.is(':checked')) {
+        $("#Razorpay").prop('checked', true);
+      }
+    } else {
+      codInput.prop('disabled', false);
+      codLabel.find('small').remove();
+    }
+  }
+
+  // Add these event listeners to your document ready function
+  $(document).ready(function() {
+    // Existing ready function code...
+    
+    // Check COD availability on page load
+    checkCODAvailability();
+    
+    // Check COD availability when coupon is applied or removed
+    // Add this to your applyCoupon and removeCoupon success handlers
+    const originalApplyCoupon = window.applyCoupon;
+    window.applyCoupon = async function() {
+      await originalApplyCoupon();
+      checkCODAvailability();
+    };
+
+    const originalRemoveCoupon = window.removeCoupon;
+    window.removeCoupon = async function() {
+      await originalRemoveCoupon();
+      checkCODAvailability();
+    };
+  });
 </script>
 
 <style>
