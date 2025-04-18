@@ -316,6 +316,26 @@
       width: 100%;
     }
   }
+
+  /* Add to your existing styles in profile.ejs */
+  .pagination {
+    margin-bottom: 0;
+  }
+
+  .page-link {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .page-item.disabled .page-link {
+    color: #6c757d;
+    border-color: #dee2e6;
+  }
 </style>
 
 <main class="main">
@@ -590,6 +610,34 @@
                         <% } %>
                       </tbody>
                     </table>
+
+                    <!-- Add Pagination Controls -->
+                    <% if (pagination.totalPages > 1) { %>
+                      <nav aria-label="Wallet history pagination" class="d-flex justify-content-center mt-4">
+                        <ul class="pagination">
+                          <!-- Previous Page -->
+                          <li class="page-item <%= !pagination.hasPrevPage ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= pagination.prevPage %>" <%= !pagination.hasPrevPage ? 'tabindex="-1" aria-disabled="true"' : '' %>>
+                              Previous
+                            </a>
+                          </li>
+
+                          <!-- Page Numbers -->
+                          <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+                            <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                              <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                            </li>
+                          <% } %>
+
+                          <!-- Next Page -->
+                          <li class="page-item <%= !pagination.hasNextPage ? 'disabled' : '' %>">
+                            <a class="page-link" href="?page=<%= pagination.nextPage %>" <%= !pagination.hasNextPage ? 'tabindex="-1" aria-disabled="true"' : '' %>>
+                              Next
+                            </a>
+                          </li>
+                        </ul>
+                      </nav>
+                    <% } %>
                   </div>
                 </div>
               </div>

@@ -296,12 +296,31 @@ const getVerifyForgotOTPPage = async (req, res) => {
 const userProfile = async (req, res, next) => {
   try {
     const userId = req.session.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10; // Number of transactions per page
+
     const userData = await User.findById(userId).lean();
     const addressData = await Address.findOne({ user: userId }).lean();
     const orders = await Order.find({ userId: userId }).sort({ createdOn: -1 }).lean();
-    const wallet = await Wallet.findOne({ user: userId }).lean(); // make sure to use field "user"
-    
-    // Compute successful referrals as count of wallet history items that are referral rewards.
+    const wallet = await Wallet.findOne({ user: userId }).lean();
+
+    // Sort wallet history by date in descending order and implement pagination
+    let walletHistory = [];
+    let totalPages = 1;
+
+    if (wallet && wallet.history) {
+      // Sort history by date in descending order
+      walletHistory = wallet.history.sort((a, b) => b.date - a.date);
+      
+      // Calculate total pages
+      totalPages = Math.ceil(walletHistory.length / limit);
+      
+      // Implement pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      walletHistory = walletHistory.slice(startIndex, endIndex);
+    }
+
     const successfulReferrals = wallet && wallet.history 
       ? wallet.history.filter(txn => txn.description && txn.description.startsWith("Referral reward")).length
       : 0;
@@ -317,9 +336,17 @@ const userProfile = async (req, res, next) => {
       orders,
       currentPage: "profile",
       walletBalance: wallet ? wallet.balance : 0,
-      walletHistory: wallet ? wallet.history : [],
+      walletHistory: walletHistory,
       referralCode: userData.referralCode,
-      successfulReferrals: successfulReferrals
+      successfulReferrals: successfulReferrals,
+      pagination: {
+        page,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        nextPage: page + 1,
+        prevPage: page - 1
+      }
     });
   } catch (error) {
     console.error("Error in ProfileData", error);
