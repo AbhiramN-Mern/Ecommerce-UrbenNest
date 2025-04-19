@@ -643,6 +643,15 @@ const googleAuthCallback = (req, res) => {
     req.session.user = user._id;
     res.redirect('/');
 };
+const loadContact=(req,res)=>{
+    try {
+        res.render('contact')
+    } catch (error) {
+        console.log(error)
+        res.redirect('pageNotFound')
+        
+    }
+}
 
 
 
@@ -659,6 +668,7 @@ module.exports = {
     loadShoppingPage,
     filterProducts,
     googleAuthCallback ,
+    loadContact
     
 };
 

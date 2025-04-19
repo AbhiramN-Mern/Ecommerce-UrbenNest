@@ -1,0 +1,264 @@
+<%- include("../../views/partials/user/header", { currentPage: 'contact' }) %>
+
+<style>
+  .contact-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    padding: 30px;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+  }
+  
+  .contact-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .contact-icon {
+    font-size: 2rem;
+    color: #3b5d50;
+    margin-bottom: 15px;
+  }
+  
+  .contact-info h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  
+  .contact-info p {
+    margin-bottom: 0;
+    color: #666;
+  }
+  
+  .map-container {
+    height: 400px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 50px;
+  }
+</style>
+</head>
+<body>
+  <!-- Start Hero Section -->
+  <div class="hero">
+    <div class="container">
+      <div class="row justify-content-between">
+        <div class="col-lg-5">
+          <div class="intro-excerpt">
+            <h1>Contact Us</h1>
+            <p class="mb-4">We're here to help! Reach out to us with any questions about our stylish and durable furniture pieces designed to enhance your home.</p>
+            <p><a href="shop" class="btn btn-secondary me-2">Shop Now</a><a href="shop" class="btn btn-white-outline">Explore</a></p>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="hero-img-wrap">
+            <img src="/furni-1.0.0/images/couch.png" class="img-fluid" alt="Couch">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End Hero Section -->
+
+  <!-- Start Contact Info Section -->
+  <div class="untree_co-section">
+    <div class="container">
+      <div class="row mb-5">
+        <div class="col-lg-12 text-center">
+          <h2 class="section-title">Get In Touch</h2>
+          <p class="section-subtitle">We'd love to hear from you! Here's how you can reach us.</p>
+        </div>
+      </div>
+      
+      <div class="row justify-content-center">
+        <div class="col-md-4">
+          <div class="contact-card text-center">
+            <div class="contact-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
+                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+              </svg>
+            </div>
+            <div class="contact-info">
+              <h3>Visit Us</h3>
+              <p>UrbenNest <br>Kasargod<br>Kerala-671320<br>India</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="contact-card text-center">
+            <div class="contact-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-envelope-fill" viewBox="0 0 16 16">
+                <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/>
+              </svg>
+            </div>
+            <div class="contact-info">
+              <h3>Email Us</h3>
+              <p>urbernest@gmail.com</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="contact-card text-center">
+            <div class="contact-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="bi bi-telephone-fill" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/>
+              </svg>
+            </div>
+            <div class="contact-info">
+              <h3>Call Us</h3>
+              <p>751024165</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Map Section -->
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="map-container">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3896.6305230476805!2d75.10733754285278!3d12.407649956499045!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba487000d6b3533%3A0x1bcc47c8489a5a6d!2sPulari%20House!5e0!3m2!1sml!2sin!4v1745040690553!5m2!1sml!2sin" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>          </div>
+        </div>
+      </div>
+      
+      <!-- Business Hours Section -->
+      <div class="row mt-5">
+        <div class="col-lg-12">
+          <div class="contact-card">
+            <div class="row">
+              <div class="col-md-6">
+                <h3 class="mb-4">Business Hours</h3>
+                <ul class="list-unstyled hours-list">
+                  <li class="d-flex justify-content-between">
+                    <span>Monday - Friday:</span>
+                    <span>9:00 AM - 7:00 PM</span>
+                  </li>
+                  <li class="d-flex justify-content-between">
+                    <span>Saturday:</span>
+                    <span>10:00 AM - 5:00 PM</span>
+                  </li>
+                  <li class="d-flex justify-content-between">
+                    <span>Sunday:</span>
+                    <span>Closed</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h3 class="mb-4">Connect With Us</h3>
+                <ul class="list-unstyled d-flex social-links">
+                  <li class="me-3"><a href="#" class="btn btn-outline-dark rounded-circle p-2"><span class="fa fa-brands fa-facebook-f"></span></a></li>
+                  <li class="me-3"><a href="#" class="btn btn-outline-dark rounded-circle p-2"><span class="fa fa-brands fa-twitter"></span></a></li>
+                  <li class="me-3"><a href="#" class="btn btn-outline-dark rounded-circle p-2"><span class="fa fa-brands fa-instagram"></span></a></li>
+                  <li><a href="#" class="btn btn-outline-dark rounded-circle p-2"><span class="fa fa-brands fa-linkedin"></span></a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End Contact Info Section -->
+
+  <!-- Start Footer Section -->
+  <footer class="footer-section">
+    <div class="container relative">
+      <div class="sofa-img">
+        <img src="/furni-1.0.0/images/sofa.png" alt="Sofa" class="img-fluid">
+      </div>
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="subscription-form">
+            <h3 class="d-flex align-items-center">
+              <span class="me-1"><img src="/furni-1.0.0/images/envelope-outline.svg" alt="Envelope" class="img-fluid"></span>
+              <span>Subscribe to Newsletter</span>
+            </h3>
+            <form action="#" class="row g-3">
+              <div class="col-auto">
+                <input type="text" class="form-control" placeholder="Enter your name">
+              </div>
+              <div class="col-auto">
+                <input type="email" class="form-control" placeholder="Enter your email">
+              </div>
+              <div class="col-auto">
+                <button class="btn btn-primary">
+                  <span class="fa fa-paper-plane"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="row g-5 mb-5">
+        <div class="col-lg-4">
+          <div class="mb-4 footer-logo-wrap"><a href="#" class="footer-logo">Furni<span>.</span></a></div>
+          <p class="mb-4">Donec facilisis quam ut purus rutrum lobortis. Donec vitae odio quis nisl dapibus malesuada. Nullam ac aliquet velit. Aliquam vulputate velit imperdiet dolor tempor tristique. Pellentesque habitant</p>
+          <ul class="list-unstyled custom-social">
+            <li><a href="#"><span class="fa fa-brands fa-facebook-f"></span></a></li>
+            <li><a href="#"><span class="fa fa-brands fa-twitter"></span></a></li>
+            <li><a href="#"><span class="fa fa-brands fa-instagram"></span></a></li>
+            <li><a href="#"><span class="fa fa-brands fa-linkedin"></span></a></li>
+          </ul>
+        </div>
+        <div class="col-lg-8">
+          <div class="row links-wrap">
+            <div class="col-6 col-sm-6 col-md-3">
+              <ul class="list-unstyled">
+                <li><a href="#">About us</a></li>
+                <li><a href="#">Services</a></li>
+                <li><a href="#">Blog</a></li>
+                <li><a href="#">Contact us</a></li>
+              </ul>
+            </div>
+            <div class="col-6 col-sm-6 col-md-3">
+              <ul class="list-unstyled">
+                <li><a href="#">Support</a></li>
+                <li><a href="#">Knowledge base</a></li>
+                <li><a href="#">Live chat</a></li>
+              </ul>
+            </div>
+            <div class="col-6 col-sm-6 col-md-3">
+              <ul class="list-unstyled">
+                <li><a href="#">Jobs</a></li>
+                <li><a href="#">Our team</a></li>
+                <li><a href="#">Leadership</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+              </ul>
+            </div>
+            <div class="col-6 col-sm-6 col-md-3">
+              <ul class="list-unstyled">
+                <li><a href="#">Nordic Chair</a></li>
+                <li><a href="#">Kruzo Aero</a></li>
+                <li><a href="#">Ergonomic Chair</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="border-top copyright">
+        <div class="row pt-4">
+          <div class="col-lg-6">
+            <p class="mb-2 text-center text-lg-start">
+              Copyright ©<script>document.write(new Date().getFullYear());</script>. All Rights Reserved. — Designed with love by <a href="https://untree.co">Untree.co</a> Distributed By <a href="https://themewagon.com">ThemeWagon</a>
+            </p>
+          </div>
+          <div class="col-lg-6 text-center text-lg-end">
+            <ul class="list-unstyled d-inline-flex ms-auto">
+              <li class="me-4"><a href="#">Terms & Conditions</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <!-- End Footer Section -->
+
+  <!-- Scripts -->
+  <script src="/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/tiny-slider.js"></script>
+  <script src="/js/custom.js"></script>
+</body>
+</html>

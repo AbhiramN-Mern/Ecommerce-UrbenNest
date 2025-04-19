@@ -16,6 +16,8 @@ const razorpay = require("../config/razorpay");
 
 
 router.get('/pageNotFound', usercontroller.pageNotFound);
+router.get('/contact',usercontroller.loadContact)
+
 
 router.get('/', usercontroller.loadhomepage);
 router.get('/signup', usercontroller.loadsignup);
@@ -100,5 +102,6 @@ router.post("/create-razorpay-order",orderController. createRazorpayOrder);
 router.post("/verify-razorpay-payment", orderController.verifyRazorpayPayment);
 router.get('/availableCoupons', orderController.getAvailableCoupons);
 router.post('/removeCoupon', orderController.removeCoupon);
+
 
 module.exports = router;
