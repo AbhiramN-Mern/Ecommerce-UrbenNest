@@ -17,6 +17,7 @@ const razorpay = require("../config/razorpay");
 
 router.get('/pageNotFound', usercontroller.pageNotFound);
 router.get('/contact',usercontroller.loadContact)
+router.get('/about',usercontroller.loadAbout)
 
 
 router.get('/', usercontroller.loadhomepage);

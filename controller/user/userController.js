@@ -652,6 +652,15 @@ const loadContact=(req,res)=>{
         
     }
 }
+const loadAbout=(req,res)=>{
+    try {
+    res.render('about')        
+    } catch (error) {
+        console.log(error)
+        res.redirect('pageNotFound')
+
+    }
+}
 
 
 
@@ -668,7 +677,8 @@ module.exports = {
     loadShoppingPage,
     filterProducts,
     googleAuthCallback ,
-    loadContact
+    loadContact,
+    loadAbout
     
 };
 
