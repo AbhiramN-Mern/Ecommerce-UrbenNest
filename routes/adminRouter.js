@@ -15,7 +15,8 @@ const upload = require('../helpers/multer');
 const product = require('../models/productSchema')
 const walletController = require('../controller/admin/walletController');
 
-const uploads = multer({ storage: storege });
+// Remove the following line:
+// const uploads = multer({ storage: storege });
 
 router.get('/login', adminController.loadlogin)
 router.post('/login', adminController.login)
@@ -61,14 +62,14 @@ router.get('/deleteBrand',adminAuth,brandController.deleteBrand)
 // router.post("/editProduct/:id", adminAuth, uploads.array("images", 4), productController.editProduct);
 // router.post("/deleteImage", adminAuth, productController.deleteSingleImage);
 router.get("/product-add", adminAuth, productController.getProductAddPage);
-router.post("/product-add", adminAuth, uploads.array("images", 4), productController.addProducts);
+router.post("/product-add", adminAuth, upload.array("images", 4), productController.addProducts);
 router.get("/products", adminAuth, productController.getAllProducts);
 router.post("/addProductOffer", adminAuth, productController.addProductOffer);
 router.post("/removeProductOffer", adminAuth, productController.removeProductOffer);
 router.get("/blockProduct", adminAuth, productController.blockProduct);
 router.get("/unblockProduct", adminAuth, productController.unblockProduct);
 router.get("/editProduct", adminAuth, productController.getEditProduct);
-router.post("/editProduct/:id", adminAuth, uploads.array("images", 4), productController.editProduct);
+router.post("/editProduct/:id", adminAuth, upload.array("images", 4), productController.editProduct);
 router.post("/deleteImage", adminAuth, productController.deleteSingleImage);
 
 
