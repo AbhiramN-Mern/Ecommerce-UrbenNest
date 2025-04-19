@@ -96,7 +96,7 @@ const orderSchema = new Schema({
   payment: {
     type: String,
     required: true,
-    enum: ["COD", "Razorpay", "Wallet", "PayPal", "cod", "wallet"] // Added "wallet" as valid enum value
+    enum: ["COD", "Razorpay", "Wallet", "PayPal", "cod", "wallet"] 
   },
   // Razorpay payment fields
   razorpayPaymentId: {

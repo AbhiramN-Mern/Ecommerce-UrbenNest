@@ -443,13 +443,19 @@ const cancelOrder = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Product is already cancelled" });
     }
 
-    // Calculate the refund as the full product price (coupon discount is ignored)
-    const refundAmount = productData.price * productData.quantity;
+    // Calculate the proportional discount for this product
+    const productTotal = productData.price * productData.quantity;
+    const orderSubtotal = findOrder.originalTotalPrice;
+    const discountRatio = findOrder.discount ? findOrder.discount / orderSubtotal : 0;
+    const productDiscount = productTotal * discountRatio;
+    
+    // Calculate actual refund amount (product price minus proportional discount)
+    const refundAmount = productTotal - productDiscount;
 
     // If order is paid via Razorpay and status is Pending, update order totals only
     if (findOrder.payment.toLowerCase() === "razorpay" && findOrder.status === "Pending") {
       findOrder.product[productIndex].productStatus = "Cancelled";
-      findOrder.totalPrice -= refundAmount;
+      findOrder.totalPrice -= productTotal;
       findOrder.finalAmount -= refundAmount;
     } else {
       if (
@@ -467,7 +473,7 @@ const cancelOrder = async (req, res, next) => {
               amount: refundAmount,
               status: "credit",
               date: Date.now(),
-              description: `Refund for cancelled order ${orderId} product ${productId}`
+              description: `Refund for cancelled order ${orderId} product ${productId} (excluding coupon discount)`
             }]
           });
           await userWallet.save();
@@ -478,33 +484,38 @@ const cancelOrder = async (req, res, next) => {
             amount: refundAmount,
             status: "credit",
             date: Date.now(),
-            description: `Refund for cancelled order ${orderId} product ${productId}`
+            description: `Refund for cancelled order ${orderId} product ${productId} (excluding coupon discount)`
           });
           await userWallet.save();
         }
       }
       // Update product status and deduct order totals
       findOrder.product[productIndex].productStatus = "Cancelled";
-      findOrder.totalPrice -= refundAmount;
+      findOrder.totalPrice -= productTotal;
       findOrder.finalAmount -= refundAmount;
     }
 
     await findOrder.save();
 
+    // Update product inventory
     const product = await Product.findById(productData.productId);
     if (product) {
       product.quantity += productData.quantity;
       await product.save();
     }
 
-    // If all products in the order are cancelled, update the overall order status
+    // Check if all products are cancelled
     const allProductsCancelled = findOrder.product.every(product => product.productStatus === "Cancelled");
     if (allProductsCancelled) {
       findOrder.status = "Cancelled";
       await findOrder.save();
     }
 
-    res.status(200).json({ success: true, message: "Product cancelled successfully" });
+    res.status(200).json({ 
+      success: true, 
+      message: "Product cancelled successfully",
+      refundAmount: refundAmount
+    });
   } catch (error) {
     next(error);
   }
