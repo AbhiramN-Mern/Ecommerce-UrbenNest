@@ -147,6 +147,23 @@
             transform: translate(-50%, -50%);
         }
 
+        .btn-btn-custom-btn-delete{
+        color: #dc3545; /* Bootstrap's danger red */
+        border: 1px solid #dc3545;
+        background-color: transparent;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        border-radius: 0.375rem;
+        transition: 0.2s ease-in-out;
+        cursor: pointer;
+        }
+
+        .btn-btn-custom-btn-delete:hover {
+        background-color: #dc3545;
+        color: white;
+        }
+
+
         @media (max-width: 768px) {
             .dashboard-container {
                 padding: 1rem;
@@ -208,6 +225,8 @@
                             <th>Quantity</th>
                             <th>Status</th>
                             <th>Actions</th>
+                            <th>Action</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -245,6 +264,11 @@
                                     >
                                         Edit
                                     </button>
+
+                                </td>
+                                <td>
+                                    <button class="btn-btn-custom-btn-delete" onclick="deleteProduct('<%= product._id %>')">Delete</button>
+
 
                                 </td>
                             </tr>
@@ -409,6 +433,39 @@
                 });
             }
         }
+
+        function deleteProduct(productId) {
+        Swal.fire({
+        title: "Are you sure?",
+        text: "Do you want to Delete this Product?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, Delete it!"
+        }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+            url: `/admin/product/${productId}/delete`,
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            success: function (response) {
+                if (response.status) {
+                Swal.fire("Success", "Product Deleted successfully", "success").then(() => {
+                    window.location.reload();
+                });
+                } else {
+                Swal.fire("Error", "Failed to unlist product", "error");
+                }
+            },
+            error: function () {
+                Swal.fire("Error", "An error occurred while unlisting the product", "error");
+            }
+            });
+        }
+        });
+    }
+
 
 
      

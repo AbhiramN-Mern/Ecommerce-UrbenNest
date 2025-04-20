@@ -181,6 +181,18 @@ const unblockProduct = async (req, res, next) => {
         next(error);
     }
 };
+const deleteProduct =async (req,res,next)=>{
+    try {
+        let id =req.params.id
+        await Product.deleteOne({_id:id})
+        return res.json({ status: true, message: "Product deleted successfully" });
+        res.redirect('/admin/product')
+    } catch (error) {
+        console.log(error);
+        
+        
+    }
+}
 
 const getEditProduct = async (req, res, next) => {
     try {
@@ -272,6 +284,7 @@ module.exports = {
     removeProductOffer,
     blockProduct,
     unblockProduct,
+    deleteProduct,
     getEditProduct,
     editProduct,
     deleteSingleImage,
