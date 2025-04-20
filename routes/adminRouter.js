@@ -97,6 +97,8 @@ router.get("/editCoupon", adminAuth, couponController.editCoupon);
 router.post("/updateCoupon", adminAuth, couponController.updateCoupon);
 router.patch("/coupon/:id/list", adminAuth, couponController.listCoupon); 
 router.patch("/coupon/:id/unlist", adminAuth, couponController.unlistCoupon)
+router.delete("/coupon/:id/delete", adminAuth, couponController.deleteCoupon)
+
 
 
 module.exports = router

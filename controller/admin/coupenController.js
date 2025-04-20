@@ -1,3 +1,4 @@
+const { log } = require("console");
 const Coupon = require("../../models/coupenSchema");
 const mongoose = require("mongoose");
 
@@ -109,6 +110,23 @@ const unlistCoupon = async (req, res, next) => {
         next(error);
     }
 };
+const deleteCoupon=async(req,res,next )=>{
+    try {
+        const id=req.params.id;
+        const result=await Coupon.deleteOne({_id:id});
+        if(result.deletedCount>0){
+            return res.json({status:true,message:"Coupon Deleted Succsesfully"})
+        }else{
+            return res.status(400).json({status:false,message:"coupon deleting failed"})
+        }
+
+    } catch (error) {
+        console.log('error in delete coupon',error);
+    
+        
+        
+    }
+}
 
 
 
@@ -120,5 +138,7 @@ module.exports = {
     updateCoupon,
     listCoupon,
     unlistCoupon,
+    deleteCoupon
+    
 
 };

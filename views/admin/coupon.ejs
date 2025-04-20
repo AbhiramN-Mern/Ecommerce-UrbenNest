@@ -250,6 +250,7 @@
                     <% } else { %>
                       <button class="btn btn-success" onclick="listCoupon('<%= coupons[i]._id %>')">List</button>
                     <% } %>
+                    <button class="btn btn-danger" onclick="deleteCoupon('<%= coupons[i]._id %>')">Delete</button>
                   </div>
                 </td>
               </tr>
@@ -374,6 +375,38 @@
       }
     });
   }
+  function deleteCoupon(couponId) {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to Delete this coupon?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, Delete it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          url: `/admin/coupon/${couponId}/delete`,
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          success: function (response) {
+            if (response.status) {
+              Swal.fire("Success", "Coupon Deleted successfully", "success").then(() => {
+                window.location.reload();
+              });
+            } else {
+              Swal.fire("Error", "Failed to unlist coupon", "error");
+            }
+          },
+          error: function () {
+            Swal.fire("Error", "An error occurred while unlisting the coupon", "error");
+          }
+        });
+      }
+    });
+  }
+
 
   function setDefaultStartDate() {
     const today = new Date();
