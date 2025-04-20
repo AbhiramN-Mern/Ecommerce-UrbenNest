@@ -322,6 +322,18 @@
                                 });
                             </script>
                         <% } %>
+
+                        <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: '<%= error %>'
+                                    });
+                                });
+                            </script>
+                        <% } %>
                     </div>
                 </div>
             </div>

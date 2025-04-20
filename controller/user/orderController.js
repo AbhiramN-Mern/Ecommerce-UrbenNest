@@ -504,7 +504,7 @@ const cancelOrder = async (req, res, next) => {
       await product.save();
     }
 
-    // Check if all products are cancelled
+    // Check if all producdts are cancelled
     const allProductsCancelled = findOrder.product.every(product => product.productStatus === "Cancelled");
     if (allProductsCancelled) {
       findOrder.status = "Cancelled";

@@ -298,18 +298,17 @@ const resendOTP = async (req, res) => {
 
 
 
-const loadlogin=async (req,res)=>{
-    try {
-        if(!req.session.user){
-            return res.render('login')
-        }else{
-            res.redirect('/')
-        }
-    } catch (error) {
-        res.redirect('/pageNotFound')
-        
+const loadlogin = async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.render('login', { error: req.query.error || '' });
+    } else {
+      res.redirect('/');
     }
-}
+  } catch (error) {
+    res.redirect('/pageNotFound');
+  }
+};
 
 const login=async(req,res)=>{
     try {
@@ -632,16 +631,21 @@ const filterProducts = async (req, res) => {
 };
 
 const googleAuthCallback = (req, res) => {
-    const user = req.user;
-    if (user.isBlocked) {
-        // Delete only the user session variable,
-        // leaving any other session data (like admin session) intact.
-        delete req.session.user;
-        res.set('Cache-Control', 'no-store'); // prevent caching
-        return res.render("login", { message: "User is Blocked by Admin" });
-    }
+  const user = req.user;
+  if (user.isBlocked) {
+    // Clear any session data for the blocked user
+    delete req.session.user;
+    // Log the user out with a callback
+    req.logout((err) => {
+      if (err) {
+        console.error("Error during logout:", err);
+      }
+      return res.redirect('/login?error=User%20is%20Blocked%20by%20Admin');
+    });
+  } else {
     req.session.user = user._id;
     res.redirect('/');
+  }
 };
 const loadContact=(req,res)=>{
     try {
