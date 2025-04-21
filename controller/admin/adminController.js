@@ -363,6 +363,7 @@ const loadDashbord = async (req, res, next) => {
                 { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdOn" } }, total: { $sum: "$discount" } } },
                 { $sort: { "_id": 1 } }
             ]);
+            
 
             const totalOrders = await Order.countDocuments({ createdOn: { $gte: start, $lt: end } });
             const returnedOrders = await Order.countDocuments({ status: "Returned", createdOn: { $gte: start, $lt: end } });
@@ -370,8 +371,10 @@ const loadDashbord = async (req, res, next) => {
             const deliveredOrders = await Order.countDocuments({ status: "Delivered", createdOn: { $gte: start, $lt: end } });
             const shippedOrders = await Order.countDocuments({ status: "Shipped", createdOn: { $gte: start, $lt: end } });
             const processingOrders = await Order.countDocuments({ status: "Processing", createdOn: { $gte: start, $lt: end } });
-            const totalUsers = await User.countDocuments({ createdOn: { $gte: start, $lt: end } });
-
+            const totalUsers = await User.countDocuments({ 
+                isAdmin: { $ne: true },
+                isBlocked: { $ne: true }
+            });
             const topProducts = await Order.aggregate([
                 { $match: { createdOn: { $gte: start, $lt: end } } },
                 { $unwind: "$product" },

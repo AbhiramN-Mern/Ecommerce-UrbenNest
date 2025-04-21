@@ -133,11 +133,17 @@ const orderPlaced = async (req, res, next) => {
 
     // Convert to numbers safely and provide defaults
     const totalPriceValue = totalPrice ? parseInt(totalPrice) : 0;
+    console.log(totalPriceValue);
     const discountValue = discount ? Math.abs(parseInt(discount)) : 0;
+    console.log(discountValue);
     const deliveryChargeValue = deliveryCharge ? parseInt(deliveryCharge) : 0;
+    console.log(deliveryChargeValue);
+    
 
     // Calculate final amount: total price minus discount plus delivery charge
     const finalAmount = totalPriceValue - discountValue + deliveryChargeValue;
+    console.log(finalAmount);
+    
 
     // (Perform validations and other steps as before)
     const findUser = await User.findOne({ _id: userId });
