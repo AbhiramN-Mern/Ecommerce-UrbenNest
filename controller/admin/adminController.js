@@ -47,11 +47,11 @@ const generateExcelReport = async (req, res, next) => {
             .select('orderId createdOn product totalPrice discount finalAmount payment')
             .sort({ createdOn: 1 });
 
-        console.log('Retrieved Orders:', orders);
+        // console.log('Retrieved Orders:', orders);
 
         
         orders.forEach(order => {
-            console.log('Order:', order); 
+            // console.log('Order:', order); 
             const itemCount = Array.isArray(order.product) ? order.product.length : 0;
             const amount = order.totalPrice !== undefined ? `₹${order.totalPrice.toFixed(2)}` : '₹0.00';
             const discount = order.discount !== undefined ? `₹${order.discount.toFixed(2)}` : '₹0.00';
@@ -316,6 +316,31 @@ const loadDashbord = async (req, res, next) => {
             const end = new Date(endDate);
             end.setDate(end.getDate() + 1);
 
+            // Modified total discount calculation
+            const totalDiscount = await Order.aggregate([
+                { 
+                    $match: { 
+                        createdOn: { $gte: start, $lt: end },
+                        discount: { $exists: true }
+                    } 
+                },
+                {
+                    $group: {
+                        _id: null,
+                        total: {
+                            $sum: {
+                                $cond: [
+                                    { $ne: ["$discount", null] },
+                                    "$discount",
+                                    0
+                                ]
+                            }
+                        }
+                    }
+                }
+            ]);
+
+            // Rest of your existing aggregations...
             const totalSales = await Order.aggregate([
                 { $match: { createdOn: { $gte: start, $lt: end } } },
                 { $group: { _id: null, total: { $sum: "$finalAmount" } } }
@@ -346,10 +371,6 @@ const loadDashbord = async (req, res, next) => {
             const shippedOrders = await Order.countDocuments({ status: "Shipped", createdOn: { $gte: start, $lt: end } });
             const processingOrders = await Order.countDocuments({ status: "Processing", createdOn: { $gte: start, $lt: end } });
             const totalUsers = await User.countDocuments({ createdOn: { $gte: start, $lt: end } });
-            const totalDiscount = await Order.aggregate([
-                { $match: { createdOn: { $gte: start, $lt: end } } },
-                { $group: { _id: null, total: { $sum: "$discount" } } }
-            ]);
 
             const topProducts = await Order.aggregate([
                 { $match: { createdOn: { $gte: start, $lt: end } } },
@@ -421,7 +442,7 @@ const loadDashbord = async (req, res, next) => {
                 shippedOrders,
                 processingOrders,
                 totalUsers,
-                totalDiscount: totalDiscount[0]?.total || 0,
+                totalDiscount: totalDiscount[0]?.total || 0, // Modified this line
                 startDate,
                 endDate,
                 dailySales: JSON.stringify(dailySales),
