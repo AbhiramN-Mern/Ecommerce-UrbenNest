@@ -154,13 +154,13 @@
           </div>
           <div class="card-body">
             <div class="summary-item d-flex justify-content-between mb-3">
-              <span>Subtotal:</span>
-              <span>₹<%= totalWithDelivery - deliveryCharge %></span>
+              <span>Original Price:</span>
+              <span id="originalPrice">₹<%= grandTotal %></span>
             </div>
             
             <div class="summary-item d-flex justify-content-between mb-3">
               <span>Shipping:</span>
-              <span>
+              <span id="delivery-charge">
                 <% if (deliveryCharge > 0) { %>
                   ₹<%= deliveryCharge %>
                 <% } else { %>
@@ -172,7 +172,7 @@
             <div class="summary-item d-flex justify-content-between mb-3">
               <span>Coupon Discount:</span>
               <div class="d-flex align-items-center">
-                <span id="coupon-discount-display" class="text-success me-2">₹0</span>
+                <span id="coupon-discount-display" class="text-danger me-2">-₹0</span>
                 <button id="remove-coupon" 
                         class="btn btn-sm btn-outline-danger" 
                         style="display: none;"
@@ -185,12 +185,14 @@
             <hr>
             
             <div class="summary-item d-flex justify-content-between mb-3">
-              <span class="fw-bold">Total Amount:</span>
+              <span class="fw-bold">Final Amount:</span>
               <span class="fw-bold" id="totalValue">₹<%= totalWithDelivery %></span>
             </div>
             
             <!-- Hidden field to hold coupon discount value -->
+            <input type="hidden" id="original-price" value="<%= grandTotal %>">
             <input type="hidden" id="discount" name="discount" value="0">
+            <input type="hidden" id="delivery-charge-value" value="<%= deliveryCharge %>">
           </div>
         </div>
         
@@ -271,37 +273,22 @@
   // Keep all your existing JavaScript functions here
   async function placeOrder(userId) {
     try {
-      let address = $("input[name='selectedAddress']:checked").val();
-      let payment = $("input[name='payment_option']:checked").val();
+      const address = $("input[name='selectedAddress']:checked").val();
+      const payment = $("input[name='payment_option']:checked").val();
       const totalAmount = parseInt($("#totalValue").text().replace(/[^\d.]/g, ''));
 
-      // Validation checks
-      if (!payment) {
-        return Swal.fire({
-          title: 'NO PAYMENT FOUND!',
-          text: 'Please select your Payment.',
-          icon: 'error',
-          timer: 3000,
-        });
+      // Enhanced validation
+      if (!address) {
+        throw new Error('Please select a delivery address');
       }
 
-      if (!address) {
-        return Swal.fire({
-          title: 'NO ADDRESS FOUND!',
-          text: 'Please select your address.',
-          icon: 'error',
-          timer: 3000,
-        });
+      if (!payment) {
+        throw new Error('Please select a payment method');
       }
 
       // COD validation
-      if (payment === 'cod' && totalAmount > 1000) {
-        return Swal.fire({
-          title: 'Invalid Payment Method',
-          text: 'Cash on Delivery is not available for orders above ₹1000',
-          icon: 'error',
-          timer: 3000,
-        });
+      if (payment === 'cod' && totalAmount > 10000) {
+        throw new Error('Cash on Delivery is not available for orders above ₹10,000');
       }
 
       // Handle different payment methods
@@ -319,12 +306,15 @@
           const walletResponse = await handleWalletPayment(userId, address, totalAmount);
           handleOrderResponse(walletResponse);
           break;
+
+        default:
+          throw new Error('Invalid payment method selected');
       }
     } catch (error) {
       console.error('Order placement error:', error);
       Swal.fire({
         title: 'Error',
-        text: 'There was an error processing your order',
+        text: error.message || 'There was an error processing your order',
         icon: 'error',
         timer: 3000
       });
@@ -333,37 +323,64 @@
 
   // Handle COD Payment
   async function handleCodPayment(userId, address, payment, amount) {
-    const response = await $.ajax({
-      url: '/orderPlaced',
-      method: 'POST',
-      data: {
-        totalPrice: amount,
-        discount: discount, 
-        deliveryCharge: deliveryCharge,
-        addressId: address,
-        payment: payment,
-      },
-      error: function(xhr) {
-        throw new Error(xhr.responseJSON?.error || 'Failed to place COD order');
+    try {
+      // Get values from hidden fields
+      const deliveryCharge = parseInt($("#delivery-charge-value").val()) || 0;
+      const discount = parseInt($("#discount").val()) || 0;
+      const originalPrice = parseInt($("#original-price").val());
+
+      console.log('COD Payment values:', { 
+        originalPrice,
+        amount, 
+        deliveryCharge, 
+        discount 
+      });
+
+      if (!address) {
+        throw new Error('Please select a delivery address');
       }
-    });
-    return response;
+
+      const response = await $.ajax({
+        url: '/orderPlaced',
+        method: 'POST',
+        data: {
+          totalPrice: originalPrice, // Send original price
+          discount: discount,
+          deliveryCharge: deliveryCharge,
+          addressId: address,
+          payment: payment,
+          finalAmount: amount, // Send final amount after discount
+          couponApplied: discount > 0
+        },
+        error: function(xhr) {
+          throw new Error(xhr.responseJSON?.error || 'Failed to place COD order');
+        }
+      });
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to place order');
+      }
+
+      return response;
+    } catch (xhr) {
+      console.error('COD payment error:', xhr);
+      throw new Error(xhr.message || 'Failed to place COD order');
+    }
   }
 
   // Handle Razorpay Payment
   async function handleRazorpayPayment(userId, address, amount) {
     try {
-      // Step 1: Create Razorpay Order
+      const deliveryCharge = parseInt($("#delivery-charge").text().replace(/[^\d.]/g, '')) || 0;
+      const discount = parseInt($("#discount").val()) || 0;
+
+      // Create Razorpay order
       const razorpayOrder = await $.ajax({
         url: '/create-razorpay-order',
         method: 'POST',
-        data: { amount: amount },
-        error: function(xhr) {
-          throw new Error(xhr.responseJSON?.message || 'Failed to create Razorpay order');
-        }
+        data: { amount: amount }
       });
 
-      // Step 2: Open Razorpay Checkout
       const options = {
         key: "<%= process.env.RAZORPAY_KEY_ID %>",
         amount: razorpayOrder.order.amount,
@@ -373,24 +390,21 @@
         order_id: razorpayOrder.order.id,
         handler: async function(response) {
           try {
-            // Step 3: Verify Payment and Place Order
             const orderResponse = await $.ajax({
               url: '/orderPlaced',
               method: 'POST',
               data: {
                 totalPrice: amount,
+                discount: discount,
+                deliveryCharge: deliveryCharge,
                 addressId: address,
                 payment: 'Razorpay',
+                couponApplied: discount > 0,
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpayOrderId: response.razorpay_order_id,
                 razorpaySignature: response.razorpay_signature,
-              },
-              error: function(xhr) {
-                throw new Error(xhr.responseJSON?.error || 'Payment verification failed');
               }
             });
-
-            // Step 4: Handle Successful Order
             handleOrderResponse(orderResponse);
           } catch (error) {
             console.error('Payment verification error:', error);
@@ -425,7 +439,7 @@
       const rzp = new Razorpay(options);
       rzp.open();
     } catch (error) {
-      console.error('Razorpay initialization error:', error);
+      console.error('Razorpay error:', error);
       Swal.fire({
         title: 'Payment Error',
         text: error.message || 'Failed to initialize payment gateway',
@@ -481,57 +495,50 @@
   }
 
   async function applyCoupon() {
-    const rawTotal = $("#totalValue").text();
-    // Remove non-numeric characters (like ₹) from the total
-    const totalNumeric = rawTotal.replace(/[^\d.]/g, '');
-    const couponCode = document.getElementById('couponCode').value.trim();
-    if (!couponCode) {
-      Swal.fire({
-        title: 'No Coupon Entered',
-        text: 'Please enter a coupon code.',
-        icon: 'error',
-        timer: 2000,
-      });
-      return;
-    }
-
     try {
+      const originalPrice = parseInt($("#original-price").val());
+      const deliveryCharge = parseInt($("#delivery-charge-value").val()) || 0;
+      const couponCode = document.getElementById('couponCode').value.trim();
+
+      if (!couponCode) {
+        Swal.fire({
+          title: 'No Coupon Entered',
+          text: 'Please enter a coupon code.',
+          icon: 'error',
+          timer: 2000,
+        });
+        return;
+      }
+
       const response = await $.ajax({
         url: '/applyCoupon',
         method: 'POST',
-        data: { coupon: couponCode, total: totalNumeric },
-        error: function(xhr) {
-          throw new Error(xhr.responseJSON?.message || 'Failed to apply coupon');
+        data: { 
+          coupon: couponCode, 
+          total: originalPrice 
         }
       });
 
       if (response.success) {
+        const discount = parseInt(response.offerPrice);
+        const finalAmount = originalPrice + deliveryCharge - discount;
+
+        // Update UI
+        $("#coupon-discount-display").text(`-₹${discount}`);
+        $("#discount").val(discount);
+        $("#totalValue").text(`₹${finalAmount}`);
+        $("#remove-coupon").show();
+        $("#couponCode").prop('disabled', true);
+
         Swal.fire({
           icon: 'success',
           title: 'Coupon Applied!',
-          text: `Discount: ₹${response.offerPrice}`,
+          text: `Discount: ₹${discount}`,
           timer: 1500
-        }).then(() => {
-          // Update the coupon discount display in the UI
-          $("#coupon-discount-display").text("₹" + response.offerPrice);
-          // Also update hidden input field that is sent with the order
-          $("#discount").val(response.offerPrice);
-          // Update the total payable amount in the UI as returned by the server
-          $("#totalValue").text("₹" + response.gt);
-          // Show the remove coupon button
-          $("#remove-coupon").show();
-          $("#couponCode").prop('disabled', true); // Disable coupon input
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Coupon Error',
-          text: response.message || 'Failed to apply coupon',
-          timer: 3000
         });
       }
     } catch (error) {
-      console.error(error);
+      console.error('Error applying coupon:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -590,35 +597,26 @@
   // Add this to your existing JavaScript in checkoutcart.ejs
   async function removeCoupon() {
     try {
-      const rawTotal = $("#totalValue").text();
-      const totalNumeric = rawTotal.replace(/[^\d.]/g, '');
+      const originalPrice = parseInt($("#original-price").val());
+      const deliveryCharge = parseInt($("#delivery-charge-value").val()) || 0;
+      const finalAmount = originalPrice + deliveryCharge;
 
       const response = await $.ajax({
         url: '/removeCoupon',
         method: 'POST',
-        data: { total: totalNumeric },
+        data: { total: originalPrice },
         error: function(xhr) {
           throw new Error(xhr.responseJSON?.message || 'Failed to remove coupon');
         }
       });
 
       if (response.success) {
-        // Update all relevant UI elements
-        $("#coupon-discount-display").text("₹0");
+        // Reset all values
+        $("#coupon-discount-display").text("-₹0");
         $("#discount").val(0);
-        $("#totalValue").text("₹" + response.gt);
+        $("#totalValue").text(`₹${finalAmount}`);
         $("#remove-coupon").hide();
         $("#couponCode").val('').prop('disabled', false);
-
-        // Update delivery charge if present
-        if ($("#delivery-charge").length) {
-          $("#delivery-charge").text("₹" + (response.deliveryCharge || 0));
-        }
-
-        // Update subtotal if present
-        if ($("#subtotal").length) {
-          $("#subtotal").text("₹" + response.actualTotal);
-        }
 
         Swal.fire({
           icon: 'success',
@@ -687,7 +685,7 @@
     const codInput = $("#CashOnDelivery");
     const codError = $("#cod-error");
     
-    if (totalAmount > 1000) {
+    if (totalAmount > 10000) {
       codInput.prop('disabled', true);
       codInput.prop('checked', false);
       codError.show();

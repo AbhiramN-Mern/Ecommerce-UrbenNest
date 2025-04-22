@@ -44,7 +44,7 @@ const getCheckoutPage = async (req, res, next) => {
         return total + item.quantity * item.productId.salePrice;
       }, 0);
 
-      const deliveryCharge = grandTotal < 1000 ? 200 : 0;
+      const deliveryCharge = grandTotal < 10000 ? 200 : 0;
       const totalWithDelivery = grandTotal + deliveryCharge;
 
       // Fetch wallet balance
@@ -133,7 +133,7 @@ const orderPlaced = async (req, res, next) => {
 
     // Convert to numbers safely and provide defaults
     const totalPriceValue = totalPrice ? parseInt(totalPrice) : 0;
-    console.log(totalPriceValue);
+    console.log("total price value ",totalPriceValue);
     const discountValue = discount ? Math.abs(parseInt(discount)) : 0;
     console.log(discountValue);
     const deliveryChargeValue = deliveryCharge ? parseInt(deliveryCharge) : 0;
@@ -424,81 +424,63 @@ const changeSingleProductStatus = async (req, res, next) => {
 const cancelOrder = async (req, res, next) => {
   try {
     const userId = req.session.user;
-    const findUser = await User.findOne({ _id: userId });
-    if (!findUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    const { orderId, productId, reason } = req.body;
-    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ success: false, message: "Invalid order ID or product ID format" });
-    }
+    const { orderId, productId } = req.body;
 
     const findOrder = await Order.findOne({ _id: orderId });
     if (!findOrder) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    const productIndex = findOrder.product.findIndex(product => product._id.toString() === productId);
-    if (productIndex === -1) {
-      return res.status(404).json({ success: false, message: "Product not found in order" });
-    }
-
+    const productIndex = findOrder.product.findIndex(product => 
+      product._id.toString() === productId
+    );
+    
     const productData = findOrder.product[productIndex];
     if (productData.productStatus === "Cancelled") {
       return res.status(400).json({ success: false, message: "Product is already cancelled" });
     }
 
-    // Calculate the proportional discount for this product
-    const productTotal = productData.price * productData.quantity;
-    const orderSubtotal = findOrder.originalTotalPrice;
-    const discountRatio = findOrder.discount ? findOrder.discount / orderSubtotal : 0;
-    const productDiscount = productTotal * discountRatio;
-    
-    // Calculate actual refund amount (product price minus proportional discount)
-    const refundAmount = productTotal - productDiscount;
+    // Calculate refund for this specific product
+    const productPrice = productData.price * productData.quantity;
+    const proportionalDiscount = (productPrice / findOrder.originalTotalPrice) * findOrder.discount;
+    const refundAmount = productPrice - proportionalDiscount;
 
-    // If order is paid via Razorpay and status is Pending, update order totals only
-    if (findOrder.payment.toLowerCase() === "razorpay" && findOrder.status === "Pending") {
-      findOrder.product[productIndex].productStatus = "Cancelled";
-      findOrder.totalPrice -= productTotal;
-      findOrder.finalAmount -= refundAmount;
-    } else {
-      if (
-        findOrder.payment.toLowerCase() === "razorpay" ||
-        findOrder.payment.toLowerCase() === "wallet"
-      ) {
-        // Locate the Wallet document for this user
-        let userWallet = await Wallet.findOne({ user: userId });
-        if (!userWallet) {
-          // Create new Wallet document if one doesn't exist
-          userWallet = new Wallet({
-            user: userId,
-            balance: refundAmount,
-            history: [{
-              amount: refundAmount,
-              status: "credit",
-              date: Date.now(),
-              description: `Refund for cancelled order ${orderId} product ${productId} (excluding coupon discount)`
-            }]
-          });
-          await userWallet.save();
-        } else {
-          // Update existing wallet balance and history
-          userWallet.balance += refundAmount;
-          userWallet.history.push({
-            amount: refundAmount,
-            status: "credit",
-            date: Date.now(),
-            description: `Refund for cancelled order ${orderId} product ${productId} (excluding coupon discount)`
-          });
-          await userWallet.save();
-        }
+    // Process refund if paid online
+    if (findOrder.payment.toLowerCase() === "razorpay" || 
+        findOrder.payment.toLowerCase() === "wallet") {
+      let userWallet = await Wallet.findOne({ user: userId });
+      
+      const walletEntry = {
+        amount: refundAmount,
+        status: "credit",
+        date: Date.now(),
+        description: `Refund for cancelled product in order ${orderId}. Amount: ₹${refundAmount}`
+      };
+
+      if (!userWallet) {
+        userWallet = new Wallet({
+          user: userId,
+          balance: refundAmount,
+          history: [walletEntry]
+        });
+      } else {
+        userWallet.balance += refundAmount;
+        userWallet.history.push(walletEntry);
       }
-      // Update product status and deduct order totals
-      findOrder.product[productIndex].productStatus = "Cancelled";
-      findOrder.totalPrice -= productTotal;
-      findOrder.finalAmount -= refundAmount;
+      await userWallet.save();
+    }
+
+    // Update only the specific product's status
+    findOrder.product[productIndex].productStatus = "Cancelled";
+    
+    // Recalculate order totals
+    const activeProducts = findOrder.product.filter(p => p.productStatus !== "Cancelled");
+    findOrder.totalPrice = activeProducts.reduce((total, p) => total + (p.price * p.quantity), 0);
+    findOrder.finalAmount = findOrder.totalPrice - findOrder.discount + findOrder.deliveryCharge;
+
+    // Update order status only if all products are cancelled
+    if (activeProducts.length === 0) {
+      findOrder.status = "Cancelled";
     }
 
     await findOrder.save();
@@ -510,19 +492,20 @@ const cancelOrder = async (req, res, next) => {
       await product.save();
     }
 
-    // Check if all producdts are cancelled
-    const allProductsCancelled = findOrder.product.every(product => product.productStatus === "Cancelled");
-    if (allProductsCancelled) {
-      findOrder.status = "Cancelled";
-      await findOrder.save();
-    }
-
     res.status(200).json({ 
       success: true, 
       message: "Product cancelled successfully",
-      refundAmount: refundAmount
+      refundAmount: refundAmount,
+      details: {
+        cancelledProductPrice: productPrice,
+        proportionalDiscount: proportionalDiscount,
+        refundAmount: refundAmount,
+        remainingOrderTotal: findOrder.finalAmount
+      }
     });
+
   } catch (error) {
+    console.error("Cancel order error:", error);
     next(error);
   }
 };
