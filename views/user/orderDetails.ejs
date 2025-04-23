@@ -38,10 +38,24 @@
               <p class="mb-1">
                 Payment Method: <%= orders.payment || 'N/A' %> <br>
                 Status: <%= orders.status || 'N/A' %> <br>
-                Price: ₹<%= (totalGrant || 0).toLocaleString() %> <br>
-                <!-- Coupon Discount: ₹<%= (orders.discount || 0).toLocaleString() %> <br> -->
-                Delivery Charge: ₹<%= (orders.deliveryCharge || 0).toLocaleString() %> <br>
-                Total Amount: ₹<%= (finalAmount || 0).toLocaleString() %>
+                
+                <!-- Original Total Price -->
+                Original Price: ₹<%= (orders.originalTotalPrice || 0).toLocaleString() %> <br>
+
+                <!-- Show Discount if exists -->
+                <% if (orders.discount && orders.discount > 0) { %>
+                  Coupon Discount: -₹<%= (orders.discount).toLocaleString() %> <br>
+                <% } %>
+
+                <!-- Show Delivery Charge -->
+                <% if (orders.deliveryCharge && orders.deliveryCharge > 0) { %>
+                  Delivery Charge: +₹<%= (orders.deliveryCharge).toLocaleString() %> <br>
+                <% } else { %>
+                  Delivery Charge: <span class="text-success">Free</span> <br>
+                <% } %>
+
+                <!-- Final Amount calculation -->
+                Final Amount: ₹<%= (orders.originalTotalPrice - (orders.discount || 0) + (orders.deliveryCharge || 0)).toLocaleString() %>
               </p>
             </div>
           </article>
