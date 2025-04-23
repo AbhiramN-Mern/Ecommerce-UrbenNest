@@ -513,38 +513,79 @@ const cancelOrder = async (req, res, next) => {
 const returnorder = async (req, res, next) => {
   try {
     const userId = req.session.user;
-    const findUser = await User.findOne({ _id: userId });
-    if (!findUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
     const { orderId, productId, reason } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ message: "Invalid order ID or product ID format" });
-    }
 
     const findOrder = await Order.findOne({ _id: orderId });
     if (!findOrder) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    const productIndex = findOrder.product.findIndex((product) => product._id.toString() === productId);
-    if (productIndex === -1) {
-      return res.status(404).json({ message: "Product not found in order" });
-    }
-
+    const productIndex = findOrder.product.findIndex(product => 
+      product._id.toString() === productId
+    );
+    
     const productData = findOrder.product[productIndex];
     if (productData.productStatus === "Returned" || productData.productStatus === "Return Requested") {
       return res.status(400).json({ message: "Product is already returned or return requested" });
     }
 
+    // Calculate refund amount for the returned product
+    const productPrice = productData.price * productData.quantity;
+    const proportionalDiscount = (productPrice / findOrder.originalTotalPrice) * findOrder.discount;
+    const refundAmount = Math.round(productPrice - proportionalDiscount); // Rounded to avoid decimals
+
+    console.log('Return Refund Calculation:', {
+      productPrice,
+      originalOrderTotal: findOrder.originalTotalPrice,
+      orderDiscount: findOrder.discount,
+      proportionalDiscount,
+      refundAmount
+    });
+
+    // Process refund if paid online
+    if (findOrder.payment.toLowerCase() === "razorpay" || 
+        findOrder.payment.toLowerCase() === "wallet") {
+      let userWallet = await Wallet.findOne({ user: userId });
+      
+      const walletEntry = {
+        amount: refundAmount,
+        status: "credit",
+        date: Date.now(),
+        description: `Refund for returned product in order ${orderId}. Original price: ₹${productPrice}, Discount deducted: ₹${proportionalDiscount}`
+      };
+
+      if (!userWallet) {
+        userWallet = new Wallet({
+          user: userId,
+          balance: refundAmount,
+          history: [walletEntry]
+        });
+      } else {
+        userWallet.balance += refundAmount;
+        userWallet.history.push(walletEntry);
+      }
+      await userWallet.save();
+    }
+
+    // Update product status
     findOrder.product[productIndex].productStatus = "Return Requested";
     findOrder.product[productIndex].returnStatus = "Pending";
+    findOrder.product[productIndex].returnReason = reason;
+    findOrder.product[productIndex].refundAmount = refundAmount;
+
     await findOrder.save();
 
-    res.status(200).json({ success: true, message: "Return request submitted successfully" });
+    res.status(200).json({ 
+      success: true, 
+      message: "Return request submitted successfully",
+      refundDetails: {
+        originalPrice: productPrice,
+        discountDeducted: proportionalDiscount,
+        refundAmount: refundAmount
+      }
+    });
   } catch (error) {
+    console.error("Return order error:", error);
     next(error);
   }
 };

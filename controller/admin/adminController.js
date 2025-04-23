@@ -343,7 +343,7 @@ const loadDashbord = async (req, res, next) => {
             // Rest of your existing aggregations...
             const totalSales = await Order.aggregate([
                 { $match: { createdOn: { $gte: start, $lt: end } } },
-                { $group: { _id: null, total: { $sum: "$finalAmount" } } }
+                { $group: { _id: null, total: { $sum: { $round:["$finalAmount",0] } } }}
             ]);
 
             const dailySales = await Order.aggregate([
@@ -437,7 +437,7 @@ const loadDashbord = async (req, res, next) => {
             ]);
 
             res.render("dashboard", {
-                totalSales: totalSales[0]?.total || 0,
+                totalSales:Math.round(totalSales[0]?.total || 0),
                 totalOrders,
                 returnedOrders,
                 pendingOrders,
