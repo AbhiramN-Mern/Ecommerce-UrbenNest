@@ -49,7 +49,7 @@ const getCheckoutPage = async (req, res, next) => {
 
       // Fetch wallet balance
       const wallet = await Wallet.findOne({ user: userId });
-      const walletBalance = wallet ? wallet.balance : 0;
+      const walletBalance = wallet ?Math.round( wallet.balance) : 0
 
       res.render("checkoutcart", {
         product: data,
@@ -332,18 +332,7 @@ const verifyRazorpayPayment = async (req, res) => {
 const getOrderDetailsPage = async (req, res, next) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.session.user);
-    // Get order ID from multiple possible sources
     const orderId = req.query.id || req.params.id || req.body.id;
-
-    console.log("Order session", userId);
-    console.log("Order ID", orderId);
-    console.log("Request path", req.path);
-    console.log("Request query", req.query);
-
-    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
-      console.error("Invalid Order ID");
-      return res.redirect("/pageNotFound");
-    }
 
     const findOrder = await Order.findOne({ 
       _id: orderId,
@@ -351,39 +340,31 @@ const getOrderDetailsPage = async (req, res, next) => {
     }).populate('product.productId');
     
     if (!findOrder) {
-      console.error("Order not found for ID:", orderId);
       return res.redirect("/pageNotFound");
     }
 
-    const findUser = await User.findOne({ _id: userId });
-    console.log("User data found:", !!findUser);
-
-    if (!findUser) {
-      console.error("User not found for ID:", userId);
-      return res.redirect("/pageNotFound");
-    }
-
+    // Calculate order totals
     let totalGrant = 0;
     if (findOrder.product && Array.isArray(findOrder.product)) {
       findOrder.product.forEach((val) => {
         totalGrant += val.price * val.quantity;
       });
-    } else {
-      console.error("Product array is undefined or not an array");
-      return res.redirect("/pageNotFound");
     }
 
-    // Important: Pass the same data with both naming conventions to ensure compatibility
+    // Calculate final amount
+    const finalAmount = findOrder.originalTotalPrice - (findOrder.discount || 0) + (findOrder.deliveryCharge || 0);
+
     res.render("orderDetails", {
-      order: findOrder,  // New variable name
-      orders: findOrder, // Old variable name - for backward compatibility
-      user: findUser,
+      order: findOrder,
+      orders: findOrder,
       totalGrant: totalGrant,
       originalTotalPrice: findOrder.originalTotalPrice,
-      totalPrice: findOrder.totalPrice,
-      finalAmount: findOrder.finalAmount,
-      orderDate: moment(findOrder.createdOn).format("MMMM Do YYYY, h:mm:ss a"),
+      discount: findOrder.discount || 0,
+      deliveryCharge: findOrder.deliveryCharge || 0,
+      finalAmount: finalAmount,
+      orderDate: moment(findOrder.createdOn).format("MMMM Do YYYY, h:mm:ss a")
     });
+
   } catch (error) {
     console.error("Error fetching order details:", error);
     next(error);
