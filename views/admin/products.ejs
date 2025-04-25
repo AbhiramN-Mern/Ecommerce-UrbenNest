@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,6 +162,33 @@
         color: white;
         }
 
+        .notification-wrapper {
+            margin-left: auto;
+        }
+
+        .low-stock-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .low-stock-list table {
+            margin-bottom: 0;
+        }
+
+        .low-stock-list .text-danger {
+            font-weight: bold;
+            color: #dc3545 !important;
+        }
+
+        .low-stock-list .text-warning {
+            font-weight: bold;
+            color: #ffc107 !important;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.25em 0.6em;
+        }
 
         @media (max-width: 768px) {
             .dashboard-container {
@@ -185,8 +211,16 @@
 
     <div class="dashboard-container">
         <!-- Content Header -->
-        <div class="content-header">
+        <div class="content-header d-flex justify-content-between align-items-center">
             <h2 class="content-title">Products Management</h2>
+            <div class="notification-wrapper">
+                <button class="btn btn-warning position-relative" onclick="showLowStockProducts()">
+                    <i class="fas fa-bell"></i> Stock Alert
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="lowStockCount">
+                        0
+                    </span>
+                </button>
+            </div>
         </div>
 
         <!-- Search Section -->
@@ -466,13 +500,79 @@
         });
     }
 
+    async function showLowStockProducts() {
+    try {
+        const lowStockProducts = Array.from(document.querySelectorAll('table tbody tr')).filter(row => {
+            const quantity = parseInt(row.querySelector('td:nth-child(8)').textContent);
+            return quantity < 10;
+        });
 
+        if (lowStockProducts.length === 0) {
+            Swal.fire({
+                title: 'Stock Status',
+                text: 'All products are well stocked!',
+                icon: 'info'
+            });
+            return;
+        }
 
-     
+        let html = `
+            <div class="low-stock-list">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Current Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
 
+        lowStockProducts.forEach(row => {
+            const productName = row.querySelector('td:nth-child(1)').textContent;
+            const quantity = row.querySelector('td:nth-child(8)').textContent;
+            html += `
+                <tr>
+                    <td>${productName}</td>
+                    <td class="${parseInt(quantity) <= 5 ? 'text-danger' : 'text-warning'}">${quantity}</td>
+                </tr>
+            `;
+        });
 
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
 
+        Swal.fire({
+            title: 'Low Stock Alert',
+            html: html,
+            icon: 'warning',
+            width: '600px'
+        });
+    } catch (error) {
+        console.error('Error showing low stock products:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Failed to load low stock products',
+            icon: 'error'
+        });
+    }
+}
 
+function updateLowStockCount() {
+    const lowStockCount = Array.from(document.querySelectorAll('table tbody tr')).filter(row => {
+        const quantity = parseInt(row.querySelector('td:nth-child(8)').textContent);
+        return quantity < 10;
+    }).length;
+
+    const badge = document.getElementById('lowStockCount');
+    badge.textContent = lowStockCount;
+    badge.style.display = lowStockCount > 0 ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', updateLowStockCount);
 
     </script>
 

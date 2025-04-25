@@ -145,7 +145,7 @@ const addProductOffer = async (req, res, next) => {
         res.json({ status: true, message: "Offer applied successfully", appliedOffer: finalOffer });
     } catch (error) {
         next(error);
-    }
+    }zz
 };
 
 const removeProductOffer = async (req, res, next) => {

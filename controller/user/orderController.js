@@ -55,7 +55,7 @@ const getCheckoutPage = async (req, res, next) => {
         product: data,
         user: {
           ...findUser.toObject(),
-          walletBalance: walletBalance // Add wallet balance to user object
+          walletBalance: walletBalance 
         },
         isCart: true,
         userAddress: addressData,
