@@ -29,7 +29,6 @@ const getCheckoutPage = async (req, res, next) => {
       return res.redirect("/pageNotFound");
     }
 
-    // Get cart items
     const cart = await Cart.findOne({ userId: userId }).populate("items.productId");
 
     if (cart && cart.items.length > 0) {
@@ -125,7 +124,6 @@ const applyCoupon = async (req, res, next) => {
   }
 };
 
-// In orderController.js (inside orderPlaced)
 const orderPlaced = async (req, res, next) => {
   try {
     const { totalPrice, discount, deliveryCharge, addressId, payment } = req.body;
@@ -140,12 +138,10 @@ const orderPlaced = async (req, res, next) => {
     console.log(deliveryChargeValue);
     
 
-    // Calculate final amount: total price minus discount plus delivery charge
     const finalAmount = totalPriceValue - discountValue + deliveryChargeValue;
     console.log(finalAmount);
     
 
-    // (Perform validations and other steps as before)
     const findUser = await User.findOne({ _id: userId });
     if (!findUser) {
       return res.status(404).json({ error: "User not found" });
@@ -165,7 +161,6 @@ const orderPlaced = async (req, res, next) => {
       return res.status(404).json({ error: "Cart is empty" });
     }
 
-    // Map ordered products
     const orderedProducts = cart.items.map((item) => ({
       productId: item.productId._id,
       quantity: item.quantity,
@@ -180,27 +175,24 @@ const orderPlaced = async (req, res, next) => {
       product: orderedProducts,
       originalTotalPrice: totalPriceValue,
       totalPrice: totalPriceValue,
-      discount: discountValue, // stored as a positive number
+      discount: discountValue, 
       deliveryCharge: deliveryChargeValue,
       finalAmount: finalAmount,
       address: desiredAddress,
-      payment: payment.toLowerCase() === 'wallet' ? 'Wallet' : payment, // Ensure consistent casing
+      payment: payment.toLowerCase() === 'wallet' ? 'Wallet' : payment, 
       userId: userId,
       status: payment === 'Razorpay' ? 'Paid' : 'Confirmed',
       createdOn: Date.now(),
     };
 
-    // Add Razorpay details if payment method is Razorpay
     if (payment === 'Razorpay') {
       orderData.razorpayPaymentId = req.body.razorpayPaymentId;
       orderData.razorpayOrderId = req.body.razorpayOrderId;
       orderData.razorpaySignature = req.body.razorpaySignature;
     }
 
-    // In orderPlaced function in orderController.js
     if (payment === 'wallet') {
       try {
-        // Check wallet balance
         const wallet = await Wallet.findOne({ user: userId });
         if (!wallet || wallet.balance < finalAmount) {
           return res.status(400).json({ 
@@ -209,24 +201,20 @@ const orderPlaced = async (req, res, next) => {
           });
         }
     
-        // First create the order
         const newOrder = new Order(orderData);
         const orderDone = await newOrder.save();
     
-        // Then deduct amount from wallet with correct order reference
         wallet.balance -= finalAmount;
         wallet.history.push({
           amount: finalAmount,
           status: "debit",
           date: Date.now(),
-          description: `Payment for order #${orderDone.orderId}` // Use the generated orderId
+          description: `Payment for order #${orderDone.orderId}`
         });
         await wallet.save();
     
-        // Clear cart
         await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
     
-        // Update product quantities
         for (const orderedProduct of orderedProducts) {
           await Product.updateOne(
             { _id: orderedProduct.productId },
@@ -254,7 +242,6 @@ const orderPlaced = async (req, res, next) => {
     const newOrder = new Order(orderData);
     const orderDone = await newOrder.save();
 
-    // Clear cart and update product quantities
     await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
     for (const orderedProduct of orderedProducts) {
       const product = await Product.findOne({ _id: orderedProduct.productId });
@@ -263,7 +250,6 @@ const orderPlaced = async (req, res, next) => {
         await product.save();
       }
     }
-    // Send success response
     res.json({
       success: true,
       payment: true,
@@ -343,7 +329,6 @@ const getOrderDetailsPage = async (req, res, next) => {
       return res.redirect("/pageNotFound");
     }
 
-    // Calculate order totals
     let totalGrant = 0;
     if (findOrder.product && Array.isArray(findOrder.product)) {
       findOrder.product.forEach((val) => {
@@ -351,7 +336,6 @@ const getOrderDetailsPage = async (req, res, next) => {
       });
     }
 
-    // Calculate final amount
     const finalAmount = findOrder.originalTotalPrice - (findOrder.discount || 0) + (findOrder.deliveryCharge || 0);
 
     res.render("orderDetails", {
@@ -451,22 +435,18 @@ const cancelOrder = async (req, res, next) => {
       await userWallet.save();
     }
 
-    // Update only the specific product's status
     findOrder.product[productIndex].productStatus = "Cancelled";
     
-    // Recalculate order totals
     const activeProducts = findOrder.product.filter(p => p.productStatus !== "Cancelled");
     findOrder.totalPrice = activeProducts.reduce((total, p) => total + (p.price * p.quantity), 0);
     findOrder.finalAmount = findOrder.totalPrice - findOrder.discount + findOrder.deliveryCharge;
 
-    // Update order status only if all products are cancelled
     if (activeProducts.length === 0) {
       findOrder.status = "Cancelled";
     }
 
     await findOrder.save();
 
-    // Update product inventory
     const product = await Product.findById(productData.productId);
     if (product) {
       product.quantity += productData.quantity;
@@ -513,7 +493,7 @@ const returnorder = async (req, res, next) => {
     // Calculate refund amount for the returned product
     const productPrice = productData.price * productData.quantity;
     const proportionalDiscount = (productPrice / findOrder.originalTotalPrice) * findOrder.discount;
-    const refundAmount = Math.round(productPrice - proportionalDiscount); // Rounded to avoid decimals
+    const refundAmount = Math.round(productPrice - proportionalDiscount); 
 
     console.log('Return Refund Calculation:', {
       productPrice,
@@ -523,7 +503,6 @@ const returnorder = async (req, res, next) => {
       refundAmount
     });
 
-    // Process refund if paid online
     if (findOrder.payment.toLowerCase() === "razorpay" || 
         findOrder.payment.toLowerCase() === "wallet") {
       let userWallet = await Wallet.findOne({ user: userId });
@@ -666,10 +645,10 @@ const downloadInvoice = async (req, res, next) => {
 
 const getAvailableCoupons = async (req, res, next) => {
   try {
-    // Fetch coupons that are still valid and listed
+    
     const coupons = await Coupon.find({ 
-      expireOn: { $gte: new Date() },  // Check for valid expiration date
-      isList: true                     // Only fetch listed coupons
+      expireOn: { $gte: new Date() },  
+      isList: true                    
     });
     res.json({ success: true, coupons });
   } catch (error) {
@@ -683,22 +662,22 @@ const removeCoupon = async (req, res) => {
     const { total } = req.body;
     const userId = req.session.user;
 
-    // Find current cart total
+
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     if (!cart) {
       throw new Error("Cart not found");
     }
 
-    // Calculate actual total without any discounts
+    
     const actualTotal = cart.items.reduce((sum, item) => {
       return sum + (item.quantity * item.productId.salePrice);
     }, 0);
 
-    // Add delivery charge if applicable
+  
     const deliveryCharge = actualTotal < 1000 ? 200 : 0;
     const finalTotal = actualTotal + deliveryCharge;
 
-    // Reset the session coupon data
+  
     if (req.session.appliedCoupon) {
       delete req.session.appliedCoupon;
     }
@@ -706,7 +685,7 @@ const removeCoupon = async (req, res) => {
     res.json({
       success: true,
       message: "Coupon removed successfully",
-      gt: finalTotal, // Return calculated total
+      gt: finalTotal, 
       deliveryCharge,
       actualTotal,
       offerPrice: 0

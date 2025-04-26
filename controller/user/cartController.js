@@ -34,6 +34,8 @@ const getCartPage = async (req, res) => {
 
         const cartItems = cart.items.map(item => {
             const product = item.productId;
+
+            
             return {
                 productId: product._id.toString(),
                 name: product.productName,
