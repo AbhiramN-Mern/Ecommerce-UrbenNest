@@ -163,6 +163,23 @@
       border-color: #28a745;
     }
 
+    .filter-clear-button{
+      padding: 10px 15px;
+      background-color: #c14535;
+      color: #ffffff;
+      border: 1px solid #dee2e6;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      font-size: 14px;
+      width: 100%;
+    }
+    .filter-clear-button:hover {
+      background-color: #ff0000;
+      color: rgb(255, 244, 244);
+      border-color: #28a745;
+    }
     .product-grid {
       flex: 1;
       display: grid;
@@ -465,6 +482,8 @@
                   </li>
                 <% }); %>
               </ul>
+              <button type="button" class="filter-clear-button" onclick="clearPage()">Clear</button>
+
             </div>
           </div>
 
@@ -575,6 +594,9 @@ function filterByPrice() {
     fetchProducts();
 }
 
+function clearPage(){
+  location.reload()  
+}
 // Function to handle category and brand clicks
 function setupFilterLinks() {
     document.querySelectorAll('.filter-item a').forEach(link => {
