@@ -155,18 +155,15 @@ const approveReturn = async (req, res, next) => {
   try {
     const { orderId, productId } = req.body;
     
-    // Validate order and product IDs
     if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({ success: false, message: "Invalid order ID or product ID" });
     }
     
-    // Find the order
     const order = await Order.findOne({ _id: orderId });
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
     
-    // Locate the product in the order
     const productIndex = order.product.findIndex(p => p._id.toString() === productId);
     if (productIndex === -1) {
       return res.status(404).json({ success: false, message: "Product not found in order" });
@@ -174,26 +171,29 @@ const approveReturn = async (req, res, next) => {
     
     const productData = order.product[productIndex];
     
-    // Check that return was requested
-    if (productData.productStatus !== "Return Requested") {
-      return res.status(400).json({ success: false, message: "Return request is not pending for this product" });
-    }
+    // Calculate refund amount with proportional discount
+    const productPrice = productData.price * productData.quantity;
+    const proportionalDiscount = (productPrice / order.originalTotalPrice) * order.discount;
+    const refundAmount = Math.round(productPrice - proportionalDiscount);
+
+    console.log('Refund calculation:', {
+      productPrice,
+      originalTotalPrice: order.originalTotalPrice,
+      orderDiscount: order.discount,
+      proportionalDiscount,
+      finalRefundAmount: refundAmount
+    });
     
     // Mark product as Returned and approved
     order.product[productIndex].productStatus = "Returned";
     order.product[productIndex].returnStatus = "Approved";
+    order.product[productIndex].refundAmount = refundAmount;
     
-    // Save order changes first
     await order.save();
     
-    // Calculate refund as full product price (coupon discount is NOT subtracted)
-    const refundAmount = productData.price * productData.quantity;
-    
-    // Refund to user's wallet regardless of payment method
     const userId = order.userId;
     let userWallet = await Wallet.findOne({ user: userId });
     if (!userWallet) {
-      // Create a new Wallet if one doesn't exist
       userWallet = new Wallet({
         user: userId,
         balance: refundAmount,
@@ -201,23 +201,20 @@ const approveReturn = async (req, res, next) => {
           amount: refundAmount,
           status: "credit",
           date: new Date(),
-          description: `Refund for returned order ${orderId} product ${productId}`
+          description: `Refund for returned order ${orderId} - Original price: ₹${productPrice}, Discount deducted: ₹${proportionalDiscount}`
         }]
       });
-      await userWallet.save();
     } else {
-      // Update existing wallet
       userWallet.balance += refundAmount;
       userWallet.history.push({
         amount: refundAmount,
         status: "credit",
         date: new Date(),
-        description: `Refund for returned order ${orderId} product ${productId}`
+        description: `Refund for returned order ${orderId} - Original price: ₹${productPrice}, Discount deducted: ₹${proportionalDiscount}`
       });
-      await userWallet.save();
     }
+    await userWallet.save();
     
-    // Optionally update product stock
     if (productData.productId) {
       await Product.findByIdAndUpdate(
         productData.productId,
@@ -225,7 +222,15 @@ const approveReturn = async (req, res, next) => {
       );
     }
     
-    return res.status(200).json({ success: true, message: "Return approved successfully and refund credited to wallet" });
+    return res.status(200).json({ 
+      success: true, 
+      message: "Return approved successfully and refund credited to wallet",
+      refundDetails: {
+        originalPrice: productPrice,
+        discountDeducted: proportionalDiscount,
+        refundAmount: refundAmount
+      }
+    });
   } catch (error) {
     console.error("Error in approveReturn:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
@@ -237,7 +242,6 @@ const rejectReturn = async (req, res, next) => {
         console.log('Return rejection request received:', req.body);
         const { orderId, productId } = req.body;
 
-        // Validate MongoDB ObjectIds
         if (!mongoose.Types.ObjectId.isValid(orderId) || !mongoose.Types.ObjectId.isValid(productId)) {
             return res.status(400).json({
                 success: false,
@@ -245,7 +249,6 @@ const rejectReturn = async (req, res, next) => {
             });
         }
 
-        // Find order and update product status atomically
         const order = await Order.findOneAndUpdate(
             {
                 _id: orderId,
@@ -316,7 +319,6 @@ const shipProduct = async (req, res, next) => {
             });
         }
 
-        // Check if all products are shipped
         const allShipped = order.product.every(p => p.productStatus === 'Shipped');
         if (allShipped) {
             order.status = 'Shipped';
@@ -376,12 +378,10 @@ const cancelProduct = async (req, res, next) => {
         // Calculate refund amount
         const refundAmount = productData.price * productData.quantity;
 
-        // Update product status
         productData.productStatus = 'Cancelled';
         order.totalPrice -= refundAmount;
         order.finalAmount -= refundAmount;
 
-        // If payment was made, refund to wallet
         if (order.payment !== 'cod') {
             await User.findByIdAndUpdate(
                 order.userId,
@@ -407,7 +407,6 @@ const cancelProduct = async (req, res, next) => {
             );
         }
 
-        // Check if all products are cancelled
         const allCancelled = order.product.every(p => p.productStatus === 'Cancelled');
         if (allCancelled) {
             order.status = 'Cancelled';
@@ -463,7 +462,6 @@ const deliverProduct = async (req, res, next) => {
             });
         }
 
-        // Check if all products are delivered
         const allDelivered = order.product.every(p => p.productStatus === 'Delivered');
         if (allDelivered) {
             order.status = 'Delivered';
