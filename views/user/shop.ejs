@@ -710,6 +710,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Function to add a product to the cart via AJAX
 async function addToCart(productId) {
+  if (!isLogedIn) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Login Required',
+      text: 'Please log in to add product to your cart',
+      timer: 1500
+    });
+    return;
+  }
   try {
     const response = await $.ajax({
       url: '/addToCart',   // Updated URL to match the router
@@ -750,6 +759,15 @@ async function addToCart(productId) {
 
 // Function to add or remove product from wishlist
 async function toggleWishlist(productId) {
+  if (!isLogedIn) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Login Required',
+      text: 'Please log in to update your wishlist',
+      timer: 1500
+    });
+    return;
+  }
   try {
     const response = await $.ajax({
       url: '/addTOWishlist', // URL matching your route
@@ -786,6 +804,9 @@ async function toggleWishlist(productId) {
     });
   }
 }
+
+  // This variable is set from the server. If "user" exists, the value is true; otherwise, it's false.
+  let isLogedIn = <%= user ? 'true' : 'false' %>;
 </script>
 
 
