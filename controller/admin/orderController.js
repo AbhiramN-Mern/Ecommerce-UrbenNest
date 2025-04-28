@@ -67,7 +67,7 @@ const changeOrderStatus = async (req, res, next) => {
 const getOrderDetailsPageAdmin = async (req, res, next) => {
     try {
         const orderId = req.query.id;
-        console.log("Order ID:", orderId);
+        // console.log("Order ID:", orderId);
 
         if (!orderId) {
             throw new Error('Order ID is required');
