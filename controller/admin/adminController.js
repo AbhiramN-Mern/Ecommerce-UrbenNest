@@ -112,11 +112,12 @@ const generateExcelReport = async (req, res, next) => {
     }
 };
 
+
 const generatePdfReport = async (req, res, next) => {
     try {
         let { startDate, endDate } = req.query;
 
-        // Default to yesterday-to-today if no dates are provided
+        // Default to yesterday-to-today if no valid dates
         if (!startDate || !endDate || isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
             const end = new Date();
             const start = new Date();
@@ -129,62 +130,30 @@ const generatePdfReport = async (req, res, next) => {
         const end = new Date(endDate);
         end.setDate(end.getDate() + 1);
 
-        // Fetch orders for the specified date range
         const orders = await Order.find({ createdOn: { $gte: start, $lt: end } })
             .select('orderId createdOn product totalPrice discount finalAmount payment')
             .sort({ createdOn: 1 });
 
-        // Prepare data for the report
         const totalOrders = orders.length;
         const totalAmount = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0).toFixed(2);
         const totalDiscount = orders.reduce((sum, order) => sum + (order.discount || 0), 0).toFixed(2);
         const totalFinalAmount = orders.reduce((sum, order) => sum + (order.finalAmount || 0), 0).toFixed(2);
 
-        // Generate HTML content for the PDF
         const htmlContent = `
             <!DOCTYPE html>
             <html>
             <head>
                 <title>Sales Report</title>
                 <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    .container {
-                        width: 90%;
-                        margin: 20px auto;
-                    }
-                    h1, h2 {
-                        text-align: center;
-                        color: #003087;
-                    }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-top: 20px;
-                    }
-                    table, th, td {
-                        border: 1px solid #ccc;
-                    }
-                    th, td {
-                        padding: 10px;
-                        text-align: center;
-                    }
-                    th {
-                        background-color: #f5f5f5;
-                    }
-                    .summary {
-                        margin-top: 20px;
-                        padding: 10px;
-                        background-color: #f5f5f5;
-                        border: 1px solid #ccc;
-                    }
-                    .summary p {
-                        margin: 5px 0;
-                        font-size: 16px;
-                    }
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                    .container { width: 90%; margin: 20px auto; }
+                    h1, h2 { text-align: center; color: #003087; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    table, th, td { border: 1px solid #ccc; }
+                    th, td { padding: 10px; text-align: center; }
+                    th { background-color: #f5f5f5; }
+                    .summary { margin-top: 20px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ccc; }
+                    .summary p { margin: 5px 0; font-size: 16px; }
                 </style>
             </head>
             <body>
@@ -228,32 +197,30 @@ const generatePdfReport = async (req, res, next) => {
             </html>
         `;
 
-        // Launch Puppeteer and generate the PDF
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
+        // Puppeteer: Use args to make it work in AWS environments
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
 
-        // Set the HTML content
+        const page = await browser.newPage();
         await page.setContent(htmlContent, { waitUntil: 'load' });
 
-        // Define the file path for the PDF
-        const filePath = path.join(__dirname, 'sales_report.pdf');
-
-        // Generate the PDF
-        await page.pdf({
-            path: filePath,
+        // Create PDF buffer instead of saving to disk
+        const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
         });
 
         await browser.close();
 
-        // Send the PDF as a download
-        res.download(filePath, 'sales_report.pdf', err => {
-            if (err) {
-                console.error("Error downloading file:", err);
-            }
-            fs.unlinkSync(filePath); // Delete the file after download
-        });
+        // Set headers to show PDF in browser
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename="sales_report.pdf"');
+        res.setHeader('Content-Length', pdfBuffer.length);
+
+        // Send buffer directly
+        res.end(pdfBuffer);
     } catch (error) {
         console.error("Error generating PDF report:", error);
         next(error);
