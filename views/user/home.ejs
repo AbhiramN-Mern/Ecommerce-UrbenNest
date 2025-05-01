@@ -28,8 +28,8 @@
             <!-- Start Column 1 -->
             <div class="col-md-12 col-lg-3 mb-5 mb-lg-0">
                 <h2 class="mb-4 section-title">Crafted with excellent material.</h2>
-                <p class="mb-4">Crafted for comfort and style. Perfectly designed to enhance your home with elegance and quality.</p>
-                <p><a href="/shop" class="btn">Explore</a></p>
+                <p class="mb-4">Crafted for comfort and style.Perfectly designed to enhance your home with elegance and quality.</p>
+         r  <p><a href="/shop" class="btn">Explore</a></p>
             </div>
             <!-- End Column 1 -->
 
@@ -205,6 +205,54 @@
         top: 10px;
         right: 10px;
     }
+    
+
+    /* meadia query for make furniture image responsible */
+
+    .hero-img-wrap img.img-fluid {
+    max-width: 100%;
+    height: auto;
+    display: block; 
+}
+
+@media (max-width: 575.98px) {
+    .hero-img-wrap img.img-fluid {
+        width: 100%; 
+        height: auto; 
+        margin: 0 auto; 
+    }
+}
+
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .hero-img-wrap img.img-fluid {
+        width: 90%; 
+        height: auto;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .hero-img-wrap img.img-fluid {
+        width: 85%; 
+        height: auto;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .hero-img-wrap img.img-fluid {
+        width: 80%; 
+        height: auto;
+    }
+}
+
+@media (min-width: 1200px) {
+    .hero-img-wrap img.img-fluid {
+        width: 100%; 
+        height: auto;
+    }
+}
 </style>
 
 <%- include("../../views/partials/user/footer") %>
