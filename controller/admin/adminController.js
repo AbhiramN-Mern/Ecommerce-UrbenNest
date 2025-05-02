@@ -10,6 +10,7 @@ const PDFDocument = require('pdfkit');
 const puppeteer = require('puppeteer');
 
 
+
 const generateExcelReport = async (req, res, next) => {
     try {
         const workbook = new ExcelJS.Workbook();
@@ -112,12 +113,27 @@ const generateExcelReport = async (req, res, next) => {
     }
 };
 
-
 const generatePdfReport = async (req, res, next) => {
     try {
+        const doc = new PDFDocument({ size: 'A4', autoFirstPage: false, margin: 0 });
+        const filePath = path.join(__dirname, 'report.pdf');
+        const writeStream = fs.createWriteStream(filePath);
+        doc.pipe(writeStream);
+
+        const colors = {
+            primary: '#003087',
+            secondary: '#005EB8',
+            accent: '#00A859',
+            text: '#333333',
+            lightGray: '#E0E0E0',
+            tableBorder: '#CCCCCC',
+            summaryBackground: '#D3D3D3', 
+            summaryText: '#000000', 
+            summaryHeader: '#000000' 
+        };
+
         let { startDate, endDate } = req.query;
 
-        // Default to yesterday-to-today if no valid dates
         if (!startDate || !endDate || isNaN(new Date(startDate)) || isNaN(new Date(endDate))) {
             const end = new Date();
             const start = new Date();
@@ -134,100 +150,195 @@ const generatePdfReport = async (req, res, next) => {
             .select('orderId createdOn product totalPrice discount finalAmount payment')
             .sort({ createdOn: 1 });
 
+        if (orders.length === 0) {
+            doc.addPage();
+            doc.font('Helvetica').fontSize(12).fillColor(colors.text)
+                .text('No orders found for the selected period.', 50, 50);
+            doc.end();
+            writeStream.on('finish', () => {
+                res.download(filePath, 'report.pdf', (err) => {
+                    if (err) console.log("Error downloading file", err);
+                    fs.unlinkSync(filePath);
+                });
+            });
+            return;
+        }
+
+        const pageWidth = 595;
+        const pageHeight = 842;
+        const margin = 50;
+        
+        const columnWidths = [100, 80, 40, 70, 70, 70, 70];
+        const totalTableWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+        const headers = ['Order ID', 'Date', 'Items', 'Amount', 'Discount', 'Final Amt', 'Payment'];
+        const headerHeight = 100;
+        const rowHeight = 25;
+        const summaryHeight = 130;
+        const tableX = (pageWidth - totalTableWidth) / 2; 
+        const maxRowsPerPage = Math.floor((pageHeight - headerHeight - margin * 2) / rowHeight);
+        const maxRowsLastPage = Math.floor((pageHeight - headerHeight - margin * 2 - summaryHeight) / rowHeight);
+
+        let y = margin;
+        let pageNumber = 0;
+
+        const addHeader = () => {
+            doc.fillColor(colors.primary).font('Helvetica-Bold').fontSize(20)
+                .text('Sales Report', margin, 20, { align: 'center' });
+            doc.fillColor(colors.secondary).fontSize(12)
+                .text(`Period: ${startDate} to ${endDate}`, margin, 45, { align: 'center' });
+            doc.moveTo(margin, 70).lineTo(pageWidth - margin, 70)
+                .strokeColor(colors.lightGray).stroke();
+        };
+
+        const addFooter = () => {
+            doc.fillColor(colors.text).font('Helvetica').fontSize(10)
+                .text(`Page ${pageNumber}`, pageWidth - margin - 30, pageHeight - 30, { align: 'right' });
+        };
+
+        const drawTableBorders = (startY, rowCount) => {
+            const tableHeight = rowHeight * rowCount;
+            let xPos = tableX;
+
+        
+            for (let i = 0; i <= columnWidths.length; i++) {
+                doc.moveTo(xPos, startY)
+                    .lineTo(xPos, startY + tableHeight)
+                    .strokeColor(colors.tableBorder)
+                    .stroke();
+                xPos += columnWidths[i] || 0;
+            }
+
+            
+            for (let i = 0; i <= rowCount; i++) {
+                doc.moveTo(tableX, startY + (i * rowHeight))
+                    .lineTo(tableX + totalTableWidth, startY + (i * rowHeight))
+                    .strokeColor(colors.tableBorder)
+                    .stroke();
+            }
+        };
+
+        const renderPageContent = (startIndex, endIndex, isLastPage = false) => {
+            doc.addPage();
+            pageNumber++;
+            y = margin;
+
+            addHeader();
+            y = 80;
+
+            
+            doc.font('Helvetica-Bold').fontSize(12).fillColor(colors.primary)
+                .text('Order Details', tableX, y);
+            y += 20;
+
+            const tableStartY = y;
+            let xPos = tableX;
+
+            
+            doc.font('Helvetica-Bold').fontSize(9).fillColor(colors.primary);
+            headers.forEach((header, i) => {
+                doc.text(header, xPos + 5, y + 5, { width: columnWidths[i] - 10, align: 'center' });
+                xPos += columnWidths[i];
+            });
+            y += rowHeight;
+
+            
+            doc.font('Helvetica').fontSize(8).fillColor(colors.text);
+            for (let i = startIndex; i <= endIndex && i < orders.length; i++) {
+                const order = orders[i];
+                const itemCount = Array.isArray(order.product) ? order.product.length : 0;
+                xPos = tableX;
+
+                const rowData = [
+                    order.orderId.slice(0, 15),
+                    order.createdOn.toLocaleDateString(),
+                    itemCount.toString(),
+                    order.totalPrice !== undefined ? `₹${order.totalPrice.toFixed(2)}` : '₹0.00',
+                    order.discount !== undefined ? `₹${order.discount.toFixed(2)}` : '₹0.00',
+                    order.finalAmount !== undefined ? `₹${order.finalAmount.toFixed(2)}` : '₹0.00',
+                    order.payment || 'N/A'
+                ];
+
+                rowData.forEach((data, j) => {
+                    doc.text(data, xPos + 5, y + 5, { width: columnWidths[j] - 10, align: j > 2 ? 'right' : 'left' });
+                    xPos += columnWidths[j];
+                });
+                y += rowHeight;
+            }
+
+            
+            const rowCount = (endIndex - startIndex + 1) + 1; 
+            drawTableBorders(tableStartY, rowCount);
+
+            if (isLastPage) {
+                if (y + summaryHeight > pageHeight - margin) {
+                    addFooter();
+                    doc.addPage();
+                    pageNumber++;
+                    y = margin;
+                    addHeader();
+                } else {
+                    y += 20;
+                }
+
+                
+                const summaryTop = y + 20; 
+                doc.font('Helvetica-Bold').fontSize(16).fillColor(colors.summaryHeader)
+                    .text('Summary', margin, y); 
+                y += 35; 
+
+                const totalOrders = orders.length;
+                const totalAmount = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0).toFixed(2);
+                const totalDiscount = orders.reduce((sum, order) => sum + (order.discount || 0), 0).toFixed(2);
+                const totalFinalAmount = orders.reduce((sum, order) => sum + (order.finalAmount || 0), 0).toFixed(2);
+
+                const summaryWidth = pageWidth - (margin * 2);
+                doc.rect(margin, summaryTop, summaryWidth, 80)
+                    .fillOpacity(1)
+                    .fill(colors.summaryBackground)
+                    .stroke(colors.tableBorder);
+
+                doc.font('Helvetica').fontSize(14).fillColor(colors.summaryText);
+                doc.text(`Total Orders: ${totalOrders}`, margin + 15, summaryTop + 15);
+                doc.text(`Total Amount: ₹${totalAmount}`, margin + 200, summaryTop + 15);
+                doc.text(`Total Discount: ₹${totalDiscount}`, margin + 15, summaryTop + 40);
+                doc.fillColor(colors.accent)
+                    .text(`Final Amount: ₹${totalFinalAmount}`, margin + 200, summaryTop + 40);
+            }
+
+            addFooter();
+        };
+
+        
+        let i = 0;
         const totalOrders = orders.length;
-        const totalAmount = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0).toFixed(2);
-        const totalDiscount = orders.reduce((sum, order) => sum + (order.discount || 0), 0).toFixed(2);
-        const totalFinalAmount = orders.reduce((sum, order) => sum + (order.finalAmount || 0), 0).toFixed(2);
+        const totalPages = Math.ceil(totalOrders / maxRowsPerPage);
+        const rowsPerPage = Math.min(maxRowsPerPage, Math.ceil(totalOrders / totalPages));
 
-        const htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Sales Report</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-                    .container { width: 90%; margin: 20px auto; }
-                    h1, h2 { text-align: center; color: #003087; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    table, th, td { border: 1px solid #ccc; }
-                    th, td { padding: 10px; text-align: center; }
-                    th { background-color: #f5f5f5; }
-                    .summary { margin-top: 20px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ccc; }
-                    .summary p { margin: 5px 0; font-size: 16px; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>Sales Report</h1>
-                    <h2>Period: ${startDate} to ${endDate}</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Date</th>
-                                <th>Items</th>
-                                <th>Amount</th>
-                                <th>Discount</th>
-                                <th>Final Amount</th>
-                                <th>Payment</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${orders.map(order => `
-                                <tr>
-                                    <td>${order.orderId}</td>
-                                    <td>${new Date(order.createdOn).toLocaleDateString()}</td>
-                                    <td>${Array.isArray(order.product) ? order.product.length : 0}</td>
-                                    <td>₹${order.totalPrice ? order.totalPrice.toFixed(2) : '0.00'}</td>
-                                    <td>₹${order.discount ? order.discount.toFixed(2) : '0.00'}</td>
-                                    <td>₹${order.finalAmount ? order.finalAmount.toFixed(2) : '0.00'}</td>
-                                    <td>${order.payment || 'N/A'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    <div class="summary">
-                        <p><strong>Total Orders:</strong> ${totalOrders}</p>
-                        <p><strong>Total Amount:</strong> ₹${totalAmount}</p>
-                        <p><strong>Total Discount:</strong> ₹${totalDiscount}</p>
-                        <p><strong>Total Final Amount:</strong> ₹${totalFinalAmount}</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
+        while (i < orders.length) {
+            const startIndex = i;
+            const remainingOrders = totalOrders - i;
+            const isLastPage = (i + rowsPerPage >= totalOrders || remainingOrders <= maxRowsLastPage);
+            const rowsForThisPage = isLastPage ? remainingOrders : rowsPerPage;
+            const endIndex = i + rowsForThisPage - 1;
 
-        // Puppeteer: Use args to make it work in AWS environments
-        const browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            renderPageContent(startIndex, endIndex, isLastPage);
+            i += rowsForThisPage;
+            y = margin;
+        }
+
+        doc.end();
+
+        writeStream.on('finish', () => {
+            res.download(filePath, 'report.pdf', (err) => {
+                if (err) console.log("Error downloading file", err);
+                fs.unlinkSync(filePath);
+            });
         });
-
-        const page = await browser.newPage();
-        await page.setContent(htmlContent, { waitUntil: 'load' });
-
-        // Create PDF buffer instead of saving to disk
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-        });
-
-        await browser.close();
-
-        // Set headers to show PDF in browser
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'inline; filename="sales_report.pdf"');
-        res.setHeader('Content-Length', pdfBuffer.length);
-
-        // Send buffer directly
-        res.end(pdfBuffer);
     } catch (error) {
-        console.error("Error generating PDF report:", error);
+        console.log("Error generating PDF report", error);
         next(error);
     }
 };
-
-
 const pageError = async (req, res, next) => {
     try {
         res.render("admin-error");
