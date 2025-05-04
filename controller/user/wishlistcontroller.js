@@ -27,27 +27,50 @@ const addToWishlist = async (req, res) => {
     try {
         const productId = req.body.productId;
         const userId = req.session.user; 
+
+        // Check if user is logged in
         if (!userId) {
-            return res.status(401).json({ success: false, message: "Please login to add to wishlist" });
+            return res.json({ 
+                status: false, 
+                message: "Please login to add to wishlist",
+                requireLogin: true 
+            });
         }
 
         let wishlistDoc = await Wishlist.findOne({ userId: userId });
+        
+        // If wishlist doesn't exist, create new one
         if (!wishlistDoc) {
             wishlistDoc = new Wishlist({ userId: userId, products: [] });
         }
+
+        // Check if product already exists in wishlist
         if (wishlistDoc.products.some(item => item.productId.toString() === productId.toString())) {
-            return res.status(200).json({ success: false, message: "Product already in wishlist" });
+            return res.json({ 
+                status: false, 
+                message: "Product is already in your wishlist" 
+            });
         }
+
+        // Add product to wishlist
         wishlistDoc.products.push({ productId: productId });
         await wishlistDoc.save();
         
-        // Optionally update wishlist count
+        // Get updated wishlist count
         const wishlistCount = wishlistDoc.products.length;
         
-        return res.status(200).json({ success: true, message: "Product added to wishlist", wishlistCount });
+        return res.json({ 
+            status: true, 
+            message: "Product has been added to your wishlist",
+            wishlistCount: wishlistCount
+        });
+
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, message: "Server Error" });
+        console.error('Wishlist error:', error);
+        return res.json({ 
+            status: false, 
+            message: "Something went wrong while adding to wishlist" 
+        });
     }
 };
 
