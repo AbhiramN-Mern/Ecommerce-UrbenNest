@@ -54,9 +54,9 @@ const generateExcelReport = async (req, res, next) => {
         orders.forEach(order => {
             // console.log('Order:', order); 
             const itemCount = Array.isArray(order.product) ? order.product.length : 0;
-            const amount = order.totalPrice !== undefined ? `₹${order.totalPrice.toFixed(2)}` : '₹0.00';
-            const discount = order.discount !== undefined ? `₹${order.discount.toFixed(2)}` : '₹0.00';
-            const finalAmount = order.finalAmount !== undefined ? `₹${order.finalAmount.toFixed(2)}` : '₹0.00';
+            const amount = order.totalPrice !== undefined ? `${order.totalPrice.toFixed(2)}` : '0.00';
+            const discount = order.discount !== undefined ? `${order.discount.toFixed(2)}` : '0.00';
+            const finalAmount = order.finalAmount !== undefined ? `${order.finalAmount.toFixed(2)}` : '0.00';
             const paymentMethod = order.payment || 'N/A';
 
             
@@ -88,15 +88,15 @@ const generateExcelReport = async (req, res, next) => {
 
         worksheet.mergeCells(`A${summaryRow + 2}:B${summaryRow + 2}`);
         worksheet.getCell(`A${summaryRow + 2}`).value = 'Total Amount';
-        worksheet.getCell(`C${summaryRow + 2}`).value = `₹${orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0).toFixed(2)}`;
+        worksheet.getCell(`C${summaryRow + 2}`).value = `${orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0).toFixed(2)}`;
 
         worksheet.mergeCells(`A${summaryRow + 3}:B${summaryRow + 3}`);
         worksheet.getCell(`A${summaryRow + 3}`).value = 'Total Discount';
-        worksheet.getCell(`C${summaryRow + 3}`).value = `₹${orders.reduce((sum, order) => sum + (order.discount || 0), 0).toFixed(2)}`;
+        worksheet.getCell(`C${summaryRow + 3}`).value = `${orders.reduce((sum, order) => sum + (order.discount || 0), 0).toFixed(2)}`;
 
         worksheet.mergeCells(`A${summaryRow + 4}:B${summaryRow + 4}`);
         worksheet.getCell(`A${summaryRow + 4}`).value = 'Total Final Amount';
-        worksheet.getCell(`C${summaryRow + 4}`).value = `₹${orders.reduce((sum, order) => sum + (order.finalAmount || 0), 0).toFixed(2)}`;
+        worksheet.getCell(`C${summaryRow + 4}`).value = `${orders.reduce((sum, order) => sum + (order.finalAmount || 0), 0).toFixed(2)}`;
 
         const filePath = path.join(__dirname, 'report.xlsx');
         await workbook.xlsx.writeFile(filePath);
@@ -252,9 +252,9 @@ const generatePdfReport = async (req, res, next) => {
                     order.orderId.slice(0, 15),
                     order.createdOn.toLocaleDateString(),
                     itemCount.toString(),
-                    order.totalPrice !== undefined ? `₹${order.totalPrice.toFixed(2)}` : '₹0.00',
-                    order.discount !== undefined ? `₹${order.discount.toFixed(2)}` : '₹0.00',
-                    order.finalAmount !== undefined ? `₹${order.finalAmount.toFixed(2)}` : '₹0.00',
+                    order.totalPrice !== undefined ? `${order.totalPrice.toFixed(2)}` : '0.00',
+                    order.discount !== undefined ? `${order.discount.toFixed(2)}` : '0.00',
+                    order.finalAmount !== undefined ? `${order.finalAmount.toFixed(2)}` : '0.00',
                     order.payment || 'N/A'
                 ];
 
@@ -299,10 +299,10 @@ const generatePdfReport = async (req, res, next) => {
 
                 doc.font('Helvetica').fontSize(14).fillColor(colors.summaryText);
                 doc.text(`Total Orders: ${totalOrders}`, margin + 15, summaryTop + 15);
-                doc.text(`Total Amount: ₹${totalAmount}`, margin + 200, summaryTop + 15);
-                doc.text(`Total Discount: ₹${totalDiscount}`, margin + 15, summaryTop + 40);
+                doc.text(`Total Amount: ${totalAmount}`, margin + 200, summaryTop + 15);
+                doc.text(`Total Discount: ${totalDiscount}`, margin + 15, summaryTop + 40);
                 doc.fillColor(colors.accent)
-                    .text(`Final Amount: ₹${totalFinalAmount}`, margin + 200, summaryTop + 40);
+                    .text(`Final Amount: ${totalFinalAmount}`, margin + 200, summaryTop + 40);
             }
 
             addFooter();
