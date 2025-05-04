@@ -297,25 +297,26 @@ const userProfile = async (req, res, next) => {
   try {
     const userId = req.session.user;
     const page = parseInt(req.query.page) || 1;
-    const limit = 10; // Number of transactions per page
+    const limit = 10;
 
     const userData = await User.findById(userId).lean();
     const addressData = await Address.findOne({ user: userId }).lean();
     const orders = await Order.find({ userId: userId }).sort({ createdOn: -1 }).lean();
     const wallet = await Wallet.findOne({ user: userId }).lean();
 
-    // Sort wallet history by date in descending order and implement pagination
+    // Calculate total referral earnings
+    const referralEarnings = wallet && wallet.history 
+      ? wallet.history
+          .filter(txn => txn.description && txn.description.startsWith("Referral reward"))
+          .reduce((total, txn) => total + txn.amount, 0)
+      : 0;
+
     let walletHistory = [];
     let totalPages = 1;
 
     if (wallet && wallet.history) {
-      // Sort history by date in descending order
       walletHistory = wallet.history.sort((a, b) => b.date - a.date);
-      
-      // Calculate total pages
       totalPages = Math.ceil(walletHistory.length / limit);
-      
-      // Implement pagination
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
       walletHistory = walletHistory.slice(startIndex, endIndex);
@@ -338,6 +339,7 @@ const userProfile = async (req, res, next) => {
       walletBalance: wallet ? wallet.balance : 0,
       walletHistory: walletHistory,
       referralCode: userData.referralCode,
+      referralEarnings: referralEarnings, // Add this new variable
       successfulReferrals: successfulReferrals,
       pagination: {
         page,
