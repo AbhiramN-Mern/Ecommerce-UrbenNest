@@ -300,7 +300,7 @@ const userProfile = async (req, res, next) => {
     const limit = 10;
 
     const userData = await User.findById(userId).lean();
-    const addressData = await Address.findOne({ user: userId }).lean();
+    const userAddress = await Address.findOne({ userId: userId }).lean();
     const orders = await Order.find({ userId: userId }).sort({ createdOn: -1 }).lean();
     const wallet = await Wallet.findOne({ user: userId }).lean();
 
@@ -333,7 +333,7 @@ const userProfile = async (req, res, next) => {
     
     res.render("profile", {
       user: userData,
-      userAddress: addressData,
+      userAddress: userAddress,
       orders,
       currentPage: "profile",
       walletBalance: wallet ? wallet.balance : 0,
@@ -537,8 +537,8 @@ const editAddress = async (req, res) => {
           // Remove the specific address from the array
           const updateResult = await Address.updateOne(
             { "address._id": addressId }, // Match the document
-            { $pull: { address: { _id: addressId } } } // Pull the matching subdocument
-          );
+            { $pull: { address: { _id: addressId } } // Pull the matching subdocument
+          });
       
           console.log("Update Result:", updateResult); // Log the result
       
