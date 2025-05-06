@@ -55,7 +55,9 @@
                 <% } %>
 
                 <!-- Final Amount calculation -->
-                Final Amount: ₹<%= (orders.originalTotalPrice || 0).toLocaleString() %>
+                <!-- Final Amount: ₹<%= (orders.originalTotalPrice - (orders.discount || 0) + (orders.deliveryCharge || 0)).toLocaleString() %> -->
+                Final Amount: ₹<%= (orders.originalTotalPrice || 0).toLocaleString() %> <br>
+
               </p>
             </div>
           </article>
