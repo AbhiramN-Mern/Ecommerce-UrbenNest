@@ -248,19 +248,20 @@ const checkProductInCart = async (req, res) => {
 };
 
 const getCartCount = async (req, res) => {
-    try {
-        const userId = getUserIdFromSession(req.session);
-        if (!userId) {
-            return res.json({ count: 0 });
-        }
-
-        const cart = await Cart.findOne({ userId });
-        const count = cart?.items.length || 0;
-        res.json({ count });
-    } catch (error) {
-        console.error('Error in getCartCount:', error.stack);
-        res.status(500).json({ success: false, message: "Internal server error" });
+  try {
+    const userId = req.session.user;
+    if (!userId) {
+      return res.json({ count: 0 });
     }
+
+    const cart = await Cart.findOne({ userId: userId });
+    const count = cart ? cart.items.length : 0;
+    
+    res.json({ count: count });
+  } catch (error) {
+    console.error('Error getting cart count:', error);
+    res.json({ count: 0 });
+  }
 };
 
 module.exports = {

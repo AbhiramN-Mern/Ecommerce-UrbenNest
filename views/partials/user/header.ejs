@@ -371,4 +371,52 @@
   <script>
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="d8p67Y8iLW0Cgp81roWJL";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
   </script>
-  <!-- End Header/Navigation -->
+
+  <script>
+    function updateCartCount() {
+      fetch('/getCartCount')
+        .then(response => response.json())
+        .then(data => {
+          const cartCountElement = document.getElementById('cartCount');
+          if (cartCountElement) {
+            if (data.count > 0) {
+              cartCountElement.textContent = data.count;
+              cartCountElement.style.display = 'block';
+            } else {
+              cartCountElement.style.display = 'none';
+            }
+          }
+        })
+        .catch(error => console.error('Error updating cart count:', error));
+    }
+
+    function updateWishlistCount() {
+      fetch('/getWishlistCount')
+        .then(response => response.json())
+        .then(data => {
+          const wishlistCountElement = document.getElementById('wishlistCount');
+          if (wishlistCountElement) {
+            if (data.count > 0) {
+              wishlistCountElement.textContent = data.count;
+              wishlistCountElement.style.display = 'block';
+            } else {
+              wishlistCountElement.style.display = 'none';
+            }
+          }
+        })
+        .catch(error => console.error('Error updating wishlist count:', error));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      updateCartCount();
+      updateWishlistCount();
+    });
+
+    // Update both counts every 30 seconds
+    setInterval(() => {
+      updateCartCount();
+      updateWishlistCount();
+    }, 30000);
+  </script>
+</body>
+</html>

@@ -100,8 +100,26 @@ const removeProduct = async (req, res) => {
     }
 };
 
+const getWishlistCount = async (req, res) => {
+    try {
+        const userId = req.session.user;
+        if (!userId) {
+            return res.json({ count: 0 });
+        }
+
+        const wishlist = await Wishlist.findOne({ userId: userId });
+        const count = wishlist ? wishlist.products.length : 0;
+        
+        res.json({ count: count });
+    } catch (error) {
+        console.error('Error getting wishlist count:', error);
+        res.json({ count: 0 });
+    }
+};
+
 module.exports = {
     loadWishList,
     addToWishlist,
-    removeProduct
+    removeProduct,
+    getWishlistCount
 };

@@ -77,6 +77,7 @@ router.post("/wallet/paymentSuccess", profileController.walletPaymentSuccess);
 router.get('/wishlist',wishlistController.loadWishList)
 router.post("/addTOWishlist",wishlistController.addToWishlist)
 router.get('/removeFromWishlist',wishlistController.removeProduct)
+router.get('/getWishlistCount', wishlistController.getWishlistCount)
 
 
 //cart Management
