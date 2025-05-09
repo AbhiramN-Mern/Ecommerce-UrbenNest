@@ -406,7 +406,7 @@
 
                         <div class="product-price">
                             <span class="current-price">₹<%= product.salePrice %></span>
-                            <% if (product.regularPrice) { %>
+                            <% if (product.regularPrice!=product.salePrice) { %>
                                  <span class="original-price">₹<%= product.regularPrice %></span>
                             <% } %>
                             <% if(totalOffer > 0) { %>
