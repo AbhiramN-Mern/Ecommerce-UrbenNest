@@ -177,41 +177,40 @@
     </div>
 
     <script>
-        // Global variables for timer
-        let timeLeft = 60;
-        let timer; // Will hold the setInterval ID
+        let timeLeft = 60; // 60 seconds
+        let timer;
         const countdownEl = document.getElementById('countdown');
-        const resendLink = document.getElementById('resendLink');
-    
-        // Timer function to start countdown
+        const resendButton = document.getElementById('resendLink');
+
         function startTimer() {
-            resendLink.classList.add('disabled');
-    
-            timer = setInterval(function () {
+            resendButton.classList.add('disabled');
+            timer = setInterval(() => {
                 timeLeft--;
-    
                 const minutes = Math.floor(timeLeft / 60);
                 const seconds = timeLeft % 60;
                 countdownEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    
+
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     countdownEl.textContent = "00:00";
-                    resendLink.classList.remove('disabled');
+                    resendButton.classList.remove('disabled');
+                    document.getElementById('otpValue').disabled = true;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'OTP Expired',
+                        text: 'Please click resend to get a new OTP'
+                    });
                 }
             }, 1000);
         }
-    
-        // Resend OTP function
-        function resendOTP() {
-            if (resendLink.classList.contains('disabled')) return; // Prevent resend if timer is active
 
-            clearInterval(timer);
-            timeLeft = 60; // Reset timer value
+        function resendOTP() {
+            if (resendButton.classList.contains('disabled')) return;
+
+            timeLeft = 60;
             document.getElementById('otpValue').disabled = false;
-            document.getElementById('countdown').classList.remove('expired');
             startTimer();
-    
+
             $.ajax({
                 type: 'POST',
                 url: '/resend-otp',
@@ -238,9 +237,8 @@
                     });
                 }
             });
-            return false;
         }
-    
+
         // OTP input handling
         const form = document.getElementById('otpForm');
         const inputs = document.querySelectorAll('.otp-input');
@@ -340,7 +338,7 @@
         }
     
         // Initialize timer on page load
-        startTimer();
+        document.addEventListener('DOMContentLoaded', startTimer);
     </script>
 </body>
 </html>

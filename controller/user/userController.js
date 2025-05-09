@@ -152,8 +152,13 @@ const signup = async (req, res) => {
             return res.render("signup", { message: "Failed to send OTP. Try again!" });
         }
 
+        // Store OTP with expiration timestamp
+        req.session.userOtp = {
+            code: otp,
+            expiresAt: Date.now() + (60 * 1000) // 60 seconds from now
+        };
+
         // Store all signup data, including the optional referral code
-        req.session.userOtp = otp;
         req.session.userData = { name, phone, email, password, referralCode };
 
         res.render("verifyOTP");
@@ -175,7 +180,24 @@ const verifyOTP = async (req, res) => {
   try {
     const { otp } = req.body;
     console.log("OTP from form:", otp, "Session OTP:", req.session.userOtp);
-    if (otp.toString() === req.session.userOtp.toString()) {
+
+    // Check if OTP exists and hasn't expired
+    if (!req.session.userOtp || !req.session.userOtp.code) {
+        return res.render("verifyOTP", { 
+            message: "OTP has expired or not found. Please request a new one." 
+        });
+    }
+
+    // Check if OTP has expired
+    if (Date.now() > req.session.userOtp.expiresAt) {
+        delete req.session.userOtp;
+        return res.render("verifyOTP", { 
+            message: "OTP has expired. Please request a new one." 
+        });
+    }
+
+    // Verify OTP
+    if (otp.toString() === req.session.userOtp.code.toString()) {
       const userData = req.session.userData; // Contains name, phone, email, password, referralCode (if any)
       const passwordHash = await securePassword(userData.password);
       
@@ -288,7 +310,11 @@ const resendOTP = async (req, res) => {
             return res.status(500).json({ success: false, message: "Failed to resend OTP" });
         }
 
-        req.session.userOtp = newOtp;
+        req.session.userOtp = {
+            code: newOtp,
+            expiresAt: Date.now() + (60 * 1000) // 60 seconds from now
+        };
+
         res.status(200).json({ success: true, message: "OTP resent successfully" });
     } catch (error) {
         console.error("Error in resendOTP:", error);
