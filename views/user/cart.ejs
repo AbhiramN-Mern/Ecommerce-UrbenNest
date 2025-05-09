@@ -143,8 +143,9 @@
               </table>
             </div>
             <% if (!outOfStockMessages?.length && data?.length > 0) { %>
-              <a href="/checkout?userId=<%= user?._id || '' %>" 
-                 class="btn btn-primary btn-block mt-3">
+              <a href="#" 
+                 class="btn btn-primary btn-block mt-3"
+                 onclick="validateCheckout()">
                 <i class="fi-rs-box-alt mr-10"></i> Proceed to Checkout
               </a>
             <% } %>
@@ -336,6 +337,36 @@
         }
       });
     });
+
+    // Highlight blocked items in the cart
+    <% data.forEach((item, i) => { %>
+        <% if (item.isBlocked) { %>
+            $('tr[data-product-id="<%= item.productId %>"]').addClass('blocked-item')
+                .find('.product-name').append('<span class="badge bg-danger ms-2">Unavailable</span>');
+        <% } %>
+    <% }); %>
   });
+
+  function validateCheckout() {
+    <% if (hasBlockedItems) { %>
+        Swal.fire({
+            title: 'Cannot Proceed to Checkout',
+            html: 'The following products in your cart are currently unavailable:<br><br>' +
+                  '<ul style="list-style: none; padding: 0;">' +
+                  '<% blockedProducts.forEach(product => { %>' +
+                  '<li style="color: #dc3545;"><%= product %></li>' +
+                  '<% }); %>' +
+                  '</ul><br>' +
+                  'Please remove these items to continue.',
+            icon: 'warning',
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK'
+        });
+    <% } else { %>
+        window.location.href = '/checkout?userId=<%= user?._id || "" %>';
+    <% } %>
+  }
 </script>
+
+
 <%- include("../../views/partials/user/footer") %>

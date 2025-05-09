@@ -28,14 +28,18 @@ const getCartPage = async (req, res) => {
                 data: [],
                 grandTotal: 0,
                 outOfStockMessages: [],
-                user
+                user,
+                hasBlockedItems: false
             });
         }
 
+        // Check for blocked products
+        const blockedProducts = cart.items.filter(item => 
+            item.productId && item.productId.isBlocked === true
+        );
+
         const cartItems = cart.items.map(item => {
             const product = item.productId;
-
-            
             return {
                 productId: product._id.toString(),
                 name: product.productName,
@@ -45,7 +49,8 @@ const getCartPage = async (req, res) => {
                 total: item.quantity * product.salePrice,
                 stock: product.quantity,
                 category: product.category,
-                brand: product.brand
+                brand: product.brand,
+                isBlocked: product.isBlocked
             };
         });
 
@@ -58,7 +63,9 @@ const getCartPage = async (req, res) => {
             data: cartItems,
             grandTotal,
             user,
-            outOfStockMessages
+            outOfStockMessages,
+            hasBlockedItems: blockedProducts.length > 0,
+            blockedProducts: blockedProducts.map(item => item.productId.productName)
         });
     } catch (error) {
         console.error('Error in getCartPage:', error.stack);
