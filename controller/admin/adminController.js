@@ -354,29 +354,34 @@ const loadlogin=async(req,res)=>{
     res.render('adminlogin',{message:null})
 
 }
-const login=async(req,res)=>{
-try {
-    const {email,password}=req.body;
-    console.log(req.body)
-    const admin=await User.findOne({email,isAdmin:true})
-    if(admin){
-        const passwordMatch=await bcrypt.compare(password,admin.password)
-        if(passwordMatch){
-            req.session.admin=true
-            
-            return res.redirect('/admin/dashbord')
-        }else{
-            return res.redirect('/admin/login')
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const admin = await User.findOne({ email, isAdmin: true });
+
+        if (!admin) {
+            return res.render('adminlogin', {
+                message: 'Invalid email address. Please check your credentials.'
+            });
         }
-    }else{
-        return res.redirect('/admin/login')
+
+        const passwordMatch = await bcrypt.compare(password, admin.password);
+        if (passwordMatch) {
+            req.session.admin = true;
+            return res.redirect('/admin/dashbord');
+        } else {
+            return res.render('adminlogin', {
+                message: 'Invalid password. Please try again.'
+            });
+        }
+
+    } catch (error) {
+        console.log('login error', error);
+        return res.render('adminlogin', {
+            message: 'An error occurred. Please try again later.'
+        });
     }
-    
-} catch (error) {
-    console.log('login error',error)
-        return res.redirect('/pageNotFound')
-}
-}
+};
 const loadDashbord = async (req, res, next) => {
     if (req.session.admin) {
         try {

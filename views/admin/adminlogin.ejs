@@ -279,13 +279,15 @@
                             </div>
                         </form>
 
-                        <% if (locals.message && locals.message.length > 0) { %>
+                        <% if (message) { %>
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
                                     Swal.fire({
                                         icon: 'error',
-                                        title: 'Access Denied',
-                                        text: '<%= message %>'
+                                        title: 'Login Failed',
+                                        text: '<%= message %>',
+                                        confirmButtonColor: '#483c5c',
+                                        confirmButtonText: 'Try Again'
                                     });
                                 });
                             </script>
