@@ -1,4 +1,4 @@
-    const Category = require("../../models/categoryScheema");
+const Category = require("../../models/categoryScheema");
 const Product = require("../../models/productSchema");
 
 const categoryInfo = async (req, res, next) => {
@@ -51,6 +51,15 @@ const addCategoryOffer = async (req, res, next) => {
     try {
         const percentage = parseInt(req.body.percentage);
         const categoryId = req.params.id;
+        
+        // Validate percentage
+        if (percentage < 0 || percentage > 100) {
+            return res.json({
+                status: false,
+                message: "Invalid offer percentage. Must be between 0 and 100"
+            });
+        }
+
         const category = await Category.findById(categoryId);
         if (!category) {
             return res.status(404).json({ status: false, message: "Category not found" });
@@ -58,24 +67,40 @@ const addCategoryOffer = async (req, res, next) => {
 
         const products = await Product.find({ category: category._id });
 
-        const hasProductOffer = products.some((product) => product.productOffer > percentage);
-        if (hasProductOffer) {
-            return res.json({
-                status: false,
-                message: "Products within this category already have product offers",
-            });
-        }
+        // Apply category offer and update product prices
+        await Category.updateOne(
+            { _id: categoryId }, 
+            { $set: { categoryOffer: percentage } }
+        );
 
-        await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: percentage } });
-
+        // Update each product's sale price based on the higher offer
         for (const product of products) {
-            product.productOffer = 0;
-            product.salePrice = product.regularPrice - (product.regularPrice * percentage / 100);
-            await product.save();
+            const productOffer = product.productOffer || 0;
+            const highestOffer = Math.max(productOffer, percentage);
+            
+            // Calculate new sale price using the highest offer
+            const newSalePrice = Math.floor(product.regularPrice - (product.regularPrice * highestOffer / 100));
+            
+            // Update product
+            await Product.updateOne(
+                { _id: product._id },
+                { 
+                    $set: { 
+                        salePrice: newSalePrice,
+                        // Keep existing productOffer if it's higher, otherwise it remains unchanged
+                        ...(productOffer < percentage && { productOffer: 0 })
+                    }
+                }
+            );
         }
 
-        res.json({ status: true, message: "Category offer applied successfully" });
+        res.json({ 
+            status: true, 
+            message: "Category offer applied successfully. Products updated with highest applicable offer." 
+        });
+
     } catch (error) {
+        console.error("Error applying category offer:", error);
         next(error);
     }
 };
@@ -83,26 +108,38 @@ const addCategoryOffer = async (req, res, next) => {
 
 const removeCategoryOffer = async (req, res, next) => {
     try {
-        const categoryId = req.params.id; 
+        const categoryId = req.params.id;
         const category = await Category.findById(categoryId);
 
         if (!category) {
             return res.status(404).json({ status: false, message: "Category not found" });
         }
 
-        const percentage = category.categoryOffer;
         const products = await Product.find({ category: category._id });
 
-        if (products.length > 0) {
-            for (const product of products) {
-                product.salePrice += Math.floor(product.regularPrice * (percentage / 100));
-                product.productOffer = 0;
-                await product.save();
-            }
+        // Update each product's sale price based on product offer only
+        for (const product of products) {
+            const productOffer = product.productOffer || 0;
+            
+            // Calculate new sale price using only product offer
+            const newSalePrice = productOffer > 0 
+                ? Math.floor(product.regularPrice - (product.regularPrice * productOffer / 100))
+                : product.regularPrice;
+
+            await Product.updateOne(
+                { _id: product._id },
+                { $set: { salePrice: newSalePrice } }
+            );
         }
+
+        // Remove category offer
         category.categoryOffer = 0;
         await category.save();
-        res.json({ status: true });
+
+        res.json({ 
+            status: true,
+            message: "Category offer removed successfully. Products updated based on their individual offers."
+        });
     } catch (error) {
         next(error);
     }

@@ -145,7 +145,7 @@ const addProductOffer = async (req, res, next) => {
         res.json({ status: true, message: "Offer applied successfully", appliedOffer: finalOffer });
     } catch (error) {
         next(error);
-    }zz
+    }
 };
 
 const removeProductOffer = async (req, res, next) => {
@@ -213,8 +213,9 @@ const getEditProduct = async (req, res, next) => {
 const editProduct = async (req, res, next) => {
     try {
         const id = req.params.id;
-        const product = await Product.findOne({ _id: id });
         const data = req.body;
+        
+        // Check for existing product with same name
         const existingProduct = await Product.findOne({
             productName: data.productName,
             _id: { $ne: id }
@@ -224,8 +225,8 @@ const editProduct = async (req, res, next) => {
             return res.status(400).json({ error: "Product with this name already exists. Please try with another name" });
         }
 
+        // Process images if any
         const images = [];
-
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
                 const originalImagePath = req.files[i].path;
@@ -236,17 +237,26 @@ const editProduct = async (req, res, next) => {
             }
         }
 
+        // Find category ID from category name
+        const categoryId = await Category.findOne({ name: data.category });
+        if (!categoryId) {
+            return res.status(400).json({ error: "Invalid category selected" });
+        }
+
+        // Update fields including the new category
         const updateFields = {
             productName: data.productName,
             description: data.description,
             brand: data.brand,
-            category: product.category,
+            category: categoryId._id, // Use the new category ID
             regularPrice: data.regularPrice,
             salePrice: data.salePrice,
             quantity: data.quantity,
             size: data.size,
             color: data.color
         };
+
+        // Add images if any were uploaded
         if (req.files.length > 0) {
             updateFields.$push = { productImage: { $each: images } };
         }
@@ -254,7 +264,7 @@ const editProduct = async (req, res, next) => {
         await Product.findByIdAndUpdate(id, updateFields, { new: true });
         res.redirect("/admin/products");
     } catch (error) {
-        console.error(error);
+        console.error("Error updating product:", error);
         next(error);
     }
 };
