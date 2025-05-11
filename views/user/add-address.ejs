@@ -141,14 +141,7 @@
            });
            isValid = false;
        }
-       if (phone === altPhone) {
-           Swal.fire({
-               title: 'Error',
-               text: 'Phone number and alternate phone number should be different.',
-               icon: 'error'
-           });
-           isValid = false;
-       }
+      
        return isValid;
    }
 </script>
