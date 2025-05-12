@@ -39,20 +39,16 @@ const getBrandPage = async (req, res) => {
 }
 const addBrand = async (req, res) => {
     try {
-        const brandName = req.body.name;
-
-        // Case-sensitive brand search
-        const findBrand = await Brand.findOne({
-            brandName: { $regex: `^${brandName}$`, $options: '' } // Ensure correct field name
-        });
-
-        if (findBrand) {
-            return res.status(400).json({ error: 'Brand already exists' });
-        }
+        // Log the file information
+        console.log('Uploaded file:', req.file);
+        
+        // Make sure you're saving the complete URL
+        const imageUrl = req.file ? req.file.path : null;
+        console.log('Image URL:', imageUrl);
 
         const newBrand = new Brand({
-            brandName: brandName, // ✅ Correct field name
-            brandImage: req.file ? [req.file.filename] : []
+            brandName: req.body.name,
+            brandImage: imageUrl ? [imageUrl] : [] // Save as array
         });
 
         await newBrand.save();
