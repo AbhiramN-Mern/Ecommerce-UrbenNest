@@ -35,23 +35,22 @@
 
             <!-- Start Column 2 -->
             <% products.forEach(product => { %>
-            <div class="col-12 col-md-4 col-lg-3 mb-5 mb-md-0">
-                
-                <a class="product-item" href=/product-details?id=<%= product._id %> >
-                    <img src="/uploads/re-image/<%= product.productImage[0] %>" style="border-radius: 30px;" class="img-fluid product-thumbnail" >
-                    <div class="product-details">
-                        <h3 class="product-title"><%= product.productName %></h3>
-                        <div>
-                            <strong style="text-decoration: line-through;" class="product-price">₹<%= product.regularPrice %></strong>
-                            <strong style="color: green;" class="productsale-price">₹<%= product.salePrice %></strong>
+                <div class="col-12 col-md-4 col-lg-3 mb-5 mb-md-0">
+                    <a class="product-item" href="/product-details?id=<%= product._id %>">
+                        <img src="<%= product.productImage[0] %>" style="border-radius: 30px;" class="img-fluid product-thumbnail">
+                        <div class="product-details">
+                            <h3 class="product-title"><%= product.productName %></h3>
+                            <div>
+                                <strong style="text-decoration: line-through;" class="product-price">₹<%= product.regularPrice %></strong>
+                                <strong style="color: green;" class="productsale-price">₹<%= product.salePrice %></strong>
+                            </div>
+                            <span class="icon-cross">
+                                <img src="/furni-1.0.0/images/cross.svg" class="img-fluid">
+                            </span>
                         </div>
-                        <span class="icon-cross">
-                            <img src="/furni-1.0.0/images/cross.svg" class="img-fluid">
-                        </span>
-                    </div>
-                </a>
-            </div>
-            <% }) %>
+                    </a>
+                </div>
+                <% }) %>
             <!-- End Column 2 -->
         </div>
     </div>

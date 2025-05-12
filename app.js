@@ -48,18 +48,17 @@ app.use(express.static(path.join(__dirname,'public')))
 app.use('/',userRouter)
 app.use('/admin',adminRouter)
 
-app.use(morgan('dev', {
-    skip: function (req, res) {
-      // Skip logging for static files
-      return req.url.startsWith('/js') ||
-             req.url.startsWith('/css') ||
-             req.url.startsWith('/images') ||
-             req.url.startsWith('/user-assets') ||
-             req.url.startsWith('/assets') ||
-             req.url.endsWith('.ico') ||
-             req.url.endsWith('.png');
-    }
-  }));
+// app.use(morgan('dev', {
+//     skip: function (req, res) {
+//       return req.url.startsWith('/js') ||
+//              req.url.startsWith('/css') ||
+//              req.url.startsWith('/images') ||
+//              req.url.startsWith('/user-assets') ||
+//              req.url.startsWith('/assets') ||
+//              req.url.endsWith('.ico') ||
+//              req.url.endsWith('.png');
+//     }
+//   }));
   
 app.use((req, res, next) => {
     res.status(404).render('page-404');

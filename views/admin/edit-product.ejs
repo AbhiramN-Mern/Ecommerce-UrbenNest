@@ -276,7 +276,7 @@
                                                         <div class="col-12">
                                                             <td>
                                                                 <input type="hidden" value="<%=product.productImage[i]%>" id="imageDatas">
-                                                                <img class="rounded" style="width: 100%; height: auto;" src="/uploads/re-image/<%=product.productImage[i]%>" alt="">
+                                                                <img class="rounded" style="width: 100%; height: auto;" src="<%= product.productImage[0] %>" alt="">
                                                                 <i onclick="deleteSingleImage('<%=product.productImage[i]%>','<%=product._id%>')" class="fa fa-times"></i>
                                                             </td>
                                                         </div>

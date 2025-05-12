@@ -498,7 +498,7 @@
               </button>
               <div class="product-content">
                 <a href="/product-details?id=<%= product._id %>" style="text-decoration: none;">
-                  <img src="/uploads/re-image/<%= product.productImage[0] %>" class="img-fluid product-thumbnail" loading="lazy">
+                  <img src="<%= product.productImage[0] %>" class="img-fluid product-thumbnail" loading="lazy">
                   <div class="product-title-container">
                     <h3 class="product-title"><%= product.productName %></h3>
                   </div>
@@ -668,7 +668,7 @@ function updateProductGrid(products) {
                 </button>
                 <div class="product-content">
                     <a href="/product-details?id=${product._id}" style="text-decoration: none;">
-                        <img src="/uploads/re-image/${product.productImage[0]}" class="img-fluid product-thumbnail" loading="lazy">
+                        <img src="${product.productImage[0]}" class="img-fluid product-thumbnail" loading="lazy">
                         <div class="product-title-container">
                             <h3 class="product-title">${product.productName}</h3>
                         </div>

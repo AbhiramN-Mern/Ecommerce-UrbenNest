@@ -1,16 +1,27 @@
+require('dotenv').config();
 const multer = require('multer');
-const path = require('path');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, "../public/uploads/re-image"));  // Fixed typo in 'uploads'
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));  // Fixed filename generation
-    }
+// Cloudinary configuration
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const upload = multer({ storage: storage });  // Create multer instance
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 're-image',
+        allowed_formats: ['jpg', 'jpeg', 'png'],
+        transformation: [
+            { width: 440, height: 440, crop: "fill" }
+        ],
+        public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
+    },
+});
 
-module.exports = upload;  // Export the multer instance instead of just storage</form>
+const upload = multer({ storage: storage });
+
+module.exports = upload;

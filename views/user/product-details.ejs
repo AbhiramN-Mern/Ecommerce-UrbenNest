@@ -355,7 +355,7 @@
                         <!-- Main Image with Dynamic Zoom -->
                         <div class="main-image-container">
                             <div class="zoom-wrapper">
-                                <img src="/uploads/re-image/<%= product.productImage[0] %>"
+                                <img src="<%= product.productImage[0] %>"
                                      alt="<%= product.productName %>"
                                      class="main-image"
                                      id="mainImage">
@@ -366,7 +366,7 @@
                         <div class="thumbnail-container">
                             <% product.productImage.forEach((image, index) => { %>
                                 <div class="thumbnail-item <%= index === 0 ? 'active' : '' %>">
-                                    <img src="/uploads/re-image/<%= image %>" alt="Thumbnail <%= index + 1 %>">
+                                    <img src="<%= product.productImage[0] %>" alt="Thumbnail <%= index + 1 %>">
                                 </div>
                             <% }) %>
                         </div>
