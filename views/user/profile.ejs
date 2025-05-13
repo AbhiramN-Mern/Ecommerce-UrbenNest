@@ -527,12 +527,20 @@
                                   order.status === 'Delivered' ? 'success' : 
                                   order.status === 'Processing' ? 'primary' : 
                                   order.status === 'Shipped' ? 'info' : 
-                                  order.status === 'Cancelled' ? 'danger' : 'warning' 
+                                  order.status === 'Payment Pending' ? 'warning' :
+                                  order.status === 'Cancelled' ? 'danger' : 'secondary' 
                                 %>">
                                   <%= order.status %>
                                 </span>
+                                <% if (order.status === 'Payment Pending') { %>
+                                  <button 
+                                    onclick="retryPayment('<%= order._id %>', <%= order.finalAmount %>)" 
+                                    class="btn btn-warning btn-sm ms-2">
+                                    <i class="fas fa-redo-alt"></i> Retry Payment
+                                  </button>
+                                <% } %>
                               </td>
-                              <td>₹<%= (order.totalPrice + order.deliveryCharge).toLocaleString() %></td>
+                              <td>₹<%= order.finalAmount.toLocaleString() %></td>
                               <td>
                                 <a href="/orderDetails?id=<%= order._id %>" class="btn btn-sm btn-outline-primary">
                                   <i class="fas fa-eye me-1"></i>View
@@ -849,6 +857,84 @@
         window.location.href = `/deleteAddress?id=${addressId}`;
       }
     });
+  }
+
+  async function retryPayment(orderId, amount) {
+    try {
+      // Create new Razorpay order
+      const response = await fetch('/create-razorpay-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount })
+      });
+      
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message);
+
+      const options = {
+        key: "<%= process.env.RAZORPAY_KEY_ID %>",
+        amount: result.order.amount,
+        currency: "INR",
+        name: "UrbenNest",
+        description: "Complete Pending Order Payment",
+        order_id: result.order.id,
+        handler: async function (response) {
+          try {
+            // Verify payment and update order status
+            const verifyResponse = await fetch('/complete-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: orderId,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature
+              })
+            });
+
+            const data = await verifyResponse.json();
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Payment Successful',
+                text: 'Your order has been confirmed!',
+                showConfirmButton: false,
+                timer: 2000
+              }).then(() => {
+                window.location.reload();
+              });
+            } else {
+              throw new Error(data.message || 'Payment verification failed');
+            }
+          } catch (error) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Payment Failed',
+              text: error.message || 'Something went wrong',
+            });
+          }
+        },
+        prefill: {
+          name: "<%= user.name %>",
+          email: "<%= user.email %>",
+          contact: "<%= user.phone %>"
+        },
+        theme: {
+          color: "#3399cc"
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+
+    } catch (error) {
+      console.error('Error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'Failed to initialize payment'
+      });
+    }
   }
 </script>
 

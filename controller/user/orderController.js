@@ -13,8 +13,7 @@ const path = require("path");
 const easyinvoice = require("easyinvoice");
 const Cart = require("../../models/cartSchema");
 const razorpay = require("../../config/razorpay");
-
-
+const crypto = require('crypto'); // Added import
 
 const getCheckoutPage = async (req, res, next) => {
   try {
@@ -179,9 +178,12 @@ const orderPlaced = async (req, res, next) => {
       deliveryCharge: deliveryChargeValue,
       finalAmount: finalAmount,
       address: desiredAddress,
-      payment: payment.toLowerCase() === 'wallet' ? 'Wallet' : payment, 
+      payment: payment,
       userId: userId,
-      status: payment === 'Razorpay' ? 'Paid' : 'Confirmed',
+      status: payment === 'Razorpay' ? 
+        (req.body.paymentStatus === 'Pending' ? 'Payment Pending' : 'Confirmed') : 
+        'Confirmed',
+      paymentStatus: req.body.paymentStatus || 'Completed',
       createdOn: Date.now(),
     };
 
@@ -242,17 +244,20 @@ const orderPlaced = async (req, res, next) => {
     const newOrder = new Order(orderData);
     const orderDone = await newOrder.save();
 
-    await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
-    for (const orderedProduct of orderedProducts) {
-      const product = await Product.findOne({ _id: orderedProduct.productId });
-      if (product) {
-        product.quantity = Math.max(product.quantity - orderedProduct.quantity, 0);
-        await product.save();
+    if (orderData.paymentStatus !== 'Pending') {
+      await Cart.updateOne({ userId: userId }, { $set: { items: [] } });
+      for (const orderedProduct of orderedProducts) {
+        const product = await Product.findOne({ _id: orderedProduct.productId });
+        if (product) {
+          product.quantity = Math.max(product.quantity - orderedProduct.quantity, 0);
+          await product.save();
+        }
       }
     }
+
     res.json({
       success: true,
-      payment: true,
+      payment: orderData.paymentStatus === 'Completed',
       method: payment,
       order: orderDone,
       orderId: orderDone._id,
@@ -314,6 +319,57 @@ const verifyRazorpayPayment = async (req, res) => {
   }
 };
 
+const completePayment = async (req, res, next) => {
+  try {
+    const { orderId, razorpayPaymentId, razorpayOrderId, razorpaySignature } = req.body;
+    
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Verify payment signature
+    const generated_signature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(razorpayOrderId + "|" + razorpayPaymentId)
+      .digest('hex');
+
+    if (generated_signature === razorpaySignature) {
+      // Update order status
+      order.status = 'Confirmed';
+      order.paymentStatus = 'Completed';
+      order.razorpayPaymentId = razorpayPaymentId;
+      order.razorpayOrderId = razorpayOrderId;
+      order.razorpaySignature = razorpaySignature;
+      await order.save();
+
+      // Clear cart and update product quantities only if not done before
+      if (order.status === 'Payment Pending') {
+        await Cart.updateOne({ userId: order.userId }, { $set: { items: [] } });
+        for (const orderedProduct of order.product) {
+          await Product.updateOne(
+            { _id: orderedProduct.productId },
+            { $inc: { quantity: -orderedProduct.quantity } }
+          );
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Payment completed successfully',
+        orderId: order._id 
+      });
+    } else {
+      res.status(400).json({ 
+        success: false, 
+        message: 'Payment verification failed' 
+      });
+    }
+  } catch (error) {
+    console.error('Error completing payment:', error);
+    next(error);
+  }
+};
 
 const getOrderDetailsPage = async (req, res, next) => {
   try {
@@ -712,5 +768,6 @@ module.exports = {
   verifyRazorpayPayment,
   applyCoupon,
   getAvailableCoupons,
-  removeCoupon
+  removeCoupon,
+  completePayment
 };

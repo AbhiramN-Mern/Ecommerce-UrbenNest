@@ -425,13 +425,52 @@
           color: "#3399cc"
         },
         modal: {
-          ondismiss: function() {
-            Swal.fire({
-              title: 'Payment Cancelled',
-              text: 'You cancelled the payment process',
-              icon: 'info',
-              timer: 3000
-            });
+          ondismiss: async function() {
+            try {
+              const result = await Swal.fire({
+                title: 'Payment Cancelled',
+                text: 'Would you like to retry payment now or pay later?',
+                icon: 'question',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Retry Now',
+                denyButtonText: 'Pay Later',
+                cancelButtonText: 'Cancel Order'
+              });
+
+              if (result.isConfirmed) {
+                // Retry payment
+                rzp.open();
+              } 
+              else if (result.isDenied) {
+                // Create order with pending payment status
+                const response = await fetch('/orderPlaced', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    totalPrice: amount,
+                    addressId: address,
+                    payment: 'Razorpay',
+                    paymentStatus: 'Pending',
+                    status: 'Payment Pending'
+                  })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                  window.location.href = `/userProfile`;
+                }
+              }
+              else {
+                // Cancel order
+                Swal.fire('Order Cancelled', '', 'info');
+              }
+            } catch (error) {
+              console.error('Error:', error);
+              Swal.fire('Error', 'Something went wrong', 'error');
+            }
           }
         }
       };

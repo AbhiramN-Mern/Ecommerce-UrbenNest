@@ -80,7 +80,8 @@ const orderSchema = new Schema({
       "Returned", 
       "Confirmed", 
       "Payment Pending",
-      "Paid" // Added this status for Razorpay payments
+      "Payment Failed",
+      "Paid" 
     ],
     default: "Pending"
   },
@@ -98,6 +99,12 @@ const orderSchema = new Schema({
     required: true,
     enum: ["COD", "Razorpay", "Wallet", "PayPal", "cod", "wallet"] 
   },
+  paymentStatus: {
+    type: String,
+    enum: ['Pending', 'Completed', 'Failed'],
+    default: 'Pending'
+  },
+  
   // Razorpay payment fields
   razorpayPaymentId: {
     type: String,

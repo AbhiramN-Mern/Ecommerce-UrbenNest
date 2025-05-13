@@ -104,6 +104,7 @@ router.post("/create-razorpay-order",orderController. createRazorpayOrder);
 router.post("/verify-razorpay-payment", orderController.verifyRazorpayPayment);
 router.get('/availableCoupons', orderController.getAvailableCoupons);
 router.post('/removeCoupon', orderController.removeCoupon);
+router.post('/complete-payment', orderController.completePayment);
 
 
 module.exports = router;
