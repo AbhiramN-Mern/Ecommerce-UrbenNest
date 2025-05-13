@@ -116,7 +116,7 @@
                   <% orders.product.forEach((product) => { %>
                     <tr>
                       <td class="text-center">
-                        <img src="/uploads/re-image/<%= product.image || 'default.jpg' %>" style="height: 7rem; width: 7rem;" class="img-xs" alt="Item">
+                        <img src="<%= product.image || 'default.jpg' %>" style="height: 7rem; width: 7rem;" class="img-xs" alt="Item">
                       </td>
                       <td class="text-center"><%= product.name || product.title || 'N/A' %></td>
                       <td class="text-center">₹<%= (product.price || 0).toLocaleString() %></td>

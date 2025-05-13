@@ -40,7 +40,7 @@
                   <% data.forEach((item, i) => { %>
                     <tr data-product-id="<%= item.productId %>">
                       <td class="image product-thumbnail">
-                        <img src="/uploads/re-image/<%= item.image || 'default.jpg' %>" 
+                        <img src="<%= item.image || 'default.jpg' %>" 
                              alt="<%= item.name %>"
                              onerror="this.src='/uploads/re-image/default.jpg'">
                       </td>
