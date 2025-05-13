@@ -249,15 +249,25 @@ const editProduct = async (req, res, next) => {
             return res.status(400).json({ error: "Product with this name already exists. Please try with another name" });
         }
 
-        // Process images if any
-        const images = [];
+        // Get existing product to preserve current images
+        const currentProduct = await Product.findById(id);
+        let productImages = [...currentProduct.productImage]; // Keep existing images
+
+        // Upload new images to Cloudinary if any
         if (req.files && req.files.length > 0) {
-            for (let i = 0; i < req.files.length; i++) {
-                const originalImagePath = req.files[i].path;
-                const resizedFilename = "resized-" + req.files[i].filename;
-                const resizedImagePath = path.join('public', 'uploads', 're-image', resizedFilename);
-                await sharp(originalImagePath).resize({ width: 440, height: 440 }).toFile(resizedImagePath);
-                images.push(resizedFilename);
+            for (const file of req.files) {
+                try {
+                    const result = await cloudinary.uploader.upload(file.path, {
+                        folder: "re-image",
+                        width: 440,
+                        height: 440,
+                        crop: "fill"
+                    });
+                    productImages.push(result.secure_url);
+                } catch (uploadError) {
+                    console.error("Cloudinary upload error:", uploadError);
+                    continue;
+                }
             }
         }
 
@@ -272,18 +282,14 @@ const editProduct = async (req, res, next) => {
             productName: data.productName,
             description: data.description,
             brand: data.brand,
-            category: categoryId._id, // Use the new category ID
+            category: categoryId._id,
             regularPrice: data.regularPrice,
             salePrice: data.salePrice,
             quantity: data.quantity,
             size: data.size,
-            color: data.color
+            color: data.color,
+            productImage: productImages // Update with both existing and new images
         };
-
-        // Add images if any were uploaded
-        if (req.files.length > 0) {
-            updateFields.$push = { productImage: { $each: images } };
-        }
 
         await Product.findByIdAndUpdate(id, updateFields, { new: true });
         res.redirect("/admin/products");
