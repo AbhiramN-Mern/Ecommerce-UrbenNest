@@ -392,6 +392,21 @@
       margin: 0 10px;
       color: #999;
     }
+    .product-price.strike {
+        text-decoration: line-through;
+        color: gray;
+        margin-right: 8px;
+    }
+
+    .product-price-regular-only {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .productsale-price {
+        color: green;
+        font-weight: bold;
+    }
 
     @media (max-width: 768px) {
       .product-list-container {
@@ -515,9 +530,16 @@
                       <% } %>
                     </div>
                     <div class="product-pricing">
-                      <strong class="product-price">₹<%= product.regularPrice %></strong>
-                      <strong class="productsale-price">₹<%= product.salePrice %></strong>
-                    </div>
+                      <% if (product.regularPrice != product.salePrice) { %>
+                          <strong class="product-price line-through">₹<%= product.regularPrice %></strong>
+                          <strong class="productsale-price">₹<%= product.salePrice %></strong>
+                      <% } else { %>
+                          <strong class="product-price-regular-only">₹<%= product.regularPrice %></strong>
+                      <% } %>
+                  </div>
+                  
+                  
+                  
                   </div>
                 </a>
               </div>

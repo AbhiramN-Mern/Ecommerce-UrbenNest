@@ -41,8 +41,14 @@
                         <div class="product-details">
                             <h3 class="product-title"><%= product.productName %></h3>
                             <div>
-                                <strong style="text-decoration: line-through;" class="product-price">₹<%= product.regularPrice %></strong>
-                                <strong style="color: green;" class="productsale-price">₹<%= product.salePrice %></strong>
+                                <% if (product.regularPrice != product.salePrice) { %>
+                                    <strong style="text-decoration: line-through;" class="product-price">₹<%= product.regularPrice %></strong>
+                                    <strong style="color: green;" class="productsale-price">₹<%= product.salePrice %></strong>
+                                <% } else { %>
+                                    <strong class="product-price">₹<%= product.regularPrice %></strong>
+                                <% } %>
+                                
+                                
                             </div>
                             <span class="icon-cross">
                                 <img src="/furni-1.0.0/images/cross.svg" class="img-fluid">
