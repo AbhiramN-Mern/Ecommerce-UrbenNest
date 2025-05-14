@@ -117,7 +117,10 @@
         }
         .thumbnail {
             position: relative;
-            margin-right: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
         }
         .thumbnail img {
             width: 100%;
@@ -165,6 +168,24 @@
         }
         .fa-thin.fa-x:hover {
             color: #bd2130;
+        }
+        .remove-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .remove-icon:hover {
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
         }
         @media (max-width: 1200px) {
             .col-lg-4 {
