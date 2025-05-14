@@ -22,6 +22,19 @@ const storage = new CloudinaryStorage({
     },
 });
 
-const upload = multer({ storage: storage });
+// Configure Multer with file size limit and file filter
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpg|jpeg|png/;
+        const mimetype = filetypes.test(file.mimetype);
+        if (mimetype) {
+            cb(null, true);
+        } else {
+            cb(new Error('Unsupported file format. Only JPG, JPEG, and PNG are allowed.'));
+        }
+    }
+});
 
 module.exports = upload;
