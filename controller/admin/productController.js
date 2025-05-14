@@ -292,10 +292,19 @@ const editProduct = async (req, res, next) => {
         };
 
         await Product.findByIdAndUpdate(id, updateFields, { new: true });
-        res.redirect("/admin/products");
+        
+        // Send success response instead of redirecting
+        res.json({
+            success: true,
+            message: 'Product updated successfully'
+        });
+
     } catch (error) {
         console.error("Error updating product:", error);
-        next(error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error updating product'
+        });
     }
 };
 

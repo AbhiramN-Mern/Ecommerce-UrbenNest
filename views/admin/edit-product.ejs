@@ -303,6 +303,7 @@
     </section>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <%- include("../../views/partials/admin/footer") %>
     <script>
         const selectedImages = [];
@@ -402,15 +403,46 @@
                 selectedImages.forEach((file, index) => {
                     formData.append(`images`, file);
                 });
+
+                // Show loading state
+                Swal.fire({
+                    title: 'Updating Product...',
+                    text: 'Please wait',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
                 fetch(`/admin/editProduct/<%=product._id%>`, {
                     method: 'POST',
                     body: formData
-                }).then(response => {
-                    if (response.ok) {
-                        window.location.href = '/admin/products';
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: data.message,
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '/admin/products';
+                            }
+                        });
                     } else {
-                        console.error('Error submitting form');
+                        throw new Error(data.message || 'Failed to update product');
                     }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.message || 'Failed to update product'
+                    });
                 });
             }
         }
