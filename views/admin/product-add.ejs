@@ -400,42 +400,63 @@ function handleFileSelect(event) {
 function validateAndSubmit() {
     if (validateForm()) {
         const formData = new FormData(document.getElementById('productForm'));
-
-        // Remove the image field from formData
         formData.delete('images');
-
         selectedImages.forEach((file, index) => {
             formData.append(`images`, file);
+        });
+
+        // Show loading alert
+        Swal.fire({
+            title: 'Adding Product...',
+            html: 'Please wait while we process your request',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
         });
 
         fetch('/admin/product-add', {
             method: 'POST',
             body: formData
-        }).then(response => {
-            if (response.ok) {
-                // Display SweetAlert on successful product addition
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Product Added',
-                    text: 'The product has been successfully added!',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    // Redirect or perform any other action after the alert is closed
+        })
+        .then(response => response.json())
+        .catch(error => {
+            // If response is not JSON, throw error
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response;
+        })
+        .then(data => {
+            // Close loading alert
+            Swal.close();
+
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Product Added Successfully!',
+                text: 'Your product has been added to the store',
+                showConfirmButton: true,
+                confirmButtonText: 'View Products',
+                showCancelButton: true,
+                cancelButtonText: 'Add Another Product'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/admin/products';
+                } else {
                     window.location.href = '/admin/product-add';
-                });
-            } else {
-                console.error('Error submitting form');
-                // Optionally, display an error alert
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Something went wrong! Please try again.',
-                });
-            }
+                }
+            });
+        })
+        .catch(error => {
+            // Close loading alert and show error
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Something went wrong while adding the product!',
+                footer: error.message
+            });
         });
     }
 }
-
 
 function validateForm() {
     let imageDatas = false;

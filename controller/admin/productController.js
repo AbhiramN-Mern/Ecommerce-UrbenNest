@@ -39,7 +39,10 @@ const addProducts = async (req, res, next) => {
         });
 
         if (productExists) {
-            return res.status(400).json("Product already exists, please try with another name");
+            return res.status(400).json({
+                success: false,
+                message: "Product already exists, please try with another name"
+            });
         }
 
         const images = [];
@@ -54,10 +57,9 @@ const addProducts = async (req, res, next) => {
                     folder: "re-image",
                     width: 440,
                     height: 440,
-                    crop: "fill",  // Ensures the image is exactly 440x440
+                    crop: "fill",
                 });
 
-                // Push the secure URL (https) to the images array
                 images.push(result.secure_url);
             }
         }
@@ -65,11 +67,14 @@ const addProducts = async (req, res, next) => {
         // Validate category
         const categoryId = await Category.findOne({ name: products.category });
         if (!categoryId) {
-            return res.status(400).send("Invalid category name");
+            return res.status(400).json({
+                success: false,
+                message: "Invalid category name"
+            });
         }
 
         // Create new product
-        const newProduct = new Product({
+        const newProduct = await new Product({
             productName: products.productName,
             description: products.description,
             brand: products.brand,
@@ -80,16 +85,23 @@ const addProducts = async (req, res, next) => {
             quantity: products.quantity,
             size: products.size,
             color: products.color,
-            productImage: images,  // Use Cloudinary URLs
+            productImage: images,
             status: "Available",
+        }).save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Product added successfully",
+            product: newProduct
         });
 
-        await newProduct.save();
-        return res.redirect("/admin/product-add");
-
     } catch (error) {
-        console.log(error);
-        next(error);
+        console.error("Error adding product:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error adding product",
+            error: error.message
+        });
     }
 };
 
