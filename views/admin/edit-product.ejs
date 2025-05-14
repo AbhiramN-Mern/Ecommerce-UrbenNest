@@ -270,19 +270,17 @@
                                     <div class="card-body">
                                         <!-- Existing Images -->
                                         <div class="existing-images mb-4">
-                                            <%for(let i=0;i<product.productImage.length;i++){%> 
-                                                <div class="col-md-12" id="existingImages<%=product.productImage[i]%>">
+                                            <% for(let i = 0; i < product.productImage.length; i++) { %>
+                                                <div class="col-md-12" id="existingImages<%= product.productImage[i] %>">
                                                     <div class="mb-4">
                                                         <div class="col-12">
-                                                            <td>
-                                                                <input type="hidden" value="<%=product.productImage[i]%>" id="imageDatas">
-                                                                <img class="rounded" style="width: 100%; height: auto;" src="<%= product.productImage[0] %>" alt="">
-                                                                <i onclick="deleteSingleImage('<%=product.productImage[i]%>','<%=product._id%>')" class="fa fa-times"></i>
-                                                            </td>
+                                                            <input type="hidden" value="<%= product.productImage[i] %>" id="imageDatas">
+                                                            <img class="rounded" style="width: 100%; height: auto;" src="<%= product.productImage[i] %>" alt="">
+                                                            <i onclick="deleteSingleImage('<%= product.productImage[i] %>','<%= product._id %>')" class="fa fa-times"></i>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            <%}%>
+                                            <% } %>
                                         </div>
                                         <!-- New Image Uploads -->
                                         <div class="image-upload-container">

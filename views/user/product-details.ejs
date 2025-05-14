@@ -366,7 +366,7 @@
                         <div class="thumbnail-container">
                             <% product.productImage.forEach((image, index) => { %>
                                 <div class="thumbnail-item <%= index === 0 ? 'active' : '' %>">
-                                    <img src="<%= product.productImage[0] %>" alt="Thumbnail <%= index + 1 %>">
+                                    <img src="<%= image %>" alt="Thumbnail <%= index + 1 %>">
                                 </div>
                             <% }) %>
                         </div>
