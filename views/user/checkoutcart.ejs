@@ -292,7 +292,19 @@
       }
 
       // Handle different payment methods
-      switch(payment) {
+  // COD validation
+      if (payment === 'cod' && totalAmount > 10000) {
+        throw new Error('Cash on Delivery is not available for orders above ₹10,000');
+      }
+
+      // Handle different payment methods
+// COD validation
+      if (payment === 'cod' && totalAmount > 10000) {
+        throw new Error('Cash on Delivery is not available for orders above ₹10,000');
+      }
+
+      // Handle different payment methods
+    switch(payment) {
         case 'cod':
           const codResponse = await handleCodPayment(userId, address, payment, totalAmount);
           handleOrderResponse(codResponse);
